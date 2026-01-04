@@ -1,0 +1,100 @@
+# =============================================================================
+# Docker Ignore - Reduce image size
+# Target: <500MB for API/Worker images
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# Virtual environments
+venv
+env
+.env.local
+.env.*.local
+
+# Tests (not needed in production)
+tests/
+test_*.py
+*_test.py
+conftest.py
+pytest.ini
+.pytest_cache
+
+# Scripts (keep only production-needed ones)
+scripts/autoscaler_load_test.py
+scripts/dead_code_analyzer.py
+scripts/add_training_examples.py
+scripts/add_more_training.py
+scripts/train_and_evaluate.py
+scripts/train_intensive.py
+scripts/test_*.py
+scripts/generate_documentation.py
+
+# Documentation
+*.md
+!README.md
+docs/
+DEPLOYMENT.md
+
+# Docker files (not needed inside container)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Alembic - KEEP ALL migration files! Required for migrations
+# alembic/versions/*.py  # DO NOT IGNORE - migrations need these!
+
+# Local development
+*.log
+*.tmp
+tmp/
+temp/
+
+# Build artifacts
+build/
+dist/
+*.egg
+
+# Cache directories (will be mounted as volume)
+.cache/
+*.cache
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Node (if any frontend)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Misc
+*.bak
+*.orig
+.DS_Store
+Thumbs.db

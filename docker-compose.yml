@@ -1,0 +1,314 @@
+# =============================================================================
+# MobilityOne WhatsApp Bot - Unified Docker Compose
+# Version: 3.0 - Production Ready with Dual-User Security
+#
+# ARCHITECTURE:
+# - bot_net: Bot API + Worker (public facing)
+# - admin_net: Admin API (internal only - no external access!)
+# - db_net: PostgreSQL + Redis (shared)
+#
+# SECURITY:
+# - bot_user: Limited DB access (can't read audit_logs, hallucination_reports)
+# - admin_user: Full DB access (for admin API and migrations)
+# - Network isolation: Admin API on internal-only network
+#
+# USAGE:
+#   Development: docker-compose up -d
+#   With Admin:  docker-compose --profile admin up -d
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # INFRASTRUCTURE
+  # ===========================================================================
+
+  # --- PostgreSQL (Dual-User Security) ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: mobility_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
+      POSTGRES_DB: mobility_db
+      BOT_DB_PASSWORD: ${BOT_DB_PASSWORD:-bot_secure_pass_123}
+      ADMIN_DB_PASSWORD: ${ADMIN_DB_PASSWORD:-admin_secure_pass_456}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d mobility_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    networks:
+      - db_net
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  # --- Redis ---
+  redis:
+    image: redis:7-alpine
+    container_name: mobility_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - db_net
+
+  # ===========================================================================
+  # MIGRATIONS (runs with admin_user)
+  # ===========================================================================
+  migration:
+    build: .
+    container_name: mobility_migration
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      - DATABASE_URL=postgresql://admin_user:${ADMIN_DB_PASSWORD:-admin_secure_pass_456}@postgres:5432/mobility_db
+      - ADMIN_DATABASE_URL=postgresql://admin_user:${ADMIN_DB_PASSWORD:-admin_secure_pass_456}@postgres:5432/mobility_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - db_net
+    restart: "no"
+
+  # ===========================================================================
+  # APPLICATION LAYER
+  # ===========================================================================
+
+  # --- Bot API (Public Facing) ---
+  api:
+    build: .
+    container_name: mobility_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      # BOT uses limited user!
+      - DATABASE_URL=postgresql+asyncpg://bot_user:${BOT_DB_PASSWORD:-bot_secure_pass_123}@postgres:5432/mobility_db
+      - BOT_DATABASE_URL=postgresql+asyncpg://bot_user:${BOT_DB_PASSWORD:-bot_secure_pass_123}@postgres:5432/mobility_db
+      - REDIS_URL=redis://redis:6379/0
+      - SERVICE_TYPE=api
+    volumes:
+      - cache_data:/app/.cache:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      - "autoheal=true"
+    networks:
+      - bot_net
+      - db_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  # --- Worker (Background Tasks) ---
+  worker:
+    build: .
+    container_name: mobility_worker
+    restart: unless-stopped
+    command: python worker.py
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://bot_user:${BOT_DB_PASSWORD:-bot_secure_pass_123}@postgres:5432/mobility_db
+      - BOT_DATABASE_URL=postgresql+asyncpg://bot_user:${BOT_DB_PASSWORD:-bot_secure_pass_123}@postgres:5432/mobility_db
+      - REDIS_URL=redis://redis:6379/0
+      - SERVICE_TYPE=worker
+    volumes:
+      - cache_data:/app/.cache:rw
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'python worker.py' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "autoheal=true"
+    networks:
+      - bot_net
+      - db_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # --- Admin API (INTERNAL ONLY - Network Isolated!) ---
+  admin-api:
+    build: .
+    container_name: mobility_admin_api
+    restart: unless-stopped
+    command: ["uvicorn", "admin_api:app", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      # SECURITY: Bind to localhost only! Use reverse proxy for external access
+      # NOTE: Default port 8088 to avoid conflict with other services on 8080
+      - "${ADMIN_BIND:-127.0.0.1}:${ADMIN_PORT:-8088}:8080"
+    env_file:
+      - .env
+    environment:
+      # Admin uses full-access user
+      - DATABASE_URL=postgresql+asyncpg://admin_user:${ADMIN_DB_PASSWORD:-admin_secure_pass_456}@postgres:5432/mobility_db
+      - ADMIN_DATABASE_URL=postgresql+asyncpg://admin_user:${ADMIN_DB_PASSWORD:-admin_secure_pass_456}@postgres:5432/mobility_db
+      - REDIS_URL=redis://redis:6379/0
+      - SERVICE_TYPE=admin
+    volumes:
+      - cache_data:/app/.cache:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - admin_net  # ISOLATED from bot_net!
+      - db_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    profiles:
+      - admin
+
+  # ===========================================================================
+  # RELIABILITY
+  # ===========================================================================
+
+  # --- Autoheal ---
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: mobility_autoheal
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_INTERVAL=30
+      - AUTOHEAL_START_PERIOD=180
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - bot_net
+
+  # ===========================================================================
+  # AUTOSCALER REMOVED - Will use Kubernetes KEDA for production scaling
+  # See: k8s/keda-autoscaler.yaml
+  # For Docker Compose, manually scale with: docker-compose up -d --scale worker=N
+  # ===========================================================================
+
+  # ===========================================================================
+  # MONITORING (optional - use --profile monitoring)
+  # ===========================================================================
+
+  # --- Prometheus ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mobility_prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - bot_net
+      - admin_net
+    profiles:
+      - monitoring
+
+  # --- Grafana ---
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mobility_grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - bot_net
+      - admin_net
+    profiles:
+      - monitoring
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  # Public facing network (Bot API, Worker)
+  bot_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+  # INTERNAL ONLY network (Admin API) - NO external access!
+  admin_net:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16
+
+  # Database network (shared)
+  db_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  cache_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

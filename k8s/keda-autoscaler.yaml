@@ -1,0 +1,193 @@
+# =============================================================================
+# KEDA (Kubernetes Event-Driven Autoscaling) Configuration
+# Version: 1.0 - 2026 Standard for WhatsApp Bot Scaling
+#
+# WHY KEDA instead of HPA (CPU-based)?
+# - AI/LLM workloads are I/O bound, not CPU bound
+# - Waiting for OpenAI API response = low CPU but high latency
+# - CPU-based scaling would NOT detect queue buildup!
+# - KEDA scales on Redis Stream LAG = actual work waiting
+#
+# INSTALLATION:
+#   helm repo add kedacore https://kedacore.github.io/charts
+#   helm install keda kedacore/keda --namespace keda --create-namespace
+#
+# USAGE:
+#   kubectl apply -f k8s/keda-autoscaler.yaml
+# =============================================================================
+
+---
+# 1. Redis connection secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-auth
+  namespace: default
+type: Opaque
+stringData:
+  # Format: redis://[:password@]host:port[/db]
+  address: "redis://redis-service:6379"
+
+---
+# 2. KEDA TriggerAuthentication for Redis
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-trigger-auth
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: address
+      name: redis-auth
+      key: address
+
+---
+# 3. ScaledObject - Main autoscaling configuration
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker-scaledobject
+  namespace: default
+spec:
+  # Target deployment to scale
+  scaleTargetRef:
+    name: mobility-worker
+    kind: Deployment
+
+  # Scaling bounds
+  minReplicaCount: 2    # Always keep 2 workers (high availability)
+  maxReplicaCount: 10   # Max 10 workers (adjust based on Azure OpenAI TPM)
+
+  # Cooldown periods (prevent oscillation)
+  cooldownPeriod: 60           # Wait 60s before scaling down
+  pollingInterval: 10          # Check every 10 seconds
+
+  # Advanced settings
+  advanced:
+    restoreToOriginalReplicaCount: false  # Don't reset on KEDA restart
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 120  # Wait 2min of low load before scale down
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 60  # Remove max 1 pod per minute
+        scaleUp:
+          stabilizationWindowSeconds: 0    # Scale up immediately
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 15  # Add up to 2 pods every 15s
+
+  # Triggers - what events cause scaling
+  triggers:
+    # Primary: Redis Stream lag (pending messages)
+    - type: redis-streams
+      metadata:
+        # Redis stream name (must match worker config!)
+        stream: whatsapp_stream_inbound
+        consumerGroup: workers
+
+        # Scale when LAG (pending messages) exceeds this
+        # LagCount of 10 = if 10+ messages waiting, add worker
+        lagCount: "10"
+
+        # Activation threshold - when to start scaling from 0
+        # (we keep minReplicaCount=2, so this doesn't apply)
+        activationLagCount: "5"
+
+        # Enable pending messages count
+        enableTLS: "false"
+
+      authenticationRef:
+        name: redis-trigger-auth
+
+    # Secondary: Memory pressure backup (emergency scaling)
+    - type: memory
+      metadata:
+        type: Utilization
+        value: "80"  # Scale if any pod hits 80% memory
+
+---
+# 4. Fallback ScaledJob for burst processing (optional)
+# Use this if you want to spawn short-lived pods for burst traffic
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: worker-burst-job
+  namespace: default
+spec:
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 3
+    template:
+      spec:
+        containers:
+          - name: burst-worker
+            image: ghcr.io/mobilityone/worker:latest
+            command: ["python", "worker.py", "--burst-mode"]
+            env:
+              - name: REDIS_URL
+                value: "redis://redis-service:6379/0"
+              - name: BURST_MODE
+                value: "true"
+              - name: MAX_MESSAGES
+                value: "100"  # Process 100 messages then exit
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+        restartPolicy: Never
+
+  # Job scaling settings
+  pollingInterval: 30
+  minReplicaCount: 0    # No jobs by default
+  maxReplicaCount: 5    # Max 5 burst jobs
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+
+  triggers:
+    - type: redis-streams
+      metadata:
+        stream: whatsapp_stream_inbound
+        consumerGroup: workers
+        lagCount: "50"  # Only spawn burst job if 50+ messages waiting
+      authenticationRef:
+        name: redis-trigger-auth
+
+---
+# 5. PrometheusRule for monitoring (optional)
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: keda-alerts
+  namespace: default
+spec:
+  groups:
+    - name: keda-autoscaler
+      rules:
+        # Alert if queue is building up despite max workers
+        - alert: WorkerQueueBacklog
+          expr: keda_scaler_metrics_value{scaler="redis-streams"} > 100
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis queue backlog exceeding threshold"
+            description: "Queue has {{ $value }} pending messages for 5+ minutes"
+
+        # Alert if KEDA is not scaling despite high lag
+        - alert: KedaNotScaling
+          expr: |
+            keda_scaler_metrics_value{scaler="redis-streams"} > 50
+            and keda_scaled_object_status{status="Active"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "KEDA not scaling despite queue backlog"
