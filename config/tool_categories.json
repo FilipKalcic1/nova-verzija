@@ -2,21 +2,21 @@
   "categories": {
     "case_management": {
       "name": "case_management",
-      "description_hr": "Kategorija API endpointa za upravljanje slučajevima omogućuje korisnicima dodavanje, brisanje i dohvaćanje informacija o slučajevima.",
-      "description_en": "The case management API endpoint category allows users to add, delete, and retrieve information about cases.",
+      "description_hr": "Kategorija API endpointa za upravljanje slučajevima omogućava korisnicima dodavanje, brisanje i pregled svih slučajeva. Ovi alati olakšavaju organizaciju i praćenje informacija vezanih uz slučajeve.",
+      "description_en": "The case management API endpoint category allows users to add, delete, and retrieve all cases. These tools facilitate the organization and tracking of case-related information.",
       "keywords_hr": [
         "upravljanje",
         "slučajevima",
         "API"
       ],
       "keywords_en": [
+        "case",
         "management",
-        "cases",
         "API"
       ],
       "typical_intents": [
         "Add a new case",
-        "Delete existing cases"
+        "Delete multiple cases"
       ],
       "tools": [
         "post_AddCase",
@@ -39,8 +39,8 @@
     },
     "mileage_tracking": {
       "name": "mileage_tracking",
-      "description_hr": "Kategorija koja omogućuje praćenje i upravljanje putnim troškovima i kilometrima. Uključuje alate za dodavanje, analizu i agregaciju podataka o putovanjima.",
-      "description_en": "A category that allows tracking and managing travel expenses and mileage. It includes tools for adding, analyzing, and aggregating travel data.",
+      "description_hr": "Kategorija koja omogućuje praćenje i upravljanje kilometrima putovanja, uključujući dodavanje unosa i analizu troškova goriva.",
+      "description_en": "A category that enables tracking and managing travel mileage, including adding entries and analyzing fuel expenses.",
       "keywords_hr": [
         "kilometri",
         "troškovi",
@@ -61,11 +61,6 @@
         "get_AverageFuelExpensesAndMileages_from_to_ProjectTo",
         "get_AverageFuelExpensesAndMileages_from_to_Agg",
         "get_AverageFuelExpensesAndMileages_from_to_GroupBy",
-        "delete_LatestMileageReports_id",
-        "get_LatestMileageReports_id",
-        "delete_LatestMileageReports",
-        "get_LatestMileageReports",
-        "delete_LatestMileageReports_DeleteByCriteria",
         "post_MileageReports",
         "delete_MileageReports",
         "get_MileageReports",
@@ -75,6 +70,7 @@
         "get_MileageReports_id",
         "post_MileageReports_multipatch",
         "delete_MileageReports_DeleteByCriteria",
+        "get_MileageReports_id_metadata",
         "get_MileageReports_ProjectTo",
         "get_MileageReports_Agg",
         "get_MileageReports_GroupBy",
@@ -85,34 +81,29 @@
         "get_MonthlyMileages_ProjectTo",
         "get_MonthlyMileages_Agg",
         "get_MonthlyMileages_GroupBy",
-        "get_MonthlyMileagesAssigned",
-        "get_MonthlyMileagesAssigned_ProjectTo",
-        "get_MonthlyMileagesAssigned_Agg",
-        "get_MonthlyMileagesAssigned_GroupBy",
         "get_Stats_FleetAverageMonthlyMileage_year_month",
         "get_Stats_NoMileageSince",
         "get_Stats_NumOfVehiclesWithoutMileageSince"
       ],
-      "tool_count": 36
+      "tool_count": 28
     },
     "data_retrieval": {
       "name": "data_retrieval",
-      "description_hr": "Ova kategorija API endpointa omogućuje dohvaćanje podataka iz različitih izvora na temelju specifičnih parametara. Korisnici mogu lako pristupiti potrebnim informacijama uz pomoć jednostavnih upita.",
-      "description_en": "This category of API endpoints allows for the retrieval of data from various sources based on specific parameters. Users can easily access the required information through simple queries.",
+      "description_hr": "Ova kategorija API endpointa omogućuje dohvaćanje raznih podataka iz sustava temeljem specifičnih parametara. Korisnici mogu pristupiti informacijama o kompanijama i troškovnim centrima.",
+      "description_en": "This category of API endpoints allows for the retrieval of various data from the system based on specific parameters. Users can access information about companies and cost centers.",
       "keywords_hr": [
         "dohvaćanje",
-        "podaci",
+        "podataka",
         "API"
       ],
       "keywords_en": [
-        "retrieval",
         "data",
+        "retrieval",
         "API"
       ],
       "typical_intents": [
-        "GET_MASTER_DATA",
-        "GET_COMPANIES",
-        "GET_COST_CENTERS"
+        "Get company data",
+        "Get cost center data"
       ],
       "tools": [
         "get_MasterData",
@@ -123,8 +114,8 @@
     },
     "user_management": {
       "name": "user_management",
-      "description_hr": "Ova kategorija omogućuje upravljanje korisničkim podacima, uključujući dohvaćanje informacija o korisnicima putem njihovih ID-a ili e-mail adresa.",
-      "description_en": "This category allows for the management of user data, including retrieving information about users by their IDs or email addresses.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje korisničkim podacima, uključujući dohvat informacija o korisnicima putem identifikatora ili e-pošte.",
+      "description_en": "This category of API endpoints allows for the management of user data, including retrieving user information by identifier or email.",
       "keywords_hr": [
         "korisnici",
         "upravljanje",
@@ -136,8 +127,8 @@
         "data"
       ],
       "typical_intents": [
-        "GET_USER_DATA",
-        "UPDATE_USER_INFO"
+        "GET_USER_INFO",
+        "UPDATE_USER_DATA"
       ],
       "tools": [
         "get_PersonData_personIdOrEmail"
@@ -147,7 +138,7 @@
     "communication": {
       "name": "communication",
       "description_hr": "Ova kategorija omogućuje korisnicima slanje i primanje poruka putem različitih komunikacijskih kanala.",
-      "description_en": "This category allows users to send and receive messages through various communication channels.",
+      "description_en": "This category enables users to send and receive messages through various communication channels.",
       "keywords_hr": [
         "komunikacija",
         "poruke"
@@ -158,7 +149,7 @@
       ],
       "typical_intents": [
         "SEND_EMAIL",
-        "RECEIVE_MESSAGES"
+        "RECEIVE_MESSAGE"
       ],
       "tools": [
         "post_SendEmail"
@@ -167,29 +158,31 @@
     },
     "vehicle_management": {
       "name": "vehicle_management",
-      "description_hr": "Kategorija API endpointa za upravljanje vozilima omogućava kreiranje, ažuriranje i brisanje dodijeljenih vozila.",
-      "description_en": "The vehicle management API endpoint category allows for creating, updating, and deleting vehicle assignments.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje vozilima, uključujući dodavanje, ažuriranje i brisanje informacija o vozilima.",
+      "description_en": "This category of API endpoints allows for vehicle management, including adding, updating, and deleting vehicle information.",
       "keywords_hr": [
-        "vozilo",
+        "vozila",
         "upravljanje",
-        "dodjela"
+        "informacije"
       ],
       "keywords_en": [
-        "vehicle",
+        "vehicles",
         "management",
-        "assignment"
+        "information"
       ],
       "typical_intents": [
-        "Modify vehicle assignment",
-        "Lookup vehicle details"
+        "Modify vehicle assignments",
+        "Retrieve vehicle information"
       ],
       "tools": [
         "post_SyncExternalIdAndLicencePlate",
         "post_SyncExternalIdAndVIN",
-        "post_VehicleAssignments",
+        "get_ExpensesInputHelper_CompanyVehicles_companyId_date",
         "get_Lookup_VehicleId",
         "get_Lookup_VehicleId_id",
-        "get_VehicleCalendarOn_on",
+        "get_VehicleBoard_id",
+        "post_VehicleBoard_Defleet",
+        "post_VehicleBoard_Infleet",
         "post_Vehicles",
         "delete_Vehicles",
         "get_Vehicles",
@@ -198,14 +191,40 @@
         "delete_Vehicles_id",
         "get_Vehicles_id",
         "post_Vehicles_multipatch",
-        "delete_Vehicles_DeleteByCriteria"
+        "delete_Vehicles_DeleteByCriteria",
+        "get_Vehicles_ProjectTo",
+        "get_Vehicles_Agg",
+        "get_Vehicles_GroupBy"
       ],
-      "tool_count": 15
+      "tool_count": 20
+    },
+    "vehicle_assignment": {
+      "name": "vehicle_assignment",
+      "description_hr": "Ova kategorija omogućuje kreiranje, ažuriranje ili brisanje dodjela vozila korisnicima ili projektima.",
+      "description_en": "This category allows for creating, updating, or deleting vehicle assignments to users or projects.",
+      "keywords_hr": [
+        "dodjela",
+        "vozila",
+        "upravljanje"
+      ],
+      "keywords_en": [
+        "assignment",
+        "vehicle",
+        "management"
+      ],
+      "typical_intents": [
+        "Create a vehicle assignment",
+        "Update an existing vehicle assignment"
+      ],
+      "tools": [
+        "post_VehicleAssignments"
+      ],
+      "tool_count": 1
     },
     "company_management": {
       "name": "company_management",
       "description_hr": "Ova kategorija API endpointa omogućuje upravljanje podacima o tvrtkama, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje informacija.",
-      "description_en": "This category of API endpoints allows for managing company data, including creating, deleting, retrieving, and updating information.",
+      "description_en": "This category of API endpoints allows for the management of company data, including creating, deleting, retrieving, and updating information.",
       "keywords_hr": [
         "tvrtka",
         "upravljanje",
@@ -217,8 +236,8 @@
         "API"
       ],
       "typical_intents": [
-        "CREATE_COMPANY",
-        "DELETE_COMPANY"
+        "Create a new company",
+        "Update existing company details"
       ],
       "tools": [
         "post_Companies",
@@ -248,8 +267,10 @@
         "files"
       ],
       "typical_intents": [
-        "Create a document",
-        "Retrieve a document"
+        "Upload a document",
+        "Retrieve a document",
+        "Update document information",
+        "Delete a document"
       ],
       "tools": [
         "post_Companies_id_documents",
@@ -357,20 +378,6 @@
         "delete_Tenants_id_documents_documentId",
         "get_Tenants_id_documents_documentId_thumb",
         "put_Tenants_id_documents_documentId_SetAsDefault",
-        "post_Cases_id_documents",
-        "get_Cases_id_documents",
-        "get_Cases_id_documents_documentId",
-        "put_Cases_id_documents_documentId",
-        "delete_Cases_id_documents_documentId",
-        "get_Cases_id_documents_documentId_thumb",
-        "put_Cases_id_documents_documentId_SetAsDefault",
-        "post_CaseTypes_id_documents",
-        "get_CaseTypes_id_documents",
-        "get_CaseTypes_id_documents_documentId",
-        "put_CaseTypes_id_documents_documentId",
-        "delete_CaseTypes_id_documents_documentId",
-        "get_CaseTypes_id_documents_documentId_thumb",
-        "put_CaseTypes_id_documents_documentId_SetAsDefault",
         "post_MileageReports_id_documents",
         "get_MileageReports_id_documents",
         "get_MileageReports_id_documents_documentId",
@@ -385,6 +392,13 @@
         "delete_PeriodicActivities_id_documents_documentId",
         "get_PeriodicActivities_id_documents_documentId_thumb",
         "put_PeriodicActivities_id_documents_documentId_SetAsDefault",
+        "post_PeriodicActivitiesSchedules_id_documents",
+        "get_PeriodicActivitiesSchedules_id_documents",
+        "get_PeriodicActivitiesSchedules_id_documents_documentId",
+        "put_PeriodicActivitiesSchedules_id_documents_documentId",
+        "delete_PeriodicActivitiesSchedules_id_documents_documentId",
+        "get_PeriodicActivitiesSchedules_id_documents_documentId_thumb",
+        "put_PeriodicActivitiesSchedules_id_documents_documentId_SetAsDefault",
         "post_PeriodicActivityTypes_id_documents",
         "get_PeriodicActivityTypes_id_documents",
         "get_PeriodicActivityTypes_id_documents_documentId",
@@ -399,6 +413,13 @@
         "delete_Pools_id_documents_documentId",
         "get_Pools_id_documents_documentId_thumb",
         "put_Pools_id_documents_documentId_SetAsDefault",
+        "post_SchedulingModels_id_documents",
+        "get_SchedulingModels_id_documents",
+        "get_SchedulingModels_id_documents_documentId",
+        "put_SchedulingModels_id_documents_documentId",
+        "delete_SchedulingModels_id_documents_documentId",
+        "get_SchedulingModels_id_documents_documentId_thumb",
+        "put_SchedulingModels_id_documents_documentId_SetAsDefault",
         "post_Tags_id_documents",
         "get_Tags_id_documents",
         "get_Tags_id_documents_documentId",
@@ -406,6 +427,21 @@
         "delete_Tags_id_documents_documentId",
         "get_Tags_id_documents_documentId_thumb",
         "put_Tags_id_documents_documentId_SetAsDefault",
+        "post_Trips_id_documents",
+        "get_Trips_id_documents",
+        "get_Trips_id_documents_documentId",
+        "put_Trips_id_documents_documentId",
+        "delete_Trips_id_documents_documentId",
+        "get_Trips_id_documents_documentId_thumb",
+        "put_Trips_id_documents_documentId_SetAsDefault",
+        "post_TripTypes_id_documents",
+        "get_TripTypes_id_documents",
+        "get_TripTypes_id_documents_documentId",
+        "put_TripTypes_id_documents_documentId",
+        "delete_TripTypes_id_documents_documentId",
+        "get_TripTypes_id_documents_documentId_thumb",
+        "put_TripTypes_id_documents_documentId_SetAsDefault",
+        "post_VehicleCalendar_id_documents",
         "get_VehicleCalendar_id_documents",
         "get_VehicleCalendar_id_documents_documentId",
         "put_VehicleCalendar_id_documents_documentId",
@@ -425,47 +461,29 @@
         "put_Vehicles_id_documents_documentId",
         "delete_Vehicles_id_documents_documentId",
         "get_Vehicles_id_documents_documentId_thumb",
-        "put_Vehicles_id_documents_documentId_SetAsDefault",
-        "post_VehiclesHistoricalEntries_id_documents",
-        "get_VehiclesHistoricalEntries_id_documents",
-        "get_VehiclesHistoricalEntries_id_documents_documentId",
-        "put_VehiclesHistoricalEntries_id_documents_documentId",
-        "delete_VehiclesHistoricalEntries_id_documents_documentId",
-        "get_VehiclesHistoricalEntries_id_documents_documentId_thumb",
-        "put_VehiclesHistoricalEntries_id_documents_documentId_SetAsDefault",
-        "post_VehicleTypes_id_documents",
-        "get_VehicleTypes_id_documents",
-        "get_VehicleTypes_id_documents_documentId",
-        "put_VehicleTypes_id_documents_documentId",
-        "delete_VehicleTypes_id_documents_documentId",
-        "get_VehicleTypes_id_documents_documentId_thumb",
-        "put_VehicleTypes_id_documents_documentId_SetAsDefault"
+        "put_Vehicles_id_documents_documentId_SetAsDefault"
       ],
-      "tool_count": 188
+      "tool_count": 189
     },
     "metadata_management": {
       "name": "metadata_management",
-      "description_hr": "Kategorija API endpointa koja omogućava upravljanje metapodacima entiteta unutar sustava. Ovi alati omogućuju dohvaćanje i upravljanje informacijama o različitim entitetima.",
-      "description_en": "This category of API endpoints facilitates the management of metadata for entities within the system. These tools allow for retrieving and managing information about various entities.",
+      "description_hr": "Kategorija koja omogućava upravljanje metapodacima entiteta unutar sustava. Uključuje alate za dohvat, kreiranje i brisanje metapodataka.",
+      "description_en": "A category that enables the management of entity metadata within the system. It includes tools for retrieving, creating, and deleting metadata.",
       "keywords_hr": [
         "metapodaci",
-        "upravljanje",
-        "entiteti"
+        "upravljanje"
       ],
       "keywords_en": [
         "metadata",
-        "management",
-        "entities"
+        "management"
       ],
       "typical_intents": [
-        "GET_METADATA",
-        "UPDATE_METADATA"
+        "Retrieve entity metadata",
+        "Create new metadata item"
       ],
       "tools": [
         "get_Companies_id_metadata",
         "get_CostCenters_id_metadata",
-        "get_DocumentTypes_id_metadata",
-        "get_LatestPersonPeriodicActivities_id_metadata",
         "post_Metadata_Order",
         "post_Metadata",
         "delete_Metadata",
@@ -492,32 +510,33 @@
         "get_Teams_id_metadata",
         "get_TenantPermissions_id_metadata",
         "get_Tenants_id_metadata",
-        "get_Cases_id_metadata",
-        "get_MileageReports_id_metadata",
         "get_PeriodicActivities_id_metadata",
+        "get_PeriodicActivitiesSchedules_id_metadata",
         "get_PeriodicActivityTypes_id_metadata",
         "get_Pools_id_metadata",
+        "get_SchedulingModels_id_metadata",
         "get_Tags_id_metadata",
+        "get_Trips_id_metadata",
+        "get_TripTypes_id_metadata",
         "get_VehicleCalendar_id_metadata",
-        "get_VehicleContracts_id_metadata"
+        "get_VehicleContracts_id_metadata",
+        "get_Vehicles_id_metadata"
       ],
-      "tool_count": 38
+      "tool_count": 39
     },
-    "data_analysis": {
-      "name": "data_analysis",
-      "description_hr": "Ova kategorija API endpointa omogućuje analizu podataka kroz agregacijske funkcije i grupiranje podataka. Alati su dizajnirani za jednostavno dobivanje vrijednosti i organizaciju informacija.",
-      "description_en": "This category of API endpoints enables data analysis through aggregate functions and data grouping. The tools are designed for easy retrieval of values and organization of information.",
+    "data_aggregation": {
+      "name": "data_aggregation",
+      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka iz različitih izvora, pružajući korisnicima mogućnost dobivanja sažetaka i statističkih informacija.",
+      "description_en": "This category of API endpoints enables data aggregation from various sources, allowing users to obtain summaries and statistical information.",
       "keywords_hr": [
-        "analiza",
-        "podaci",
         "agregacija",
-        "grupiranje"
+        "podaci",
+        "statistika"
       ],
       "keywords_en": [
-        "analysis",
-        "data",
         "aggregation",
-        "grouping"
+        "data",
+        "statistics"
       ],
       "typical_intents": [
         "GET_AGGREGATED_DATA",
@@ -527,14 +546,30 @@
         "get_Companies_Agg",
         "get_Companies_GroupBy",
         "get_CostCenters_Agg",
-        "get_CostCenters_GroupBy"
+        "get_CostCenters_GroupBy",
+        "get_Partners_Agg",
+        "get_PersonActivityTypes_Agg",
+        "get_PersonOrgUnits_Agg",
+        "get_PersonTypes_Agg",
+        "get_Roles_Agg",
+        "get_TeamMembers_Agg",
+        "get_Teams_Agg",
+        "get_TenantPermissions_Agg",
+        "get_Tenants_Agg",
+        "get_SchedulingModels_Agg",
+        "get_SchedulingModels_GroupBy",
+        "get_Tags_Agg",
+        "get_Tags_GroupBy",
+        "get_Trips_Agg",
+        "get_TripTypes_Agg",
+        "get_VehicleCalendar_Agg"
       ],
-      "tool_count": 4
+      "tool_count": 20
     },
     "cost_center_management": {
       "name": "cost_center_management",
-      "description_hr": "Upravljanje troškovnim centrima omogućuje korisnicima stvaranje, brisanje i ažuriranje troškovnih centara unutar sustava.",
-      "description_en": "Cost center management allows users to create, delete, and update cost centers within the system.",
+      "description_hr": "Upravljanje troškovnim centrima omogućuje korisnicima stvaranje, brisanje i ažuriranje informacija o troškovnim centrima.",
+      "description_en": "Cost center management allows users to create, delete, and update information about cost centers.",
       "keywords_hr": [
         "troškovni",
         "centar",
@@ -564,10 +599,10 @@
     },
     "dashboard_management": {
       "name": "dashboard_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje stavkama na nadzornoj ploči. Korisnici mogu dohvatiti sve stavke bez filtriranja.",
-      "description_en": "This category of API endpoints allows for the management of dashboard items. Users can retrieve all items without any filtering.",
+      "description_hr": "Kategorija koja omogućuje upravljanje stavkama na kontrolnoj ploči, uključujući dohvaćanje svih stavki bez filtriranja.",
+      "description_en": "Category that allows management of dashboard items, including retrieving all items without any filtering.",
       "keywords_hr": [
-        "nadzorna ploča",
+        "kontrolna ploča",
         "upravljanje",
         "stavke"
       ],
@@ -578,7 +613,7 @@
       ],
       "typical_intents": [
         "GET_ALL_DASHBOARD_ITEMS",
-        "RETRIEVE_DASHBOARD_DATA"
+        "MANAGE_DASHBOARD_ITEMS"
       ],
       "tools": [
         "get_DashboardItems"
@@ -587,12 +622,12 @@
     },
     "dashboard_item_management": {
       "name": "dashboard_item_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje stavkama na nadzornoj ploči, uključujući kreiranje, ažuriranje, dohvaćanje i brisanje stavki.",
-      "description_en": "This category of API endpoints allows for the management of dashboard items, including creating, updating, retrieving, and deleting items.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje stavkama na kontrolnoj ploči, uključujući kreiranje, ažuriranje i brisanje stavki.",
+      "description_en": "This category of API endpoints allows for the management of dashboard items, including creating, updating, and deleting items.",
       "keywords_hr": [
         "upravljanje",
         "stavkama",
-        "nadzorna ploča"
+        "kontrolna ploča"
       ],
       "keywords_en": [
         "management",
@@ -615,17 +650,17 @@
     },
     "document_type_management": {
       "name": "document_type_management",
-      "description_hr": "Upravlja dokumentnim tipovima, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje dokumenata.",
-      "description_en": "Manages document types, allowing for the creation, deletion, retrieval, and updating of documents.",
+      "description_hr": "Upravlja raznim tipovima dokumenata, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje dokumenata.",
+      "description_en": "Manages various document types, allowing for the creation, deletion, retrieval, and updating of documents.",
       "keywords_hr": [
-        "upravljanje",
-        "dokumenti",
-        "tipovi"
+        "tipovi",
+        "dokumenata",
+        "upravljanje"
       ],
       "keywords_en": [
-        "management",
-        "documents",
-        "types"
+        "document",
+        "types",
+        "management"
       ],
       "typical_intents": [
         "Create a new document type",
@@ -647,23 +682,46 @@
       ],
       "tool_count": 12
     },
+    "document_metadata_management": {
+      "name": "document_metadata_management",
+      "description_hr": "Ova kategorija omogućuje upravljanje metapodacima dokumenata, uključujući preuzimanje i ažuriranje informacija o dokumentima.",
+      "description_en": "This category enables the management of document metadata, including retrieving and updating information about documents.",
+      "keywords_hr": [
+        "metapodaci",
+        "dokumenti",
+        "upravljanje"
+      ],
+      "keywords_en": [
+        "metadata",
+        "documents",
+        "management"
+      ],
+      "typical_intents": [
+        "retrieve_document_metadata",
+        "update_document_metadata"
+      ],
+      "tools": [
+        "get_DocumentTypes_id_metadata"
+      ],
+      "tool_count": 1
+    },
     "person_activity_management": {
       "name": "person_activity_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje aktivnostima osoba, uključujući brisanje i dohvaćanje podataka o periodičnim aktivnostima.",
-      "description_en": "This category of API endpoints allows for the management of person activities, including deletion and retrieval of periodic activity data.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje aktivnostima osoba, uključujući brisanje i dohvaćanje podataka na temelju različitih kriterija.",
+      "description_en": "This category of API endpoints allows for managing person activities, including deleting and retrieving data based on various criteria.",
       "keywords_hr": [
         "aktivnosti",
-        "upravljanje",
-        "osobe"
+        "osobe",
+        "upravljanje"
       ],
       "keywords_en": [
         "activities",
-        "management",
-        "person"
+        "person",
+        "management"
       ],
       "typical_intents": [
         "Retrieve person activities",
-        "Delete person activities"
+        "Delete specific person activity"
       ],
       "tools": [
         "delete_LatestPersonPeriodicActivities_id",
@@ -677,23 +735,46 @@
       ],
       "tool_count": 8
     },
+    "person_activity_metadata_management": {
+      "name": "person_activity_metadata_management",
+      "description_hr": "Ova kategorija omogućuje upravljanje metapodacima aktivnosti osoba, uključujući pristup najnovijim informacijama o aktivnostima.",
+      "description_en": "This category allows for the management of person activity metadata, including access to the latest information about activities.",
+      "keywords_hr": [
+        "metapodaci",
+        "aktivnosti",
+        "osobe"
+      ],
+      "keywords_en": [
+        "metadata",
+        "activities",
+        "person"
+      ],
+      "typical_intents": [
+        "Retrieve latest activity metadata",
+        "Manage person activity records"
+      ],
+      "tools": [
+        "get_LatestPersonPeriodicActivities_id_metadata"
+      ],
+      "tool_count": 1
+    },
     "lookup_management": {
       "name": "lookup_management",
-      "description_hr": "Kategorija API endpointa koja omogućuje pristup raznim lookup podacima kao što su identifikatori troškovnih centara, kompanija, organizacijskih jedinica i osoba.",
-      "description_en": "A category of API endpoints that provides access to various lookup data such as cost center IDs, company IDs, organizational unit IDs, and person IDs.",
+      "description_hr": "Kategorija API endpointa koja omogućuje upravljanje i pretraživanje raznih identifikatora unutar sustava, kao što su centri troškova, tvrtke i osobe.",
+      "description_en": "This category of API endpoints facilitates the management and retrieval of various identifiers within the system, such as cost centers, companies, and individuals.",
       "keywords_hr": [
-        "lookup",
         "upravljanje",
+        "pretraživanje",
         "identifikatori"
       ],
       "keywords_en": [
-        "lookup",
         "management",
+        "lookup",
         "identifiers"
       ],
       "typical_intents": [
-        "Retrieve cost center ID",
-        "Get company ID"
+        "GET_COST_CENTER_ID",
+        "GET_COMPANY_ID"
       ],
       "tools": [
         "get_Lookup_CostCenterId",
@@ -709,6 +790,25 @@
         "get_Lookup_PartnerTypeId",
         "get_Lookup_ActivityTypeId",
         "get_Lookup_ActivityStatusId",
+        "get_Lookup_ActivityCategories",
+        "get_Lookup_AcquiringType",
+        "get_Lookup_AcquiringTypeId",
+        "get_Lookup_CaseSeverities",
+        "get_Lookup_GeneralStatuses",
+        "get_Lookup_EntityTypes",
+        "get_Lookup_CalendarEntryTypes",
+        "get_Lookup_Availabilities",
+        "get_Lookup_CaseStatuses",
+        "get_Lookup_EquipmentAvailabities",
+        "get_Lookup_EquipmentId",
+        "get_Lookup_EquipmentStatuses",
+        "get_Lookup_EquipmentTypeId",
+        "get_Lookup_ExpenseCategories",
+        "get_Lookup_ExpenseCategoryId",
+        "get_Lookup_ExpenseStatuses",
+        "get_Lookup_PeriodicActivityStatuses",
+        "get_Lookup_MileageSources",
+        "get_Lookup_SearchTypes",
         "get_Lookup_AssigneeId",
         "get_Lookup_AssignedToId",
         "get_Lookup_CaseId",
@@ -717,6 +817,7 @@
         "get_Lookup_PeriodicActivityTypeId",
         "get_Lookup_PeriodicActivityTypeName",
         "get_Lookup_PoolId",
+        "get_Lookup_SchedulingModelId",
         "get_Lookup_VehiclePoolId",
         "get_Lookup_VehicleTypeId",
         "get_Lookup_TripTypeId",
@@ -728,12 +829,12 @@
         "get_Lookup_TimeZones",
         "get_Lookup_PeriodicActivityStatusId"
       ],
-      "tool_count": 31
+      "tool_count": 51
     },
     "organization_management": {
       "name": "organization_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje organizacijskim jedinicama unutar tvrtke. Uključuje funkcionalnosti za kreiranje, ažuriranje, brisanje i dohvaćanje informacija o organizacijskim jedinicama.",
-      "description_en": "This category of API endpoints allows for the management of organizational units within a company. It includes functionalities for creating, updating, deleting, and retrieving information about organizational units.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje organizacijskim jedinicama unutar tvrtke, uključujući stvaranje, ažuriranje i brisanje stavki.",
+      "description_en": "This category of API endpoints allows for the management of organizational units within a company, including creating, updating, and deleting items.",
       "keywords_hr": [
         "organizacija",
         "upravljanje",
@@ -767,8 +868,8 @@
     },
     "partner_management": {
       "name": "partner_management",
-      "description_hr": "Ova kategorija API endpointa omogućava upravljanje partnerima, uključujući dodavanje, uklanjanje i preuzimanje informacija o partnerima.",
-      "description_en": "This category of API endpoints allows for partner management, including adding, unlinking, and retrieving information about partners.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje partnerima, uključujući dodavanje, uklanjanje i dohvaćanje informacija o partnerima.",
+      "description_en": "This category of API endpoints allows for partner management, including adding, unlinking, and retrieving partner information.",
       "keywords_hr": [
         "partneri",
         "upravljanje",
@@ -780,8 +881,8 @@
         "API"
       ],
       "typical_intents": [
-        "Add a new partner",
-        "Remove an existing partner"
+        "Create a new partner",
+        "Remove a partner"
       ],
       "tools": [
         "post_Partners_linktenant_partnerId",
@@ -800,21 +901,21 @@
     },
     "data_projection": {
       "name": "data_projection",
-      "description_hr": "Ova kategorija API endpointa omogućuje dohvaćanje raznih podataka temeljenih na parametrima učitavanja. Sadrži alate za pristup informacijama o partnerima, aktivnostima, organizacijskim jedinicama i drugim relevantnim entitetima.",
-      "description_en": "This category of API endpoints allows retrieval of various data based on load parameters. It includes tools for accessing information about partners, activities, organizational units, and other relevant entities.",
+      "description_hr": "Kategorija API endpointa koja omogućava dohvaćanje raznih podataka temeljenih na parametrima učitavanja.",
+      "description_en": "A category of API endpoints that allows fetching various data based on load parameters.",
       "keywords_hr": [
         "dohvaćanje",
         "podaci",
         "parametri"
       ],
       "keywords_en": [
-        "retrieval",
+        "fetching",
         "data",
         "parameters"
       ],
       "typical_intents": [
-        "GET_PARTNERS",
-        "GET_PERSON_ACTIVITY_TYPES"
+        "Get all partners",
+        "Get person activity types"
       ],
       "tools": [
         "get_Partners_ProjectTo",
@@ -826,99 +927,61 @@
         "get_Teams_ProjectTo",
         "get_TenantPermissions_ProjectTo",
         "get_Tenants_ProjectTo",
-        "get_VehicleCalendar_ProjectTo",
-        "get_VehicleCalendarOn_on_ProjectTo",
-        "get_VehicleContracts_ProjectTo",
-        "get_VehicleTypes_ProjectTo"
+        "get_Trips_ProjectTo",
+        "get_TripTypes_ProjectTo",
+        "get_VehicleCalendar_ProjectTo"
       ],
-      "tool_count": 13
-    },
-    "data_aggregation": {
-      "name": "data_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka iz različitih izvora. Korisnici mogu dobiti vrijednosti prema specifičnim agregatnim funkcijama.",
-      "description_en": "This category of API endpoints allows for data aggregation from various sources. Users can retrieve values based on specified aggregate functions.",
-      "keywords_hr": [
-        "agregacija",
-        "podaci",
-        "funkcije"
-      ],
-      "keywords_en": [
-        "aggregation",
-        "data",
-        "functions"
-      ],
-      "typical_intents": [
-        "GET_AGGREGATED_DATA",
-        "ANALYZE_DATA"
-      ],
-      "tools": [
-        "get_Partners_Agg",
-        "get_PersonActivityTypes_Agg",
-        "get_PersonOrgUnits_Agg",
-        "get_PersonTypes_Agg",
-        "get_PersonTypes_GroupBy",
-        "get_Roles_Agg",
-        "get_Roles_GroupBy",
-        "get_TeamMembers_Agg",
-        "get_TeamMembers_GroupBy",
-        "get_Teams_Agg",
-        "get_TenantPermissions_Agg",
-        "get_Tenants_Agg",
-        "get_VehicleCalendar_Agg",
-        "get_VehicleCalendarOn_on_Agg",
-        "get_VehicleContracts_Agg",
-        "get_VehicleTypes_Agg",
-        "get_VehicleTypes_GroupBy"
-      ],
-      "tool_count": 17
+      "tool_count": 12
     },
     "data_grouping": {
       "name": "data_grouping",
-      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje podataka prema različitim kriterijima, poput partnera, aktivnosti osoba i organizacijskih jedinica.",
-      "description_en": "This category of API endpoints allows for data grouping based on various criteria, such as partners, person activity types, and organizational units.",
+      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje podataka prema različitim kriterijima, što olakšava analizu i organizaciju informacija.",
+      "description_en": "This category of API endpoints allows for the grouping of data based on various criteria, facilitating the analysis and organization of information.",
       "keywords_hr": [
         "grupiranje",
         "podaci",
-        "organizacija"
+        "analiza"
       ],
       "keywords_en": [
         "grouping",
         "data",
-        "organization"
+        "analysis"
       ],
       "typical_intents": [
         "GET_PARTNERS_GROUP",
-        "GET_PERSON_ACTIVITY_TYPES_GROUP"
+        "GET_PERSON_ACTIVITY_TYPES"
       ],
       "tools": [
         "get_Partners_GroupBy",
         "get_PersonActivityTypes_GroupBy",
         "get_PersonOrgUnits_GroupBy",
+        "get_PersonTypes_GroupBy",
+        "get_Roles_GroupBy",
+        "get_TeamMembers_GroupBy",
         "get_Teams_GroupBy",
         "get_TenantPermissions_GroupBy",
-        "get_VehicleCalendar_GroupBy",
-        "get_VehicleCalendarOn_on_GroupBy",
-        "get_VehicleContracts_GroupBy"
+        "get_Trips_GroupBy",
+        "get_TripTypes_GroupBy"
       ],
-      "tool_count": 8
+      "tool_count": 10
     },
     "activity_type_management": {
       "name": "activity_type_management",
-      "description_hr": "Upravlja različitim tipovima aktivnosti, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o aktivnostima.",
-      "description_en": "Manages various activity types, allowing for the creation, deletion, retrieval, and updating of activity data.",
+      "description_hr": "Ova kategorija omogućuje upravljanje vrstama aktivnosti, uključujući kreiranje, brisanje, ažuriranje i dohvaćanje podataka o aktivnostima.",
+      "description_en": "This category allows for the management of activity types, including creating, deleting, updating, and retrieving activity data.",
       "keywords_hr": [
         "upravljanje",
-        "aktivnost",
+        "aktivnostima",
         "tipovi"
       ],
       "keywords_en": [
         "management",
-        "activity",
+        "activities",
         "types"
       ],
       "typical_intents": [
-        "CREATE_ACTIVITY_TYPE",
-        "DELETE_ACTIVITY_TYPE"
+        "Create new activity type",
+        "Delete existing activity types"
       ],
       "tools": [
         "post_PersonActivityTypes",
@@ -940,21 +1003,24 @@
         "post_PeriodicActivityTypes_multipatch",
         "delete_PeriodicActivityTypes_DeleteByCriteria",
         "get_PeriodicActivityTypes_ProjectTo",
-        "get_PeriodicActivityTypes_Agg"
+        "get_PeriodicActivityTypes_Agg",
+        "get_PeriodicActivityTypes_GroupBy"
       ],
-      "tool_count": 20
+      "tool_count": 21
     },
     "organization_unit_management": {
       "name": "organization_unit_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje organizacijskim jedinicama, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o osobnim organizacijskim jedinicama.",
-      "description_en": "This category of API endpoints allows for the management of organizational units, including creating, deleting, retrieving, and updating data related to personal organizational units.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje organizacijskim jedinicama, uključujući kreiranje, brisanje i ažuriranje podataka o osobama unutar tih jedinica.",
+      "description_en": "This category of API endpoints allows for the management of organizational units, including creating, deleting, and updating data related to individuals within those units.",
       "keywords_hr": [
         "organizacijske jedinice",
-        "upravljanje"
+        "upravljanje",
+        "API"
       ],
       "keywords_en": [
         "organizational units",
-        "management"
+        "management",
+        "API"
       ],
       "typical_intents": [
         "Create new organizational unit",
@@ -975,8 +1041,8 @@
     },
     "activity_management": {
       "name": "activity_management",
-      "description_hr": "Ova kategorija omogućuje upravljanje periodičnim aktivnostima korisnika, uključujući kreiranje, ažuriranje i brisanje aktivnosti.",
-      "description_en": "This category allows for managing user periodic activities, including creating, updating, and deleting activities.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje aktivnostima korisnika, uključujući kreiranje, brisanje i ažuriranje periodičnih aktivnosti.",
+      "description_en": "This category of API endpoints allows for the management of user activities, including creating, deleting, and updating periodic activities.",
       "keywords_hr": [
         "aktivnosti",
         "upravljanje",
@@ -1003,42 +1069,28 @@
         "delete_PersonPeriodicActivities_DeleteByCriteria",
         "get_PersonPeriodicActivities_ProjectTo",
         "get_PersonPeriodicActivities_Agg",
-        "get_PersonPeriodicActivities_GroupBy",
-        "post_PeriodicActivities",
-        "delete_PeriodicActivities",
-        "get_PeriodicActivities",
-        "put_PeriodicActivities_id",
-        "patch_PeriodicActivities_id",
-        "delete_PeriodicActivities_id",
-        "get_PeriodicActivities_id",
-        "post_PeriodicActivities_multipatch",
-        "delete_PeriodicActivities_DeleteByCriteria",
-        "get_PeriodicActivities_ProjectTo",
-        "get_PeriodicActivities_Agg",
-        "get_PeriodicActivities_GroupBy",
-        "get_PeriodicActivityTypes_GroupBy"
+        "get_PersonPeriodicActivities_GroupBy"
       ],
-      "tool_count": 25
+      "tool_count": 12
     },
     "person_management": {
       "name": "person_management",
-      "description_hr": "Kategorija koja omogućuje upravljanje osobama, uključujući slanje pozivnica i brisanje više stavki odjednom.",
-      "description_en": "A category that enables management of persons, including sending invitations and deleting multiple items at once.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje osobama, uključujući slanje pozivnica, dohvaćanje i brisanje podataka o osobama.",
+      "description_en": "This category of API endpoints allows for managing persons, including sending invitations, retrieving, and deleting person data.",
       "keywords_hr": [
         "upravljanje",
         "osobama",
-        "pozivnice",
-        "brisanje"
+        "pozivnice"
       ],
       "keywords_en": [
         "management",
         "persons",
-        "invitations",
-        "deletion"
+        "invitations"
       ],
       "typical_intents": [
         "CREATE_PERSON",
-        "DELETE_PERSONS"
+        "DELETE_PERSON",
+        "RETRIEVE_PERSONS"
       ],
       "tools": [
         "post_Persons_ResendInvitation_personId",
@@ -1059,8 +1111,8 @@
     },
     "type_management": {
       "name": "type_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje tipovima osoba, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka.",
-      "description_en": "This category of API endpoints allows for the management of person types, including creating, deleting, retrieving, and updating data.",
+      "description_hr": "Ova kategorija omogućuje upravljanje tipovima osoba, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka.",
+      "description_en": "This category allows for the management of person types, including creating, deleting, retrieving, and updating data.",
       "keywords_hr": [
         "upravljanje",
         "tipovima",
@@ -1090,15 +1142,17 @@
     },
     "role_management": {
       "name": "role_management",
-      "description_hr": "Ova kategorija omogućuje upravljanje ulogama unutar sustava. Korisnici mogu dohvatiti sve uloge ili specifičnu ulogu prema ID-u.",
-      "description_en": "This category allows for the management of roles within the system. Users can retrieve all roles or a specific role by its ID.",
+      "description_hr": "Ova kategorija omogućuje upravljanje ulogama unutar sustava, uključujući dohvaćanje svih uloga ili pojedinačne uloge prema njihovom identifikatoru.",
+      "description_en": "This category allows for the management of roles within the system, including retrieving all roles or a single role based on its identifier.",
       "keywords_hr": [
         "upravljanje",
-        "ulogama"
+        "ulogama",
+        "sustav"
       ],
       "keywords_en": [
-        "role",
-        "management"
+        "management",
+        "roles",
+        "system"
       ],
       "typical_intents": [
         "GET_ALL_ROLES",
@@ -1112,15 +1166,15 @@
     },
     "settings_management": {
       "name": "settings_management",
-      "description_hr": "Ova kategorija omogućava upravljanje postavkama aplikacije putem API poziva. Uključuje alate za dohvat i postavljanje ključnih postavki.",
-      "description_en": "This category allows management of application settings through API calls. It includes tools for retrieving and setting key configurations.",
+      "description_hr": "Ova kategorija omogućuje upravljanje postavkama aplikacije putem API-ja. Korisnici mogu dohvatiti i ažurirati ključne postavke.",
+      "description_en": "This category allows management of application settings through the API. Users can retrieve and update key settings.",
       "keywords_hr": [
-        "upravljanje",
-        "postavkama"
+        "postavke",
+        "upravljanje"
       ],
       "keywords_en": [
-        "management",
-        "settings"
+        "settings",
+        "management"
       ],
       "typical_intents": [
         "GET_SETTINGS",
@@ -1135,7 +1189,7 @@
     "team_management": {
       "name": "team_management",
       "description_hr": "Ova kategorija API endpointa omogućuje upravljanje članovima tima, uključujući dodavanje, brisanje i ažuriranje informacija o članovima tima.",
-      "description_en": "This category of API endpoints allows for managing team members, including adding, deleting, and updating information about team members.",
+      "description_en": "This category of API endpoints allows for the management of team members, including adding, deleting, and updating member information.",
       "keywords_hr": [
         "upravljanje",
         "timom",
@@ -1172,26 +1226,48 @@
       ],
       "tool_count": 18
     },
+    "user_role_management": {
+      "name": "user_role_management",
+      "description_hr": "Ova kategorija omogućuje upravljanje ulogama korisnika unutar sustava, uključujući dodjelu i uklanjanje uloga korisnicima.",
+      "description_en": "This category allows for the management of user roles within the system, including assigning and removing roles from users.",
+      "keywords_hr": [
+        "upravljanje",
+        "ulogama",
+        "korisnici"
+      ],
+      "keywords_en": [
+        "management",
+        "roles",
+        "users"
+      ],
+      "typical_intents": [
+        "SET_USER_ROLE",
+        "REMOVE_USER_ROLE"
+      ],
+      "tools": [
+        "post_TenantPermissions_SetRolesForUser_personId"
+      ],
+      "tool_count": 1
+    },
     "permission_management": {
       "name": "permission_management",
-      "description_hr": "Kategorija koja omogućuje upravljanje dozvolama korisnika unutar sustava. Ovdje se mogu postaviti, ažurirati i brisati dozvole za različite korisnike.",
-      "description_en": "A category that allows management of user permissions within the system. Here, permissions for different users can be set, updated, and deleted.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dozvolama unutar sustava, uključujući kreiranje, brisanje i ažuriranje stavki dozvola.",
+      "description_en": "This category of API endpoints allows for managing permissions within the system, including creating, deleting, and updating permission items.",
       "keywords_hr": [
         "dozvole",
         "upravljanje",
-        "korisnici"
+        "API"
       ],
       "keywords_en": [
         "permissions",
         "management",
-        "users"
+        "API"
       ],
       "typical_intents": [
-        "SET_USER_PERMISSIONS",
-        "UPDATE_USER_PERMISSIONS"
+        "Create new permission",
+        "Delete existing permissions"
       ],
       "tools": [
-        "post_TenantPermissions_SetRolesForUser_personId",
         "post_TenantPermissions",
         "delete_TenantPermissions",
         "get_TenantPermissions",
@@ -1202,12 +1278,12 @@
         "post_TenantPermissions_multipatch",
         "delete_TenantPermissions_DeleteByCriteria"
       ],
-      "tool_count": 10
+      "tool_count": 9
     },
     "tenant_management": {
       "name": "tenant_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje najmodavcima, uključujući kreiranje, ažuriranje i brisanje stavki. Također omogućuje dohvat svih najmodavaca prema parametrima učitavanja.",
-      "description_en": "This category of API endpoints enables tenant management, including creating, updating, and deleting items. It also allows retrieval of all tenants based on loading parameters.",
+      "description_hr": "Upravlja svim aspektima najmodavaca, uključujući kreiranje, ažuriranje i brisanje unosa. Ovaj API omogućuje jednostavno upravljanje najmodavcima i njihovim pozivnicama.",
+      "description_en": "Manages all aspects of tenants, including creating, updating, and deleting entries. This API allows for easy management of tenants and their invitations.",
       "keywords_hr": [
         "najmodavci",
         "upravljanje",
@@ -1239,19 +1315,17 @@
     },
     "people_management": {
       "name": "people_management",
-      "description_hr": "Ova kategorija omogućuje dodavanje ili ažuriranje informacija o osobama na temelju koda osobe i kompanije.",
-      "description_en": "This category allows for adding or updating information about people based on person code and company.",
+      "description_hr": "Kategorija koja omogućava upravljanje podacima o osobama, uključujući dodavanje i ažuriranje informacija.",
+      "description_en": "A category that enables the management of person data, including adding and updating information.",
       "keywords_hr": [
         "upravljanje",
         "osobama",
-        "dodavanje",
-        "ažuriranje"
+        "podaci"
       ],
       "keywords_en": [
         "management",
         "people",
-        "add",
-        "update"
+        "data"
       ],
       "typical_intents": [
         "Add a new person",
@@ -1264,44 +1338,44 @@
     },
     "user_info": {
       "name": "user_info",
-      "description_hr": "Ova kategorija API endpointa pruža informacije o korisnicima i njihovim mogućnostima unutar sustava.",
-      "description_en": "This category of API endpoints provides information about users and their capabilities within the system.",
+      "description_hr": "Ova kategorija API endpointa omogućuje korisnicima da dobiju informacije o svojim mogućnostima i postavkama. Pruža jednostavan pristup podacima koji su relevantni za korisnički profil.",
+      "description_en": "This category of API endpoints allows users to retrieve information about their capabilities and settings. It provides easy access to data relevant to the user profile.",
       "keywords_hr": [
         "korisnik",
         "informacije",
-        "mogućnosti"
+        "profil"
       ],
       "keywords_en": [
         "user",
         "information",
-        "capabilities"
+        "profile"
       ],
       "typical_intents": [
-        "GET_USER_DETAILS",
-        "GET_USER_PERMISSIONS"
+        "GET_USER_PROFILE",
+        "CHECK_USER_PERMISSIONS"
       ],
       "tools": [
         "get_WhatCanIDo"
       ],
       "tool_count": 1
     },
-    "availability_management": {
-      "name": "availability_management",
-      "description_hr": "Kategorija koja omogućuje upravljanje dostupnošću stavki kroz različite API alate.",
-      "description_en": "A category that enables management of item availability through various API tools.",
+    "availability_tracking": {
+      "name": "availability_tracking",
+      "description_hr": "Kategorija koja omogućuje praćenje dostupnosti stavki putem različitih API alata.",
+      "description_en": "A category that enables tracking the availability of items through various API tools.",
       "keywords_hr": [
         "dostupnost",
-        "upravljanje",
+        "praćenje",
         "stavke"
       ],
       "keywords_en": [
         "availability",
-        "management",
+        "tracking",
         "items"
       ],
       "typical_intents": [
-        "GET_AVAILABILITY_DATA",
-        "AGGREGATE_AVAILABILITY_INFO"
+        "Get availability data",
+        "Project availability metrics"
       ],
       "tools": [
         "get_AvailabilityProjection",
@@ -1313,8 +1387,8 @@
     },
     "vehicle_info": {
       "name": "vehicle_info",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup informacijama o vozilima, uključujući dostupna vozila i njihove detalje.",
-      "description_en": "This category of API endpoints provides access to vehicle information, including available vehicles and their details.",
+      "description_hr": "Ova kategorija API endpointa omogućuje pristup informacijama o vozilima, uključujući dostupna vozila i vanjske podatke o vozilima.",
+      "description_en": "This category of API endpoints provides access to vehicle information, including available vehicles and external vehicle data.",
       "keywords_hr": [
         "vozila",
         "informacije",
@@ -1326,17 +1400,15 @@
         "availability"
       ],
       "typical_intents": [
-        "Get available vehicles",
-        "Retrieve vehicle metadata"
+        "GET_AVAILABLE_VEHICLES",
+        "GET_VEHICLE_EXTERNAL_INFO"
       ],
       "tools": [
-        "get_ExpensesInputHelper_CompanyVehicles_companyId_date",
-        "get_Vehicles_id_metadata",
-        "get_Vehicles_ProjectTo",
-        "get_Vehicles_Agg",
-        "get_Vehicles_GroupBy"
+        "get_AvailableVehicles",
+        "get_AvailableVehicles_ProjectTo",
+        "get_Vehicles_vehicleId_external_info"
       ],
-      "tool_count": 5
+      "tool_count": 3
     },
     "booking_management": {
       "name": "booking_management",
@@ -1344,11 +1416,13 @@
       "description_en": "A category that enables management of bookings, including creating, updating, and deleting reservations.",
       "keywords_hr": [
         "rezervacije",
-        "upravljanje"
+        "upravljanje",
+        "alat"
       ],
       "keywords_en": [
         "bookings",
-        "management"
+        "management",
+        "tool"
       ],
       "typical_intents": [
         "CREATE_BOOKING",
@@ -1359,10 +1433,63 @@
       ],
       "tool_count": 1
     },
+    "case_document_management": {
+      "name": "case_document_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz slučajeve, uključujući dodavanje, ažuriranje i brisanje dokumenata.",
+      "description_en": "This category of API endpoints allows for the management of documents related to cases, including adding, updating, and deleting documents.",
+      "keywords_hr": [
+        "upravljanje",
+        "dokumentima",
+        "slučajevima"
+      ],
+      "keywords_en": [
+        "management",
+        "documents",
+        "cases"
+      ],
+      "typical_intents": [
+        "Add a document to a case",
+        "Update a document's information"
+      ],
+      "tools": [
+        "post_Cases_id_documents",
+        "get_Cases_id_documents",
+        "get_Cases_id_documents_documentId",
+        "put_Cases_id_documents_documentId",
+        "delete_Cases_id_documents_documentId",
+        "get_Cases_id_documents_documentId_thumb",
+        "put_Cases_id_documents_documentId_SetAsDefault"
+      ],
+      "tool_count": 7
+    },
+    "case_metadata": {
+      "name": "case_metadata",
+      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima slučajeva i tipova slučajeva. Korisnici mogu dobiti detaljne informacije o specifičnim entitetima.",
+      "description_en": "This category of API endpoints provides access to the metadata of cases and case types. Users can retrieve detailed information about specific entities.",
+      "keywords_hr": [
+        "metapodaci",
+        "slučajevi",
+        "tipovi slučajeva"
+      ],
+      "keywords_en": [
+        "metadata",
+        "cases",
+        "case types"
+      ],
+      "typical_intents": [
+        "GET_CASE_METADATA",
+        "GET_CASE_TYPE_METADATA"
+      ],
+      "tools": [
+        "get_Cases_id_metadata",
+        "get_CaseTypes_id_metadata"
+      ],
+      "tool_count": 2
+    },
     "case_type_management": {
       "name": "case_type_management",
-      "description_hr": "Upravlja različitim tipovima slučajeva unutar sustava, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje informacija o slučajevima.",
-      "description_en": "Manages various case types within the system, allowing for the creation, deletion, retrieval, and updating of case information.",
+      "description_hr": "Upravlja različitim tipovima slučajeva, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje informacija o slučajevima.",
+      "description_en": "Manages different case types, allowing for the creation, deletion, retrieval, and updating of case information.",
       "keywords_hr": [
         "upravljanje",
         "tipovima",
@@ -1390,33 +1517,42 @@
       ],
       "tool_count": 9
     },
-    "case_metadata": {
-      "name": "case_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima vezanim uz slučajeve. Korisnici mogu dobiti detaljne informacije o različitim tipovima slučajeva.",
-      "description_en": "This category of API endpoints provides access to metadata related to cases. Users can retrieve detailed information about various case types.",
+    "case_type_document_management": {
+      "name": "case_type_document_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz tipove slučajeva, uključujući dodavanje, ažuriranje i brisanje dokumenata.",
+      "description_en": "This category of API endpoints allows for the management of documents related to case types, including adding, updating, and deleting documents.",
       "keywords_hr": [
-        "metapodaci",
-        "slučajevi",
-        "tipovi"
+        "upravljanje",
+        "dokumentima",
+        "tipovi",
+        "slučajeva"
       ],
       "keywords_en": [
-        "metadata",
-        "cases",
+        "management",
+        "documents",
+        "case",
         "types"
       ],
       "typical_intents": [
-        "GET_CASE_METADATA",
-        "RETRIEVE_CASE_TYPES"
+        "ADD_DOCUMENT",
+        "UPDATE_DOCUMENT",
+        "DELETE_DOCUMENT"
       ],
       "tools": [
-        "get_CaseTypes_id_metadata"
+        "post_CaseTypes_id_documents",
+        "get_CaseTypes_id_documents",
+        "get_CaseTypes_id_documents_documentId",
+        "put_CaseTypes_id_documents_documentId",
+        "delete_CaseTypes_id_documents_documentId",
+        "get_CaseTypes_id_documents_documentId_thumb",
+        "put_CaseTypes_id_documents_documentId_SetAsDefault"
       ],
-      "tool_count": 1
+      "tool_count": 7
     },
     "case_aggregation": {
       "name": "case_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o slučajevima prema različitim kriterijima. Korisnici mogu dobiti sažete informacije o vrstama slučajeva.",
-      "description_en": "This category of API endpoints allows for the aggregation of case data based on various criteria. Users can retrieve summarized information about case types.",
+      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o slučajevima prema različitim kriterijima.",
+      "description_en": "This category of API endpoints allows for the aggregation of case data based on various criteria.",
       "keywords_hr": [
         "agregacija",
         "slučajevi",
@@ -1428,25 +1564,47 @@
         "data"
       ],
       "typical_intents": [
-        "GET_SUMMARIZED_CASE_DATA",
-        "GROUP_CASES_BY_TYPE"
+        "GET_CASE_TYPE_AGGREGATION",
+        "FETCH_CASE_DATA_SUMMARY"
       ],
       "tools": [
-        "get_CaseTypes_Agg",
+        "get_CaseTypes_Agg"
+      ],
+      "tool_count": 1
+    },
+    "case_grouping": {
+      "name": "case_grouping",
+      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje slučajeva prema različitim tipovima. Pomaže u organizaciji i analizi podataka o slučajevima.",
+      "description_en": "This category of API endpoints enables the grouping of cases by different types. It assists in the organization and analysis of case data.",
+      "keywords_hr": [
+        "grupiranje",
+        "slučajevi"
+      ],
+      "keywords_en": [
+        "grouping",
+        "cases"
+      ],
+      "typical_intents": [
+        "GET_CASE_TYPES",
+        "ANALYZE_CASES"
+      ],
+      "tools": [
         "get_CaseTypes_GroupBy"
       ],
-      "tool_count": 2
+      "tool_count": 1
     },
     "demo": {
       "name": "demo",
-      "description_hr": "Ova kategorija sadrži alate za demonstraciju funkcionalnosti API-ja. Idealna je za testiranje i učenje.",
-      "description_en": "This category contains tools for demonstrating API functionality. It is ideal for testing and learning.",
+      "description_hr": "Ova kategorija sadrži alate za demonstraciju funkcionalnosti API-ja. Omogućuje korisnicima da testiraju i istraže mogućnosti dostupne putem API-ja.",
+      "description_en": "This category contains tools for demonstrating API functionality. It allows users to test and explore the capabilities available through the API.",
       "keywords_hr": [
-        "demo",
+        "demonstracija",
+        "API",
         "testiranje"
       ],
       "keywords_en": [
-        "demo",
+        "demonstration",
+        "API",
         "testing"
       ],
       "typical_intents": [
@@ -1460,8 +1618,8 @@
     },
     "equipment_availability": {
       "name": "equipment_availability",
-      "description_hr": "Ova kategorija omogućuje korisnicima da provjere dostupnost opreme u određenom vremenskom razdoblju.",
-      "description_en": "This category allows users to check the availability of equipment within a specified time frame.",
+      "description_hr": "Ova kategorija API endpointa omogućuje korisnicima da provjere dostupnost opreme u određenom vremenskom razdoblju.",
+      "description_en": "This category of API endpoints allows users to check the availability of equipment within a specified time frame.",
       "keywords_hr": [
         "oprema",
         "dostupnost",
@@ -1473,8 +1631,8 @@
         "time"
       ],
       "typical_intents": [
-        "CHECK_EQUIPMENT_AVAILABILITY",
-        "GET_AVAILABLE_EQUIPMENT"
+        "CHECK_AVAILABILITY",
+        "GET_EQUIPMENT_STATUS"
       ],
       "tools": [
         "get_Equipment_Available_from_to"
@@ -1484,7 +1642,7 @@
     "equipment_management": {
       "name": "equipment_management",
       "description_hr": "Ova kategorija API endpointa omogućuje upravljanje opremom, uključujući dodavanje, brisanje i ažuriranje stavki opreme.",
-      "description_en": "This category of API endpoints allows for equipment management, including adding, deleting, and updating equipment items.",
+      "description_en": "This category of API endpoints allows for the management of equipment, including adding, deleting, and updating equipment items.",
       "keywords_hr": [
         "oprema",
         "upravljanje",
@@ -1533,21 +1691,21 @@
     },
     "equipment_documents": {
       "name": "equipment_documents",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz opremu. Korisnici mogu dodavati, dohvaćati, ažurirati i brisati dokumente za određenu opremu.",
-      "description_en": "This category of API endpoints allows management of documents related to equipment. Users can create, retrieve, update, and delete documents for specific equipment.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz opremu. Korisnici mogu dodavati, preuzimati, ažurirati i brisati dokumente povezane s određenim alatima.",
+      "description_en": "This category of API endpoints allows management of documents related to equipment. Users can add, retrieve, update, and delete documents associated with specific tools.",
       "keywords_hr": [
         "oprema",
-        "dokumentacija",
+        "dokumenti",
         "upravljanje"
       ],
       "keywords_en": [
         "equipment",
-        "documentation",
+        "documents",
         "management"
       ],
       "typical_intents": [
-        "Create a new document for equipment",
-        "Retrieve documents for specific equipment"
+        "Add a document for equipment",
+        "Retrieve documents for equipment"
       ],
       "tools": [
         "post_Equipment_id_documents",
@@ -1569,8 +1727,8 @@
     },
     "equipment_metadata": {
       "name": "equipment_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima različitih alata. Korisnici mogu dobiti detaljne informacije o specifičnim entitetima povezanima s opremom.",
-      "description_en": "This category of API endpoints provides access to metadata of various equipment. Users can retrieve detailed information about specific entities related to the equipment.",
+      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima različitih alata. Korisnici mogu dobiti specifične informacije o opremi putem jedinstvenih identifikatora.",
+      "description_en": "This category of API endpoints provides access to metadata of various equipment. Users can retrieve specific information about tools using unique identifiers.",
       "keywords_hr": [
         "oprema",
         "metapodaci",
@@ -1594,8 +1752,8 @@
     },
     "equipment_aggregation": {
       "name": "equipment_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o opremi kroz različite funkcije. Korisnici mogu dobiti specifične vrijednosti ili grupirati podatke prema potrebama.",
-      "description_en": "This category of API endpoints enables the aggregation of equipment data through various functions. Users can retrieve specific values or group data according to their needs.",
+      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o opremi, pružajući korisnicima mogućnost dobivanja vrijednosti prema specifičnim funkcijama agregacije.",
+      "description_en": "This category of API endpoints allows for the aggregation of equipment data, providing users the ability to retrieve values based on specific aggregate functions.",
       "keywords_hr": [
         "oprema",
         "agregacija",
@@ -1608,20 +1766,42 @@
       ],
       "typical_intents": [
         "GET_EQUIPMENT_DATA",
-        "GROUP_EQUIPMENT_INFO"
+        "AGGREGATE_EQUIPMENT_VALUES"
       ],
       "tools": [
         "get_Equipment_Agg",
-        "get_Equipment_GroupBy",
         "get_LatestEquipmentCalendar_Agg",
         "get_LatestEquipmentCalendar_GroupBy"
       ],
-      "tool_count": 4
+      "tool_count": 3
+    },
+    "equipment_grouping": {
+      "name": "equipment_grouping",
+      "description_hr": "Ova kategorija omogućuje grupiranje opreme prema različitim kriterijima. Korisnici mogu lako pristupiti informacijama o grupama opreme.",
+      "description_en": "This category allows for the grouping of equipment based on various criteria. Users can easily access information about equipment groups.",
+      "keywords_hr": [
+        "oprema",
+        "grupiranje",
+        "kategorija"
+      ],
+      "keywords_en": [
+        "equipment",
+        "grouping",
+        "category"
+      ],
+      "typical_intents": [
+        "GET_EQUIPMENT_GROUP",
+        "LIST_EQUIPMENT_GROUPS"
+      ],
+      "tools": [
+        "get_Equipment_GroupBy"
+      ],
+      "tool_count": 1
     },
     "equipment_calendar_management": {
       "name": "equipment_calendar_management",
-      "description_hr": "Upravljanje kalendarom opreme omogućuje korisnicima kreiranje, ažuriranje i brisanje unosa vezanih uz opremu. Ovaj API pruža jednostavne načine za pristup i manipulaciju podacima o opremi.",
-      "description_en": "Equipment calendar management allows users to create, update, and delete entries related to equipment. This API provides straightforward methods for accessing and manipulating equipment data.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje kalendarom opreme, uključujući kreiranje, brisanje i ažuriranje unosa.",
+      "description_en": "This category of API endpoints allows for managing the equipment calendar, including creating, deleting, and updating entries.",
       "keywords_hr": [
         "oprema",
         "kalendar",
@@ -1634,7 +1814,10 @@
       ],
       "typical_intents": [
         "CREATE_NEW_ENTRY",
-        "DELETE_ITEMS"
+        "DELETE_ITEMS",
+        "GET_ALL_ITEMS",
+        "UPDATE_ENTRY",
+        "PARTIAL_UPDATE"
       ],
       "tools": [
         "post_EquipmentCalendar",
@@ -1646,29 +1829,31 @@
         "get_EquipmentCalendar_id",
         "post_EquipmentCalendar_multipatch",
         "delete_EquipmentCalendar_DeleteByCriteria",
-        "get_EquipmentCalendar_ProjectTo"
+        "get_EquipmentCalendar_ProjectTo",
+        "get_EquipmentCalendarOn_on",
+        "get_EquipmentCalendarOn_on_ProjectTo"
       ],
-      "tool_count": 10
+      "tool_count": 12
     },
     "equipment_calendar_documents": {
       "name": "equipment_calendar_documents",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz kalendar opreme. Korisnici mogu dodavati, preuzimati, ažurirati i brisati dokumente vezane uz određene alate.",
-      "description_en": "This category of API endpoints allows for the management of documents related to the equipment calendar. Users can add, retrieve, update, and delete documents associated with specific tools.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz kalendar opreme. Korisnici mogu dodavati, dohvaćati, ažurirati i brisati dokumente vezane uz određene kalendare opreme.",
+      "description_en": "This category of API endpoints allows for managing documents related to the equipment calendar. Users can create, retrieve, update, and delete documents associated with specific equipment calendars.",
       "keywords_hr": [
         "oprema",
         "kalendar",
-        "dokumenti"
+        "dokument",
+        "upravljanje"
       ],
       "keywords_en": [
         "equipment",
         "calendar",
-        "documents"
+        "document",
+        "management"
       ],
       "typical_intents": [
-        "Add a document",
-        "Retrieve a document",
-        "Update document information",
-        "Delete a document"
+        "Add a document to equipment calendar",
+        "Retrieve documents from equipment calendar"
       ],
       "tools": [
         "post_EquipmentCalendar_id_documents",
@@ -1683,8 +1868,8 @@
     },
     "equipment_calendar_metadata": {
       "name": "equipment_calendar_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima o kalendaru opreme. Korisnici mogu dobiti detaljne informacije o određenim entitetima unutar sustava.",
-      "description_en": "This category of API endpoints provides access to metadata about the equipment calendar. Users can retrieve detailed information about specific entities within the system.",
+      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima entiteta vezanih uz kalendar opreme.",
+      "description_en": "This category of API endpoints provides access to metadata of entities related to the equipment calendar.",
       "keywords_hr": [
         "oprema",
         "kalendar",
@@ -1696,8 +1881,8 @@
         "metadata"
       ],
       "typical_intents": [
-        "GET_METADATA_FOR_EQUIPMENT",
-        "RETRIEVE_CALENDAR_DETAILS"
+        "GET_METADATA",
+        "FETCH_EQUIPMENT_INFO"
       ],
       "tools": [
         "get_EquipmentCalendar_id_metadata"
@@ -1706,69 +1891,67 @@
     },
     "equipment_calendar_aggregation": {
       "name": "equipment_calendar_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o opremi prema kalendaru. Korisnici mogu dobiti vrijednosti prema specificiranim funkcijama agregacije.",
-      "description_en": "This category of API endpoints allows for the aggregation of equipment data by calendar. Users can retrieve values based on specified aggregate functions.",
+      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka vezanih uz opremu i njihovih kalendara. Korisnici mogu dobiti vrijednosti prema specificiranim agregatnim funkcijama.",
+      "description_en": "This category of API endpoints allows for the aggregation of data related to equipment and their calendars. Users can retrieve values based on specified aggregate functions.",
       "keywords_hr": [
         "oprema",
-        "kalendar",
+        "kalendari",
         "agregacija"
       ],
       "keywords_en": [
         "equipment",
-        "calendar",
+        "calendars",
         "aggregation"
       ],
       "typical_intents": [
-        "GET_AGGREGATED_DATA",
-        "GROUP_BY_EQUIPMENT"
+        "GET_AGGREGATED_EQUIPMENT_DATA",
+        "RETRIEVE_CALENDAR_VALUES"
       ],
       "tools": [
         "get_EquipmentCalendar_Agg",
-        "get_EquipmentCalendar_GroupBy"
+        "get_EquipmentCalendarOn_on_Agg"
       ],
       "tool_count": 2
     },
-    "equipment_calendar_on": {
-      "name": "equipment_calendar_on",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup kalendaru opreme s različitim parametrima učitavanja. Korisnici mogu dobiti informacije o opremi prema specifičnim kriterijima.",
-      "description_en": "This category of API endpoints provides access to the equipment calendar with various loading parameters. Users can retrieve information about equipment based on specific criteria.",
+    "equipment_calendar_grouping": {
+      "name": "equipment_calendar_grouping",
+      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje podataka o opremi prema kalendaru. Korisnici mogu dobiti pregled rasporeda opreme po različitim kriterijima.",
+      "description_en": "This category of API endpoints allows for the grouping of equipment data by calendar. Users can obtain an overview of equipment schedules based on various criteria.",
       "keywords_hr": [
         "oprema",
         "kalendar",
-        "API"
+        "grupiranje"
       ],
       "keywords_en": [
         "equipment",
         "calendar",
-        "API"
+        "grouping"
       ],
       "typical_intents": [
-        "GET_EQUIPMENT_DATA",
-        "FILTER_EQUIPMENT_BY_PROJECT"
+        "GET_EQUIPMENT_SCHEDULE",
+        "GROUP_EQUIPMENT_BY_DATE"
       ],
       "tools": [
-        "get_EquipmentCalendarOn_on",
-        "get_EquipmentCalendarOn_on_ProjectTo",
-        "get_EquipmentCalendarOn_on_Agg",
+        "get_EquipmentCalendar_GroupBy",
         "get_EquipmentCalendarOn_on_GroupBy"
       ],
-      "tool_count": 4
+      "tool_count": 2
     },
     "equipment_calendar": {
       "name": "equipment_calendar",
-      "description_hr": "Kategorija koja omogućava pristup kalendaru opreme vezanom uz osobe i vozila. Uključuje različite metode za dohvat podataka o opremi.",
-      "description_en": "A category that provides access to the equipment calendar related to persons and vehicles. It includes various methods for retrieving equipment data.",
+      "description_hr": "Kategorija API endpointa koja omogućava pristup kalendaru opreme vezanog uz osobe i vozila. Ovi endpointi omogućuju dohvat podataka o opremi na temelju različitih parametara.",
+      "description_en": "This category of API endpoints provides access to the equipment calendar related to persons and vehicles. These endpoints allow for retrieving equipment data based on various parameters.",
       "keywords_hr": [
         "oprema",
         "kalendar",
-        "vozila",
-        "osobe"
+        "API",
+        "dohvat"
       ],
       "keywords_en": [
         "equipment",
         "calendar",
-        "vehicles",
-        "persons"
+        "API",
+        "retrieve"
       ],
       "typical_intents": [
         "GET_EQUIPMENT_DATA",
@@ -1785,8 +1968,8 @@
     },
     "expense_management": {
       "name": "expense_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje troškovima, uključujući kreiranje, brisanje i ažuriranje grupa troškova.",
-      "description_en": "This category of API endpoints allows for expense management, including creating, deleting, and updating expense groups.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje troškovima kroz kreiranje, brisanje, dohvaćanje i ažuriranje grupa troškova.",
+      "description_en": "This category of API endpoints allows for expense management through creating, deleting, retrieving, and updating expense groups.",
       "keywords_hr": [
         "troškovi",
         "upravljanje",
@@ -1824,29 +2007,23 @@
         "get_Expenses_id",
         "post_Expenses_multipatch",
         "delete_Expenses_DeleteByCriteria",
-        "get_Expenses_ProjectTo",
-        "get_VehiclesMonthlyExpenses_id",
-        "get_VehiclesMonthlyExpenses_id_metadata",
-        "get_VehiclesMonthlyExpenses",
-        "get_VehiclesMonthlyExpenses_ProjectTo",
-        "get_VehiclesMonthlyExpenses_Agg",
-        "get_VehiclesMonthlyExpenses_GroupBy"
+        "get_Expenses_ProjectTo"
       ],
-      "tool_count": 29
+      "tool_count": 23
     },
     "expense_documents": {
       "name": "expense_documents",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz troškove unutar grupa troškova.",
-      "description_en": "This category of API endpoints allows for managing expense-related documents within expense groups.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz troškove unutar određenih grupa troškova.",
+      "description_en": "This category of API endpoints allows for the management of expense-related documents within specific expense groups.",
       "keywords_hr": [
         "troškovi",
-        "dokumenti",
-        "upravljanje"
+        "dokumentacija",
+        "grupe"
       ],
       "keywords_en": [
         "expenses",
-        "documents",
-        "management"
+        "documentation",
+        "groups"
       ],
       "typical_intents": [
         "Create a new expense document",
@@ -1865,21 +2042,21 @@
     },
     "expense_metadata": {
       "name": "expense_metadata",
-      "description_hr": "Ova kategorija API endpointa pruža metapodatke o troškovima i grupama troškova. Korisnicima omogućuje pristup detaljnim informacijama o specifičnim entitetima.",
-      "description_en": "This category of API endpoints provides metadata about expenses and expense groups. It allows users to access detailed information about specific entities.",
+      "description_hr": "Ova kategorija API endpointa pruža metapodatke o troškovima i grupama troškova.",
+      "description_en": "This category of API endpoints provides metadata about expenses and expense groups.",
       "keywords_hr": [
-        "troškovi",
         "metapodaci",
+        "troškovi",
         "grupe"
       ],
       "keywords_en": [
-        "expenses",
         "metadata",
+        "expenses",
         "groups"
       ],
       "typical_intents": [
-        "GET_EXPENSE_METADATA",
-        "GET_EXPENSE_GROUP_METADATA"
+        "GET_EXPENSE_GROUP_METADATA",
+        "GET_EXPENSE_METADATA"
       ],
       "tools": [
         "get_ExpenseGroups_id_metadata",
@@ -1889,15 +2066,15 @@
     },
     "expense_document_management": {
       "name": "expense_document_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima povezanima s troškovima, uključujući dodavanje, ažuriranje i brisanje dokumenata.",
-      "description_en": "This category of API endpoints allows for the management of documents related to expenses, including adding, updating, and deleting documents.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz troškove. Korisnici mogu dodavati, pregledavati, ažurirati i brisati dokumente povezane s troškovima.",
+      "description_en": "This category of API endpoints allows for the management of expense-related documents. Users can add, view, update, and delete documents associated with expenses.",
       "keywords_hr": [
-        "trošak",
+        "troškovi",
         "dokumenti",
         "upravljanje"
       ],
       "keywords_en": [
-        "expense",
+        "expenses",
         "documents",
         "management"
       ],
@@ -1922,11 +2099,13 @@
       "description_en": "This category of API endpoints allows for the aggregation of expenses based on various functions and data grouping.",
       "keywords_hr": [
         "troškovi",
-        "agregacija"
+        "agregacija",
+        "grupiranje"
       ],
       "keywords_en": [
         "expenses",
-        "aggregation"
+        "aggregation",
+        "grouping"
       ],
       "typical_intents": [
         "GET_TOTAL_EXPENSES",
@@ -1940,17 +2119,17 @@
     },
     "expense_type_management": {
       "name": "expense_type_management",
-      "description_hr": "Upravlja tipovima troškova, omogućujući kreiranje, brisanje, ažuriranje i dohvaćanje stavki troškova.",
-      "description_en": "Manages expense types, allowing for the creation, deletion, updating, and retrieval of expense items.",
+      "description_hr": "Upravlja vrstama troškova, omogućujući kreiranje, ažuriranje i brisanje stavki troškova.",
+      "description_en": "Manages expense types, allowing for the creation, updating, and deletion of expense items.",
       "keywords_hr": [
         "troškovi",
         "upravljanje",
-        "tipovi"
+        "stavke"
       ],
       "keywords_en": [
         "expenses",
         "management",
-        "types"
+        "items"
       ],
       "typical_intents": [
         "Create a new expense type",
@@ -1972,21 +2151,21 @@
     },
     "expense_type_document_management": {
       "name": "expense_type_document_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz vrste troškova. Korisnici mogu dodavati, pregledavati, ažurirati i brisati dokumente vezane uz specifične vrste troškova.",
-      "description_en": "This category of API endpoints allows management of documents related to expense types. Users can create, retrieve, update, and delete documents associated with specific expense types.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz vrste troškova. Korisnici mogu dodavati, dohvaćati, ažurirati i brisati dokumente povezane s određenim vrstama troškova.",
+      "description_en": "This category of API endpoints allows for the management of documents related to expense types. Users can create, retrieve, update, and delete documents associated with specific expense types.",
       "keywords_hr": [
         "troškovi",
-        "dokumenti",
-        "upravljanje"
+        "upravljanje",
+        "dokumentima"
       ],
       "keywords_en": [
         "expenses",
-        "documents",
-        "management"
+        "management",
+        "documents"
       ],
       "typical_intents": [
-        "Add a document",
-        "Update a document"
+        "Add a document for an expense type",
+        "Update an existing document for an expense type"
       ],
       "tools": [
         "post_ExpenseTypes_id_documents",
@@ -2001,19 +2180,21 @@
     },
     "expense_type_metadata": {
       "name": "expense_type_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima tipova troškova. Korisnici mogu dobiti detaljne informacije o specifičnim tipovima troškova.",
-      "description_en": "This category of API endpoints provides access to metadata of expense types. Users can retrieve detailed information about specific expense types.",
+      "description_hr": "Ova kategorija API endpointa pruža informacije o vrstama troškova i njihovim metapodacima.",
+      "description_en": "This category of API endpoints provides information about expense types and their metadata.",
       "keywords_hr": [
+        "troškovi",
         "metapodaci",
-        "tipovi troškova"
+        "vrste"
       ],
       "keywords_en": [
+        "expenses",
         "metadata",
-        "expense types"
+        "types"
       ],
       "typical_intents": [
         "GET_EXPENSE_TYPE_METADATA",
-        "RETRIEVE_EXPENSE_TYPE_DETAILS"
+        "FETCH_EXPENSE_TYPE_DETAILS"
       ],
       "tools": [
         "get_ExpenseTypes_id_metadata"
@@ -2035,7 +2216,7 @@
         "types"
       ],
       "typical_intents": [
-        "GET_SUMMARY_OF_EXPENSES",
+        "GET_AGGREGATED_EXPENSES",
         "GROUP_EXPENSES_BY_TYPE"
       ],
       "tools": [
@@ -2044,19 +2225,46 @@
       ],
       "tool_count": 2
     },
-    "mileage_reports": {
-      "name": "mileage_reports",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup izvještajima o kilometraži, uključujući metapodatke, agregirane vrijednosti i grupirane podatke.",
-      "description_en": "This category of API endpoints provides access to mileage reports, including metadata, aggregated values, and grouped data.",
+    "mileage_management": {
+      "name": "mileage_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje izvještajima o kilometraži, uključujući brisanje i dohvaćanje pojedinačnih ili višestrukih stavki.",
+      "description_en": "This category of API endpoints enables management of mileage reports, including deletion and retrieval of single or multiple items.",
       "keywords_hr": [
         "kilometraža",
         "izvještaji",
-        "metapodaci"
+        "upravljanje"
       ],
       "keywords_en": [
         "mileage",
         "reports",
-        "metadata"
+        "management"
+      ],
+      "typical_intents": [
+        "Retrieve mileage reports",
+        "Delete mileage records"
+      ],
+      "tools": [
+        "delete_LatestMileageReports_id",
+        "get_LatestMileageReports_id",
+        "delete_LatestMileageReports",
+        "get_LatestMileageReports",
+        "delete_LatestMileageReports_DeleteByCriteria"
+      ],
+      "tool_count": 5
+    },
+    "mileage_report_management": {
+      "name": "mileage_report_management",
+      "description_hr": "Upravljanje izvještajima o kilometrima omogućuje korisnicima pregled, analizu i agregaciju podataka o putnim troškovima.",
+      "description_en": "Mileage report management allows users to view, analyze, and aggregate travel expense data.",
+      "keywords_hr": [
+        "izvještaji",
+        "kilometri",
+        "upravljanje"
+      ],
+      "keywords_en": [
+        "reports",
+        "mileage",
+        "management"
       ],
       "typical_intents": [
         "GET_LATEST_REPORTS",
@@ -2070,22 +2278,22 @@
       ],
       "tool_count": 4
     },
-    "periodic_activities": {
-      "name": "periodic_activities",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje periodičnim aktivnostima, uključujući brisanje i dohvaćanje pojedinačnih ili višestrukih stavki.",
-      "description_en": "This category of API endpoints allows for the management of periodic activities, including deleting and retrieving single or multiple items.",
+    "periodic_activity_management": {
+      "name": "periodic_activity_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje periodičnim aktivnostima, uključujući dodavanje, brisanje i dohvaćanje aktivnosti na temelju različitih kriterija.",
+      "description_en": "This category of API endpoints allows for the management of periodic activities, including adding, deleting, and retrieving activities based on various criteria.",
       "keywords_hr": [
-        "aktivnosti",
-        "periodične",
-        "upravljanje"
+        "upravljanje",
+        "aktivnostima",
+        "periodične"
       ],
       "keywords_en": [
+        "management",
         "activities",
-        "periodic",
-        "management"
+        "periodic"
       ],
       "typical_intents": [
-        "Retrieve all periodic activities",
+        "Retrieve periodic activities",
         "Delete specific periodic activity"
       ],
       "tools": [
@@ -2097,40 +2305,39 @@
         "get_LatestPeriodicActivities_id_metadata",
         "get_LatestPeriodicActivities_ProjectTo",
         "get_LatestPeriodicActivities_Agg",
-        "get_LatestPeriodicActivities_GroupBy"
+        "get_LatestPeriodicActivities_GroupBy",
+        "post_PeriodicActivities",
+        "delete_PeriodicActivities",
+        "get_PeriodicActivities",
+        "put_PeriodicActivities_id",
+        "patch_PeriodicActivities_id",
+        "delete_PeriodicActivities_id",
+        "get_PeriodicActivities_id",
+        "post_PeriodicActivities_multipatch",
+        "delete_PeriodicActivities_DeleteByCriteria",
+        "get_PeriodicActivities_ProjectTo",
+        "get_PeriodicActivities_Agg",
+        "get_PeriodicActivities_GroupBy"
       ],
-      "tool_count": 9
+      "tool_count": 21
     },
-    "vehicle_calendar": {
-      "name": "vehicle_calendar",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje kalendarom vozila, uključujući brisanje i dohvaćanje podataka o vozilima.",
-      "description_en": "This category of API endpoints allows management of the vehicle calendar, including deletion and retrieval of vehicle data.",
+    "vehicle_calendar_management": {
+      "name": "vehicle_calendar_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje kalendarima vozila, uključujući brisanje i dohvaćanje stavki na temelju njihovih jedinstvenih identifikatora.",
+      "description_en": "This category of API endpoints allows for the management of vehicle calendars, including deleting and retrieving items based on their unique identifiers.",
       "keywords_hr": [
         "vozilo",
         "kalendar",
-        "upravljanje",
-        "slobodna",
-        "slobodno",
-        "slobodni",
-        "dostupna",
-        "dostupno",
-        "dostupni",
-        "rezervacija"
+        "upravljanje"
       ],
       "keywords_en": [
         "vehicle",
         "calendar",
-        "management",
-        "available",
-        "free",
-        "booking",
-        "reservation"
+        "management"
       ],
       "typical_intents": [
         "Retrieve vehicle calendar data",
-        "Delete vehicle calendar entries",
-        "Get available vehicles",
-        "Check vehicle availability"
+        "Delete vehicle calendar entries"
       ],
       "tools": [
         "delete_LatestVehicleCalendar_id",
@@ -2142,15 +2349,27 @@
         "get_LatestVehicleCalendar_ProjectTo",
         "get_LatestVehicleCalendar_Agg",
         "get_LatestVehicleCalendar_GroupBy",
-        "get_AvailableVehicles",
-        "get_AvailableVehicles_ProjectTo"
+        "post_VehicleCalendar",
+        "delete_VehicleCalendar",
+        "get_VehicleCalendar",
+        "put_VehicleCalendar_id",
+        "patch_VehicleCalendar_id",
+        "delete_VehicleCalendar_id",
+        "get_VehicleCalendar_id",
+        "post_VehicleCalendar_multipatch",
+        "delete_VehicleCalendar_DeleteByCriteria",
+        "get_VehicleCalendar_GroupBy",
+        "get_VehicleCalendarOn_on",
+        "get_VehicleCalendarOn_on_ProjectTo",
+        "get_VehicleCalendarOn_on_Agg",
+        "get_VehicleCalendarOn_on_GroupBy"
       ],
-      "tool_count": 11
+      "tool_count": 23
     },
-    "vehicle_contracts": {
-      "name": "vehicle_contracts",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje ugovorima o vozilima, uključujući brisanje i dohvaćanje pojedinačnih ili višestrukih stavki.",
-      "description_en": "This category of API endpoints allows for the management of vehicle contracts, including deleting and retrieving individual or multiple items.",
+    "vehicle_contract_management": {
+      "name": "vehicle_contract_management",
+      "description_hr": "Upravlja ugovorima vozila, omogućujući korisnicima brisanje, dohvaćanje i filtriranje ugovora prema različitim kriterijima.",
+      "description_en": "Manages vehicle contracts, allowing users to delete, retrieve, and filter contracts based on various criteria.",
       "keywords_hr": [
         "ugovori",
         "vozila",
@@ -2163,7 +2382,7 @@
       ],
       "typical_intents": [
         "Retrieve vehicle contracts",
-        "Delete vehicle contracts"
+        "Delete vehicle contract"
       ],
       "tools": [
         "delete_LatestVehicleContracts_id",
@@ -2178,49 +2397,10 @@
       ],
       "tool_count": 9
     },
-    "lookup": {
-      "name": "lookup",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup raznim referentnim podacima i kategorijama koje se koriste u aplikacijama.",
-      "description_en": "This category of API endpoints provides access to various reference data and categories used within applications.",
-      "keywords_hr": [
-        "referentni podaci",
-        "kategorije"
-      ],
-      "keywords_en": [
-        "reference data",
-        "categories"
-      ],
-      "typical_intents": [
-        "GET_ACTIVITY_CATEGORIES",
-        "GET_ACQUIRING_TYPE"
-      ],
-      "tools": [
-        "get_Lookup_ActivityCategories",
-        "get_Lookup_AcquiringType",
-        "get_Lookup_AcquiringTypeId",
-        "get_Lookup_CaseSeverities",
-        "get_Lookup_GeneralStatuses",
-        "get_Lookup_EntityTypes",
-        "get_Lookup_CalendarEntryTypes",
-        "get_Lookup_Availabilities",
-        "get_Lookup_CaseStatuses",
-        "get_Lookup_EquipmentAvailabities",
-        "get_Lookup_EquipmentId",
-        "get_Lookup_EquipmentStatuses",
-        "get_Lookup_EquipmentTypeId",
-        "get_Lookup_ExpenseCategories",
-        "get_Lookup_ExpenseCategoryId",
-        "get_Lookup_ExpenseStatuses",
-        "get_Lookup_PeriodicActivityStatuses",
-        "get_Lookup_MileageSources",
-        "get_Lookup_SearchTypes"
-      ],
-      "tool_count": 19
-    },
     "master_data_management": {
       "name": "master_data_management",
-      "description_hr": "Upravlja podacima o glavnim entitetima unutar sustava, omogućujući korisnicima pristup i manipulaciju podacima. Ova kategorija uključuje alate za dohvat, metapodatke i agregaciju podataka.",
-      "description_en": "Manages master entity data within the system, allowing users to access and manipulate data. This category includes tools for retrieval, metadata, and data aggregation.",
+      "description_hr": "Upravlja podacima o glavnim entitetima, omogućujući pristup i upravljanje ključnim informacijama.",
+      "description_en": "Manages master data entities, allowing access and management of key information.",
       "keywords_hr": [
         "upravljanje",
         "podacima",
@@ -2235,7 +2415,7 @@
       ],
       "typical_intents": [
         "GET_MASTER_DATA",
-        "RETRIEVE_METADATA"
+        "GET_MASTER_METADATA"
       ],
       "tools": [
         "get_Master_id",
@@ -2249,19 +2429,17 @@
     },
     "fuel_management": {
       "name": "fuel_management",
-      "description_hr": "Kategorija API endpointa koja omogućuje upravljanje troškovima goriva i kilometrima. Pruža različite alate za analizu i izvještavanje o potrošnji goriva.",
-      "description_en": "A category of API endpoints that enables management of fuel expenses and mileages. It provides various tools for analyzing and reporting fuel consumption.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje troškovima goriva i kilometražom kroz različite upite.",
+      "description_en": "This category of API endpoints allows for the management of fuel expenses and mileages through various queries.",
       "keywords_hr": [
         "gorivo",
         "troškovi",
-        "kilometri",
-        "upravljanje"
+        "kilometraža"
       ],
       "keywords_en": [
         "fuel",
         "expenses",
-        "mileage",
-        "management"
+        "mileage"
       ],
       "typical_intents": [
         "GET_MONTHLY_EXPENSES",
@@ -2270,15 +2448,117 @@
       "tools": [
         "get_MonthlyFuelExpensesAndMileages",
         "get_MonthlyFuelExpensesAndMileages_ProjectTo",
-        "get_MonthlyFuelExpensesAndMileages_Agg",
+        "get_MonthlyFuelExpensesAndMileages_Agg"
+      ],
+      "tool_count": 3
+    },
+    "fuel_expense_tracking": {
+      "name": "fuel_expense_tracking",
+      "description_hr": "Ova kategorija omogućuje praćenje troškova goriva i kilometraže za vozila. Korisnici mogu analizirati svoje troškove i optimizirati potrošnju goriva.",
+      "description_en": "This category allows tracking fuel expenses and mileage for vehicles. Users can analyze their costs and optimize fuel consumption.",
+      "keywords_hr": [
+        "troškovi",
+        "gorivo",
+        "kilometraža"
+      ],
+      "keywords_en": [
+        "expenses",
+        "fuel",
+        "mileage"
+      ],
+      "typical_intents": [
+        "GET_MONTHLY_EXPENSES",
+        "ANALYZE_FUEL_COSTS"
+      ],
+      "tools": [
         "get_MonthlyFuelExpensesAndMileages_GroupBy"
+      ],
+      "tool_count": 1
+    },
+    "mileage_assignment": {
+      "name": "mileage_assignment",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje i dohvaćanje podataka o dodijeljenim kilometrima na mjesečnoj razini.",
+      "description_en": "This category of API endpoints allows for the management and retrieval of monthly mileage assignment data.",
+      "keywords_hr": [
+        "kilometri",
+        "dodjela",
+        "mjesečno"
+      ],
+      "keywords_en": [
+        "mileage",
+        "assignment",
+        "monthly"
+      ],
+      "typical_intents": [
+        "GET_MONTHLY_MILEAGES",
+        "AGGREGATE_MILEAGE_DATA"
+      ],
+      "tools": [
+        "get_MonthlyMileagesAssigned",
+        "get_MonthlyMileagesAssigned_ProjectTo",
+        "get_MonthlyMileagesAssigned_Agg",
+        "get_MonthlyMileagesAssigned_GroupBy"
       ],
       "tool_count": 4
     },
+    "periodic_activity_schedule_management": {
+      "name": "periodic_activity_schedule_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje rasporedima periodičnih aktivnosti, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje stavki.",
+      "description_en": "This category of API endpoints allows for the management of periodic activity schedules, including creating, deleting, retrieving, and updating items.",
+      "keywords_hr": [
+        "raspored",
+        "aktivnosti",
+        "upravljanje"
+      ],
+      "keywords_en": [
+        "schedule",
+        "activities",
+        "management"
+      ],
+      "typical_intents": [
+        "Create a new periodic activity schedule",
+        "Delete existing periodic activity schedules"
+      ],
+      "tools": [
+        "post_PeriodicActivitiesSchedules",
+        "delete_PeriodicActivitiesSchedules",
+        "get_PeriodicActivitiesSchedules",
+        "put_PeriodicActivitiesSchedules_id",
+        "patch_PeriodicActivitiesSchedules_id",
+        "delete_PeriodicActivitiesSchedules_id",
+        "get_PeriodicActivitiesSchedules_id",
+        "post_PeriodicActivitiesSchedules_multipatch",
+        "delete_PeriodicActivitiesSchedules_DeleteByCriteria",
+        "get_PeriodicActivitiesSchedules_ProjectTo"
+      ],
+      "tool_count": 10
+    },
+    "activity_scheduling": {
+      "name": "activity_scheduling",
+      "description_hr": "Kategorija koja omogućuje upravljanje rasporedima aktivnosti, uključujući agregiranje i grupiranje podataka.",
+      "description_en": "A category that enables management of activity schedules, including data aggregation and grouping.",
+      "keywords_hr": [
+        "raspored",
+        "aktivnosti"
+      ],
+      "keywords_en": [
+        "schedule",
+        "activities"
+      ],
+      "typical_intents": [
+        "GET_SCHEDULE_DATA",
+        "GROUP_ACTIVITY_DATA"
+      ],
+      "tools": [
+        "get_PeriodicActivitiesSchedules_Agg",
+        "get_PeriodicActivitiesSchedules_GroupBy"
+      ],
+      "tool_count": 2
+    },
     "pool_management": {
       "name": "pool_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje bazenima, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o bazenima.",
-      "description_en": "This category of API endpoints allows for the management of pools, including creating, deleting, retrieving, and updating pool data.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje bazenima, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje informacija o bazenima.",
+      "description_en": "This category of API endpoints allows for the management of pools, including creating, deleting, retrieving, and updating pool information.",
       "keywords_hr": [
         "bazen",
         "upravljanje",
@@ -2309,10 +2589,64 @@
       ],
       "tool_count": 12
     },
-    "expense_tracking": {
-      "name": "expense_tracking",
-      "description_hr": "Kategorija koja omogućuje praćenje i analizu troškova povezanih s voznim parkom. Korisnici mogu dobiti prosječne mjesečne troškove po stanaru ili vozilu.",
-      "description_en": "This category allows for tracking and analyzing expenses related to the fleet. Users can retrieve average monthly expenses per tenant or vehicle.",
+    "scheduling_model_management": {
+      "name": "scheduling_model_management",
+      "description_hr": "Ova kategorija omogućuje upravljanje modelima rasporeda, uključujući kreiranje, brisanje i ažuriranje stavki.",
+      "description_en": "This category allows for the management of scheduling models, including creating, deleting, and updating items.",
+      "keywords_hr": [
+        "upravljanje",
+        "rasporedima",
+        "modeli"
+      ],
+      "keywords_en": [
+        "management",
+        "schedules",
+        "models"
+      ],
+      "typical_intents": [
+        "CREATE_SCHEDULING_MODEL",
+        "DELETE_SCHEDULING_MODEL"
+      ],
+      "tools": [
+        "post_SchedulingModels",
+        "delete_SchedulingModels",
+        "get_SchedulingModels",
+        "put_SchedulingModels_id",
+        "patch_SchedulingModels_id",
+        "delete_SchedulingModels_id",
+        "get_SchedulingModels_id",
+        "post_SchedulingModels_multipatch"
+      ],
+      "tool_count": 8
+    },
+    "scheduling_management": {
+      "name": "scheduling_management",
+      "description_hr": "Kategorija koja omogućuje upravljanje rasporedima i modelima zakazivanja. Uključuje alate za brisanje i dohvaćanje rasporeda temeljenih na kriterijima.",
+      "description_en": "This category enables management of schedules and scheduling models. It includes tools for deleting and retrieving schedules based on specified criteria.",
+      "keywords_hr": [
+        "upravljanje",
+        "rasporedima",
+        "zakazivanje"
+      ],
+      "keywords_en": [
+        "management",
+        "schedules",
+        "scheduling"
+      ],
+      "typical_intents": [
+        "DELETE_SCHEDULING_MODELS",
+        "GET_SCHEDULING_MODELS"
+      ],
+      "tools": [
+        "delete_SchedulingModels_DeleteByCriteria",
+        "get_SchedulingModels_ProjectTo"
+      ],
+      "tool_count": 2
+    },
+    "expenses_tracking": {
+      "name": "expenses_tracking",
+      "description_hr": "Ova kategorija API endpointa omogućuje praćenje i analizu troškova povezanih s voznim parkom. Korisnici mogu dobiti prosječne mjesečne troškove po stanaru ili vozilu.",
+      "description_en": "This category of API endpoints allows for tracking and analyzing expenses related to the fleet. Users can retrieve average monthly expenses per tenant or vehicle.",
       "keywords_hr": [
         "troškovi",
         "praćenje",
@@ -2335,19 +2669,19 @@
     },
     "tag_management": {
       "name": "tag_management",
-      "description_hr": "Kategorija za upravljanje oznakama, omogućuje kreiranje, brisanje, dohvaćanje i ažuriranje oznaka.",
-      "description_en": "Category for managing tags, allowing for the creation, deletion, retrieval, and updating of tags.",
+      "description_hr": "Kategorija za upravljanje oznakama, omogućava kreiranje, brisanje i ažuriranje oznaka za različite stavke.",
+      "description_en": "Category for tag management, allowing the creation, deletion, and updating of tags for various items.",
       "keywords_hr": [
-        "oznake",
+        "oznaka",
         "upravljanje"
       ],
       "keywords_en": [
-        "tags",
+        "tag",
         "management"
       ],
       "typical_intents": [
-        "CREATE_TAG",
-        "DELETE_TAG"
+        "CREATE_NEW_TAG",
+        "DELETE_EXISTING_TAG"
       ],
       "tools": [
         "post_Tags",
@@ -2359,29 +2693,27 @@
         "get_Tags_id",
         "post_Tags_multipatch",
         "delete_Tags_DeleteByCriteria",
-        "get_Tags_ProjectTo",
-        "get_Tags_Agg",
-        "get_Tags_GroupBy"
+        "get_Tags_ProjectTo"
       ],
-      "tool_count": 12
+      "tool_count": 10
     },
     "trip_management": {
       "name": "trip_management",
-      "description_hr": "Kategorija za upravljanje putovanjima omogućuje korisnicima dodavanje, ažuriranje i brisanje putničkih podataka.",
-      "description_en": "The trip management category allows users to add, update, and delete travel data.",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje putovanjima, uključujući dodavanje, ažuriranje i brisanje putovanja.",
+      "description_en": "This category of API endpoints allows for the management of trips, including adding, updating, and deleting trips.",
       "keywords_hr": [
         "putovanje",
         "upravljanje",
-        "podaci"
+        "API"
       ],
       "keywords_en": [
-        "travel",
+        "trip",
         "management",
-        "data"
+        "API"
       ],
       "typical_intents": [
-        "GET_TRIPS",
-        "ADD_TRIP"
+        "Retrieve all trips",
+        "Add a new trip"
       ],
       "tools": [
         "get_Trips_FileIds",
@@ -2397,131 +2729,10 @@
       ],
       "tool_count": 10
     },
-    "trip_document_management": {
-      "name": "trip_document_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz putovanja. Korisnici mogu dodavati, preuzimati, ažurirati i brisati dokumente vezane uz određene putove.",
-      "description_en": "This category of API endpoints allows for the management of documents related to trips. Users can add, retrieve, update, and delete documents associated with specific trips.",
-      "keywords_hr": [
-        "putovanje",
-        "dokumenti",
-        "upravljanje"
-      ],
-      "keywords_en": [
-        "trip",
-        "documents",
-        "management"
-      ],
-      "typical_intents": [
-        "Add a document",
-        "Retrieve a document"
-      ],
-      "tools": [
-        "post_Trips_id_documents",
-        "get_Trips_id_documents",
-        "get_Trips_id_documents_documentId",
-        "put_Trips_id_documents_documentId",
-        "delete_Trips_id_documents_documentId",
-        "get_Trips_id_documents_documentId_thumb",
-        "put_Trips_id_documents_documentId_SetAsDefault"
-      ],
-      "tool_count": 7
-    },
-    "trip_metadata": {
-      "name": "trip_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima putovanja. Korisnici mogu dobiti detaljne informacije o specifičnim entitetima povezanima s putovanjima.",
-      "description_en": "This category of API endpoints provides access to trip metadata. Users can retrieve detailed information about specific entities related to trips.",
-      "keywords_hr": [
-        "putovanje",
-        "metapodaci",
-        "informacije"
-      ],
-      "keywords_en": [
-        "trip",
-        "metadata",
-        "information"
-      ],
-      "typical_intents": [
-        "GET_TRIP_METADATA",
-        "RETRIEVE_TRIP_INFO"
-      ],
-      "tools": [
-        "get_Trips_id_metadata"
-      ],
-      "tool_count": 1
-    },
-    "trip_data_projection": {
-      "name": "trip_data_projection",
-      "description_hr": "Ova kategorija API endpointa omogućuje korisnicima da dobiju sve stavke na temelju parametara učitavanja (lazy) za projiciranje podataka o putovanjima.",
-      "description_en": "This category of API endpoints allows users to retrieve all items based on load parameters (lazy) for projecting trip data.",
-      "keywords_hr": [
-        "putovanje",
-        "projekcija",
-        "podaci"
-      ],
-      "keywords_en": [
-        "trip",
-        "projection",
-        "data"
-      ],
-      "typical_intents": [
-        "GET_ALL_TRIPS",
-        "FILTER_TRIPS_BY_PARAMETERS"
-      ],
-      "tools": [
-        "get_Trips_ProjectTo"
-      ],
-      "tool_count": 1
-    },
-    "trip_data_aggregation": {
-      "name": "trip_data_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o putovanjima, pružajući korisnicima mogućnost dobivanja sažetka informacija na temelju različitih funkcija agregacije.",
-      "description_en": "This category of API endpoints allows for the aggregation of trip data, providing users with the ability to retrieve summarized information based on various aggregate functions.",
-      "keywords_hr": [
-        "agregacija",
-        "putovanja",
-        "podaci"
-      ],
-      "keywords_en": [
-        "aggregation",
-        "trips",
-        "data"
-      ],
-      "typical_intents": [
-        "Get aggregated trip data",
-        "Retrieve summary statistics for trips"
-      ],
-      "tools": [
-        "get_Trips_Agg"
-      ],
-      "tool_count": 1
-    },
-    "trip_data_grouping": {
-      "name": "trip_data_grouping",
-      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje podataka o putovanjima prema različitim kriterijima.",
-      "description_en": "This category of API endpoints allows for the grouping of trip data based on various criteria.",
-      "keywords_hr": [
-        "putovanja",
-        "grupiranje",
-        "podaci"
-      ],
-      "keywords_en": [
-        "trips",
-        "grouping",
-        "data"
-      ],
-      "typical_intents": [
-        "GET_TRIP_SUMMARY",
-        "GROUP_TRIPS_BY_DATE"
-      ],
-      "tools": [
-        "get_Trips_GroupBy"
-      ],
-      "tool_count": 1
-    },
     "trip_type_management": {
       "name": "trip_type_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje tipovima putovanja, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o tipovima putovanja.",
-      "description_en": "This category of API endpoints allows for the management of trip types, including creating, deleting, retrieving, and updating trip type data.",
+      "description_hr": "Ova kategorija omogućuje upravljanje tipovima putovanja putem različitih API alata za kreiranje, brisanje, dohvaćanje i ažuriranje podataka.",
+      "description_en": "This category allows management of trip types through various API tools for creating, deleting, retrieving, and updating data.",
       "keywords_hr": [
         "tipovi",
         "putovanja",
@@ -2549,220 +2760,19 @@
       ],
       "tool_count": 9
     },
-    "trip_type_document_management": {
-      "name": "trip_type_document_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vezanim uz tipove putovanja, uključujući dodavanje, ažuriranje i brisanje dokumenata.",
-      "description_en": "This category of API endpoints allows for the management of documents related to trip types, including adding, updating, and deleting documents.",
-      "keywords_hr": [
-        "putovanje",
-        "dokumenti",
-        "upravljanje"
-      ],
-      "keywords_en": [
-        "travel",
-        "documents",
-        "management"
-      ],
-      "typical_intents": [
-        "Retrieve documents for a trip type",
-        "Update a specific document for a trip type"
-      ],
-      "tools": [
-        "post_TripTypes_id_documents",
-        "get_TripTypes_id_documents",
-        "get_TripTypes_id_documents_documentId",
-        "put_TripTypes_id_documents_documentId",
-        "delete_TripTypes_id_documents_documentId",
-        "get_TripTypes_id_documents_documentId_thumb",
-        "put_TripTypes_id_documents_documentId_SetAsDefault"
-      ],
-      "tool_count": 7
-    },
-    "trip_type_metadata": {
-      "name": "trip_type_metadata",
-      "description_hr": "Ova kategorija API endpointa omogućuje pristup metapodacima o različitim tipovima putovanja.",
-      "description_en": "This category of API endpoints provides access to metadata about different trip types.",
-      "keywords_hr": [
-        "putovanje",
-        "metapodaci"
-      ],
-      "keywords_en": [
-        "travel",
-        "metadata"
-      ],
-      "typical_intents": [
-        "GET_TRIP_TYPE_METADATA",
-        "FETCH_TRIP_TYPE_DETAILS"
-      ],
-      "tools": [
-        "get_TripTypes_id_metadata"
-      ],
-      "tool_count": 1
-    },
-    "trip_type_data_projection": {
-      "name": "trip_type_data_projection",
-      "description_hr": "Ova kategorija omogućuje pristup podacima o vrstama putovanja temeljenim na parametrima učitavanja.",
-      "description_en": "This category provides access to trip type data based on load parameters.",
-      "keywords_hr": [
-        "putovanje",
-        "tipovi",
-        "projekcija"
-      ],
-      "keywords_en": [
-        "travel",
-        "types",
-        "projection"
-      ],
-      "typical_intents": [
-        "GET_TRIP_TYPES",
-        "FILTER_TRIP_DATA"
-      ],
-      "tools": [
-        "get_TripTypes_ProjectTo"
-      ],
-      "tool_count": 1
-    },
-    "trip_type_data_aggregation": {
-      "name": "trip_type_data_aggregation",
-      "description_hr": "Ova kategorija API endpointa omogućuje agregaciju podataka o vrstama putovanja. Korisnici mogu dobiti vrijednosti prema specificiranim agregatnim funkcijama.",
-      "description_en": "This category of API endpoints allows for the aggregation of trip type data. Users can retrieve values based on specified aggregate functions.",
-      "keywords_hr": [
-        "agregacija",
-        "putovanja",
-        "podaci"
-      ],
-      "keywords_en": [
-        "aggregation",
-        "trips",
-        "data"
-      ],
-      "typical_intents": [
-        "GET_AGGREGATED_TRIP_DATA",
-        "FETCH_TRIP_TYPE_STATISTICS"
-      ],
-      "tools": [
-        "get_TripTypes_Agg"
-      ],
-      "tool_count": 1
-    },
-    "trip_type_data_grouping": {
-      "name": "trip_type_data_grouping",
-      "description_hr": "Ova kategorija API endpointa omogućuje grupiranje podataka o vrstama putovanja za analizu i izvještavanje.",
-      "description_en": "This category of API endpoints allows for the grouping of trip type data for analysis and reporting.",
-      "keywords_hr": [
-        "putovanje",
-        "grupiranje",
-        "podaci"
-      ],
-      "keywords_en": [
-        "travel",
-        "grouping",
-        "data"
-      ],
-      "typical_intents": [
-        "GET_TRIP_TYPES",
-        "ANALYZE_TRIP_DATA"
-      ],
-      "tools": [
-        "get_TripTypes_GroupBy"
-      ],
-      "tool_count": 1
-    },
-    "vehicle_board_management": {
-      "name": "vehicle_board_management",
-      "description_hr": "Kategorija API endpointa za upravljanje podacima o vozilima na ploči. Omogućuje pristup informacijama o vozilima i njihovom statusu.",
-      "description_en": "API endpoint category for managing vehicle board data. It provides access to information about vehicles and their status.",
-      "keywords_hr": [
-        "vozilo",
-        "upravljanje",
-        "ploča"
-      ],
-      "keywords_en": [
-        "vehicle",
-        "management",
-        "board"
-      ],
-      "typical_intents": [
-        "GET_VEHICLE_DATA",
-        "UPDATE_VEHICLE_STATUS"
-      ],
-      "tools": [
-        "get_VehicleBoard_id",
-        "post_VehicleBoard_Defleet",
-        "post_VehicleBoard_Infleet"
-      ],
-      "tool_count": 3
-    },
-    "vehicle_calendar_management": {
-      "name": "vehicle_calendar_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje kalendarom vozila, uključujući kreiranje, brisanje i ažuriranje unosa.",
-      "description_en": "This category of API endpoints allows for the management of vehicle calendars, including creating, deleting, and updating entries.",
-      "keywords_hr": [
-        "vozilo",
-        "kalendar",
-        "upravljanje"
-      ],
-      "keywords_en": [
-        "vehicle",
-        "calendar",
-        "management"
-      ],
-      "typical_intents": [
-        "CREATE_ENTRY",
-        "DELETE_ENTRIES",
-        "GET_ALL_ENTRIES",
-        "UPDATE_ENTRY",
-        "PARTIAL_UPDATE_ENTRY"
-      ],
-      "tools": [
-        "post_VehicleCalendar",
-        "delete_VehicleCalendar",
-        "get_VehicleCalendar",
-        "put_VehicleCalendar_id",
-        "patch_VehicleCalendar_id",
-        "delete_VehicleCalendar_id",
-        "get_VehicleCalendar_id",
-        "post_VehicleCalendar_multipatch",
-        "delete_VehicleCalendar_DeleteByCriteria"
-      ],
-      "tool_count": 9
-    },
-    "vehicle_calendar_document_management": {
-      "name": "vehicle_calendar_document_management",
-      "description_hr": "Upravljanje dokumentima vezanim uz vozila i kalendare. Ovaj API omogućuje dodavanje, ažuriranje i brisanje dokumenata povezanih s vozilima.",
-      "description_en": "Management of documents related to vehicles and calendars. This API allows for adding, updating, and deleting documents associated with vehicles.",
-      "keywords_hr": [
-        "vozilo",
-        "kalendari",
-        "dokumenti"
-      ],
-      "keywords_en": [
-        "vehicle",
-        "calendars",
-        "documents"
-      ],
-      "typical_intents": [
-        "Upload vehicle document",
-        "Retrieve vehicle calendar documents"
-      ],
-      "tools": [
-        "post_VehicleCalendar_id_documents"
-      ],
-      "tool_count": 1
-    },
     "contract_management": {
       "name": "contract_management",
-      "description_hr": "Upravlja ugovorima vezanim uz vozila, omogućujući dodavanje, brisanje i ažuriranje ugovora.",
-      "description_en": "Manages vehicle-related contracts, allowing for the addition, deletion, and updating of contracts.",
+      "description_hr": "Upravljanje ugovorima omogućuje korisnicima dodavanje, brisanje i ažuriranje ugovora vezanih uz vozila. Ovaj API pruža alate za efikasno upravljanje poviješću akvizicija.",
+      "description_en": "Contract management allows users to add, delete, and update contracts related to vehicles. This API provides tools for efficiently managing acquisition history.",
       "keywords_hr": [
         "ugovor",
-        "vozilo",
-        "upravljanje"
+        "upravljanje",
+        "vozila"
       ],
       "keywords_en": [
         "contract",
-        "vehicle",
-        "management"
+        "management",
+        "vehicles"
       ],
       "typical_intents": [
         "Add a new vehicle contract",
@@ -2777,27 +2787,34 @@
         "delete_VehicleContracts_id",
         "get_VehicleContracts_id",
         "post_VehicleContracts_multipatch",
-        "delete_VehicleContracts_DeleteByCriteria"
+        "delete_VehicleContracts_DeleteByCriteria",
+        "get_VehicleContracts_ProjectTo",
+        "get_VehicleContracts_Agg",
+        "get_VehicleContracts_GroupBy"
       ],
-      "tool_count": 9
+      "tool_count": 12
     },
-    "input_helper": {
-      "name": "input_helper",
-      "description_hr": "Ova kategorija API endpointa pruža pomoć pri unosu podataka vezanih uz vozila, uključujući marke, modele i prethodne vozila.",
-      "description_en": "This category of API endpoints provides assistance in data input related to vehicles, including brands, models, and previous vehicles.",
+    "vehicle_input_management": {
+      "name": "vehicle_input_management",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje unosom podataka o vozilima, uključujući pretraživanje različitih marki, modela i punih naziva prethodnih vozila.",
+      "description_en": "This category of API endpoints facilitates the management of vehicle input data, including searching for distinct brands, models, and full names of previous vehicles.",
       "keywords_hr": [
         "vozila",
+        "upravljanje",
         "unos",
-        "pomoć"
+        "marke",
+        "modeli"
       ],
       "keywords_en": [
         "vehicles",
+        "management",
         "input",
-        "helper"
+        "brands",
+        "models"
       ],
       "typical_intents": [
-        "GET_DISTINCT_BRANDS",
-        "GET_DISTINCT_MODELS"
+        "Get distinct vehicle brands",
+        "Get distinct vehicle models"
       ],
       "tools": [
         "get_VehicleInputHelper_DistinctBrands",
@@ -2807,44 +2824,23 @@
       ],
       "tool_count": 4
     },
-    "external_data": {
-      "name": "external_data",
-      "description_hr": "Ova kategorija omogućuje pristup vanjskim podacima vezanim uz vozila, uključujući informacije iz drugih aplikacija.",
-      "description_en": "This category provides access to external data related to vehicles, including information from other applications.",
+    "vehicle_assignments": {
+      "name": "vehicle_assignments",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dodjelama vozila, uključujući pregled i filtriranje podataka o dodijeljenim vozilima.",
+      "description_en": "This category of API endpoints allows for managing vehicle assignments, including viewing and filtering data related to assigned vehicles.",
       "keywords_hr": [
-        "vozila",
-        "vanjski podaci"
-      ],
-      "keywords_en": [
-        "vehicles",
-        "external data"
-      ],
-      "typical_intents": [
-        "GET_VEHICLE_INFO",
-        "RETRIEVE_EXTERNAL_DATA"
-      ],
-      "tools": [
-        "get_Vehicles_vehicleId_external_info"
-      ],
-      "tool_count": 1
-    },
-    "assignment_management": {
-      "name": "assignment_management",
-      "description_hr": "Kategorija koja upravlja dodjelama vozila, omogućujući pregled i filtriranje informacija o dodjelama na temelju različitih parametara.",
-      "description_en": "A category that manages vehicle assignments, allowing for the overview and filtering of assignment information based on various parameters.",
-      "keywords_hr": [
-        "dodjela",
+        "dodjele",
         "vozila",
         "upravljanje"
       ],
       "keywords_en": [
-        "assignment",
+        "assignments",
         "vehicles",
         "management"
       ],
       "typical_intents": [
-        "GET_ASSIGNMENT_OVERVIEW",
-        "FILTER_ASSIGNMENTS"
+        "GET_VEHICLE_ASSIGNMENTS",
+        "FILTER_VEHICLE_DATA"
       ],
       "tools": [
         "get_VehiclesAssignmentsOverview_on",
@@ -2854,23 +2850,23 @@
       ],
       "tool_count": 4
     },
-    "historical_data_management": {
-      "name": "historical_data_management",
-      "description_hr": "Upravlja povijesnim podacima vozila, omogućujući kreiranje, brisanje, dohvaćanje i ažuriranje unosa podataka.",
-      "description_en": "Manages historical vehicle data, allowing for the creation, deletion, retrieval, and updating of data entries.",
+    "vehicle_history": {
+      "name": "vehicle_history",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje poviješću vozila, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje povijesnih unosa vozila.",
+      "description_en": "This category of API endpoints allows for managing vehicle history, including creating, deleting, retrieving, and updating historical vehicle entries.",
       "keywords_hr": [
-        "povijesni",
-        "podaci",
-        "vozila"
+        "vozilo",
+        "povijest",
+        "unosi"
       ],
       "keywords_en": [
-        "historical",
-        "data",
-        "vehicles"
+        "vehicle",
+        "history",
+        "entries"
       ],
       "typical_intents": [
-        "Create historical entry",
-        "Delete historical entries"
+        "CREATE_VEHICLE_HISTORY_ENTRY",
+        "DELETE_VEHICLE_HISTORY_ENTRIES"
       ],
       "tools": [
         "post_VehiclesHistoricalEntries",
@@ -2888,48 +2884,114 @@
       ],
       "tool_count": 12
     },
-    "historical_data_info": {
-      "name": "historical_data_info",
-      "description_hr": "Ova kategorija API endpointa pruža informacije o povijesnim podacima vezanim uz vozila. Korisnici mogu dobiti metapodatke o određenim entitetima.",
-      "description_en": "This category of API endpoints provides information about historical data related to vehicles. Users can retrieve metadata for specific entities.",
-      "keywords_hr": [
-        "povijesni",
-        "podaci",
-        "vozila",
-        "metapodaci"
-      ],
-      "keywords_en": [
-        "historical",
-        "data",
-        "vehicles",
-        "metadata"
-      ],
-      "typical_intents": [
-        "GET_VEHICLE_HISTORY",
-        "RETRIEVE_METADATA"
-      ],
-      "tools": [
-        "get_VehiclesHistoricalEntries_id_metadata"
-      ],
-      "tool_count": 1
-    },
-    "vehicle_type_management": {
-      "name": "vehicle_type_management",
-      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje vrstama vozila, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o vozilima.",
-      "description_en": "This category of API endpoints allows for the management of vehicle types, including creating, deleting, retrieving, and updating vehicle data.",
+    "vehicle_documents": {
+      "name": "vehicle_documents",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje dokumentima vozila, uključujući povijesne unose i ažuriranje informacija o dokumentima.",
+      "description_en": "This category of API endpoints allows for the management of vehicle documents, including historical entries and updating document information.",
       "keywords_hr": [
         "vozilo",
-        "upravljanje",
-        "tipovi"
+        "dokument",
+        "upravljanje"
       ],
       "keywords_en": [
         "vehicle",
-        "management",
-        "types"
+        "document",
+        "management"
       ],
       "typical_intents": [
-        "Create a new vehicle type",
-        "Delete existing vehicle types"
+        "GET_DOCUMENT_INFO",
+        "UPDATE_DOCUMENT",
+        "DELETE_DOCUMENT"
+      ],
+      "tools": [
+        "post_VehiclesHistoricalEntries_id_documents",
+        "get_VehiclesHistoricalEntries_id_documents",
+        "get_VehiclesHistoricalEntries_id_documents_documentId",
+        "put_VehiclesHistoricalEntries_id_documents_documentId",
+        "delete_VehiclesHistoricalEntries_id_documents_documentId",
+        "get_VehiclesHistoricalEntries_id_documents_documentId_thumb",
+        "put_VehiclesHistoricalEntries_id_documents_documentId_SetAsDefault",
+        "post_VehicleTypes_id_documents",
+        "get_VehicleTypes_id_documents",
+        "get_VehicleTypes_id_documents_documentId",
+        "put_VehicleTypes_id_documents_documentId",
+        "delete_VehicleTypes_id_documents_documentId",
+        "get_VehicleTypes_id_documents_documentId_thumb",
+        "put_VehicleTypes_id_documents_documentId_SetAsDefault"
+      ],
+      "tool_count": 14
+    },
+    "vehicle_metadata": {
+      "name": "vehicle_metadata",
+      "description_hr": "Ova kategorija API endpointa pruža metapodatke o vozilima, uključujući povijesne unose, mjesečne troškove i tipove vozila.",
+      "description_en": "This category of API endpoints provides metadata about vehicles, including historical entries, monthly expenses, and vehicle types.",
+      "keywords_hr": [
+        "vozilo",
+        "metapodaci",
+        "troškovi"
+      ],
+      "keywords_en": [
+        "vehicle",
+        "metadata",
+        "expenses"
+      ],
+      "typical_intents": [
+        "GET_VEHICLE_METADATA",
+        "RETRIEVE_VEHICLE_INFO"
+      ],
+      "tools": [
+        "get_VehiclesHistoricalEntries_id_metadata",
+        "get_VehiclesMonthlyExpenses_id_metadata",
+        "get_VehicleTypes_id_metadata"
+      ],
+      "tool_count": 3
+    },
+    "vehicle_expenses": {
+      "name": "vehicle_expenses",
+      "description_hr": "Ova kategorija API endpointa omogućuje pristup podacima o troškovima vozila, uključujući mjesečne troškove i agregirane podatke.",
+      "description_en": "This category of API endpoints provides access to vehicle expense data, including monthly expenses and aggregated figures.",
+      "keywords_hr": [
+        "troškovi",
+        "vozila",
+        "mjesečni",
+        "agregacija"
+      ],
+      "keywords_en": [
+        "expenses",
+        "vehicles",
+        "monthly",
+        "aggregation"
+      ],
+      "typical_intents": [
+        "Retrieve monthly expenses for a vehicle",
+        "Get aggregated vehicle expenses data"
+      ],
+      "tools": [
+        "get_VehiclesMonthlyExpenses_id",
+        "get_VehiclesMonthlyExpenses",
+        "get_VehiclesMonthlyExpenses_ProjectTo",
+        "get_VehiclesMonthlyExpenses_Agg",
+        "get_VehiclesMonthlyExpenses_GroupBy"
+      ],
+      "tool_count": 5
+    },
+    "vehicle_types": {
+      "name": "vehicle_types",
+      "description_hr": "Ova kategorija API endpointa omogućuje upravljanje vrstama vozila, uključujući kreiranje, brisanje, dohvaćanje i ažuriranje podataka o vozilima.",
+      "description_en": "This category of API endpoints allows for managing vehicle types, including creating, deleting, retrieving, and updating vehicle data.",
+      "keywords_hr": [
+        "vozila",
+        "tipovi",
+        "upravljanje"
+      ],
+      "keywords_en": [
+        "vehicles",
+        "types",
+        "management"
+      ],
+      "typical_intents": [
+        "CREATE_VEHICLE_TYPE",
+        "DELETE_VEHICLE_TYPES"
       ],
       "tools": [
         "post_VehicleTypes",
@@ -2940,32 +3002,12 @@
         "delete_VehicleTypes_id",
         "get_VehicleTypes_id",
         "post_VehicleTypes_multipatch",
-        "delete_VehicleTypes_DeleteByCriteria"
+        "delete_VehicleTypes_DeleteByCriteria",
+        "get_VehicleTypes_ProjectTo",
+        "get_VehicleTypes_Agg",
+        "get_VehicleTypes_GroupBy"
       ],
-      "tool_count": 9
-    },
-    "metadata_retrieval": {
-      "name": "metadata_retrieval",
-      "description_hr": "Ova kategorija API endpointa omogućuje dohvaćanje metapodataka za različite entitete. Korisnici mogu pristupiti specifičnim informacijama o vozilima i drugim objektima.",
-      "description_en": "This category of API endpoints allows for the retrieval of metadata for various entities. Users can access specific information about vehicles and other objects.",
-      "keywords_hr": [
-        "metapodaci",
-        "dohvaćanje",
-        "vozila"
-      ],
-      "keywords_en": [
-        "metadata",
-        "retrieval",
-        "vehicles"
-      ],
-      "typical_intents": [
-        "GET_METADATA_FOR_VEHICLE",
-        "RETRIEVE_ENTITY_INFO"
-      ],
-      "tools": [
-        "get_VehicleTypes_id_metadata"
-      ],
-      "tool_count": 1
+      "tool_count": 12
     }
   },
   "tool_to_category": {
@@ -2977,7 +3019,7 @@
     "post_SendEmail": "communication",
     "post_SyncExternalIdAndLicencePlate": "vehicle_management",
     "post_SyncExternalIdAndVIN": "vehicle_management",
-    "post_VehicleAssignments": "vehicle_management",
+    "post_VehicleAssignments": "vehicle_assignment",
     "post_Companies": "company_management",
     "delete_Companies": "company_management",
     "get_Companies": "company_management",
@@ -2996,8 +3038,8 @@
     "put_Companies_id_documents_documentId_SetAsDefault": "document_management",
     "get_Companies_id_metadata": "metadata_management",
     "get_Companies_ProjectTo": "data_retrieval",
-    "get_Companies_Agg": "data_analysis",
-    "get_Companies_GroupBy": "data_analysis",
+    "get_Companies_Agg": "data_aggregation",
+    "get_Companies_GroupBy": "data_aggregation",
     "post_CostCenters": "cost_center_management",
     "delete_CostCenters": "cost_center_management",
     "get_CostCenters": "cost_center_management",
@@ -3016,8 +3058,8 @@
     "put_CostCenters_id_documents_documentId_SetAsDefault": "document_management",
     "get_CostCenters_id_metadata": "metadata_management",
     "get_CostCenters_ProjectTo": "data_retrieval",
-    "get_CostCenters_Agg": "data_analysis",
-    "get_CostCenters_GroupBy": "data_analysis",
+    "get_CostCenters_Agg": "data_aggregation",
+    "get_CostCenters_GroupBy": "data_aggregation",
     "get_DashboardItems": "dashboard_management",
     "post_DashboardItems": "dashboard_item_management",
     "get_DashboardItems_id": "dashboard_item_management",
@@ -3039,7 +3081,7 @@
     "delete_DocumentTypes_id_documents_documentId": "document_management",
     "get_DocumentTypes_id_documents_documentId_thumb": "document_management",
     "put_DocumentTypes_id_documents_documentId_SetAsDefault": "document_management",
-    "get_DocumentTypes_id_metadata": "metadata_management",
+    "get_DocumentTypes_id_metadata": "document_metadata_management",
     "get_DocumentTypes_ProjectTo": "document_type_management",
     "get_DocumentTypes_Agg": "document_type_management",
     "get_DocumentTypes_GroupBy": "document_type_management",
@@ -3048,7 +3090,7 @@
     "delete_LatestPersonPeriodicActivities": "person_activity_management",
     "get_LatestPersonPeriodicActivities": "person_activity_management",
     "delete_LatestPersonPeriodicActivities_DeleteByCriteria": "person_activity_management",
-    "get_LatestPersonPeriodicActivities_id_metadata": "metadata_management",
+    "get_LatestPersonPeriodicActivities_id_metadata": "person_activity_metadata_management",
     "get_LatestPersonPeriodicActivities_ProjectTo": "person_activity_management",
     "get_LatestPersonPeriodicActivities_Agg": "person_activity_management",
     "get_LatestPersonPeriodicActivities_GroupBy": "person_activity_management",
@@ -3229,13 +3271,13 @@
     "get_PersonTypes_id_metadata": "metadata_management",
     "get_PersonTypes_ProjectTo": "data_projection",
     "get_PersonTypes_Agg": "data_aggregation",
-    "get_PersonTypes_GroupBy": "data_aggregation",
+    "get_PersonTypes_GroupBy": "data_grouping",
     "get_Roles_id": "role_management",
     "get_Roles_id_metadata": "metadata_management",
     "get_Roles": "role_management",
     "get_Roles_ProjectTo": "data_projection",
     "get_Roles_Agg": "data_aggregation",
-    "get_Roles_GroupBy": "data_aggregation",
+    "get_Roles_GroupBy": "data_grouping",
     "get_Settings_key": "settings_management",
     "post_Settings": "settings_management",
     "post_TeamMembers": "team_management",
@@ -3257,7 +3299,7 @@
     "get_TeamMembers_id_metadata": "metadata_management",
     "get_TeamMembers_ProjectTo": "data_projection",
     "get_TeamMembers_Agg": "data_aggregation",
-    "get_TeamMembers_GroupBy": "data_aggregation",
+    "get_TeamMembers_GroupBy": "data_grouping",
     "post_Teams": "team_management",
     "delete_Teams": "team_management",
     "get_Teams": "team_management",
@@ -3278,7 +3320,7 @@
     "get_Teams_ProjectTo": "data_projection",
     "get_Teams_Agg": "data_aggregation",
     "get_Teams_GroupBy": "data_grouping",
-    "post_TenantPermissions_SetRolesForUser_personId": "permission_management",
+    "post_TenantPermissions_SetRolesForUser_personId": "user_role_management",
     "post_TenantPermissions": "permission_management",
     "delete_TenantPermissions": "permission_management",
     "get_TenantPermissions": "permission_management",
@@ -3322,12 +3364,12 @@
     "get_Tenants_GroupBy": "tenant_management",
     "post_Upsert_People": "people_management",
     "get_WhatCanIDo": "user_info",
-    "get_AvailabilityProjection": "availability_management",
-    "get_AvailabilityProjection_ProjectTo": "availability_management",
-    "get_AvailabilityProjection_Agg": "availability_management",
-    "get_AvailabilityProjection_GroupBy": "availability_management",
-    "get_AvailableVehicles": "vehicle_calendar",
-    "get_AvailableVehicles_ProjectTo": "vehicle_calendar",
+    "get_AvailabilityProjection": "availability_tracking",
+    "get_AvailabilityProjection_ProjectTo": "availability_tracking",
+    "get_AvailabilityProjection_Agg": "availability_tracking",
+    "get_AvailabilityProjection_GroupBy": "availability_tracking",
+    "get_AvailableVehicles": "vehicle_info",
+    "get_AvailableVehicles_ProjectTo": "vehicle_info",
     "get_AverageFuelExpensesAndMileages_from_to": "mileage_tracking",
     "get_AverageFuelExpensesAndMileages_from_to_ProjectTo": "mileage_tracking",
     "get_AverageFuelExpensesAndMileages_from_to_Agg": "mileage_tracking",
@@ -3342,14 +3384,14 @@
     "get_Cases_id": "case_management",
     "post_Cases_multipatch": "case_management",
     "delete_Cases_DeleteByCriteria": "case_management",
-    "post_Cases_id_documents": "document_management",
-    "get_Cases_id_documents": "document_management",
-    "get_Cases_id_documents_documentId": "document_management",
-    "put_Cases_id_documents_documentId": "document_management",
-    "delete_Cases_id_documents_documentId": "document_management",
-    "get_Cases_id_documents_documentId_thumb": "document_management",
-    "put_Cases_id_documents_documentId_SetAsDefault": "document_management",
-    "get_Cases_id_metadata": "metadata_management",
+    "post_Cases_id_documents": "case_document_management",
+    "get_Cases_id_documents": "case_document_management",
+    "get_Cases_id_documents_documentId": "case_document_management",
+    "put_Cases_id_documents_documentId": "case_document_management",
+    "delete_Cases_id_documents_documentId": "case_document_management",
+    "get_Cases_id_documents_documentId_thumb": "case_document_management",
+    "put_Cases_id_documents_documentId_SetAsDefault": "case_document_management",
+    "get_Cases_id_metadata": "case_metadata",
     "get_Cases_ProjectTo": "case_management",
     "get_Cases_Agg": "case_management",
     "get_Cases_GroupBy": "case_management",
@@ -3362,17 +3404,17 @@
     "get_CaseTypes_id": "case_type_management",
     "post_CaseTypes_multipatch": "case_type_management",
     "delete_CaseTypes_DeleteByCriteria": "case_type_management",
-    "post_CaseTypes_id_documents": "document_management",
-    "get_CaseTypes_id_documents": "document_management",
-    "get_CaseTypes_id_documents_documentId": "document_management",
-    "put_CaseTypes_id_documents_documentId": "document_management",
-    "delete_CaseTypes_id_documents_documentId": "document_management",
-    "get_CaseTypes_id_documents_documentId_thumb": "document_management",
-    "put_CaseTypes_id_documents_documentId_SetAsDefault": "document_management",
+    "post_CaseTypes_id_documents": "case_type_document_management",
+    "get_CaseTypes_id_documents": "case_type_document_management",
+    "get_CaseTypes_id_documents_documentId": "case_type_document_management",
+    "put_CaseTypes_id_documents_documentId": "case_type_document_management",
+    "delete_CaseTypes_id_documents_documentId": "case_type_document_management",
+    "get_CaseTypes_id_documents_documentId_thumb": "case_type_document_management",
+    "put_CaseTypes_id_documents_documentId_SetAsDefault": "case_type_document_management",
     "get_CaseTypes_id_metadata": "case_metadata",
     "get_CaseTypes_ProjectTo": "case_management",
     "get_CaseTypes_Agg": "case_aggregation",
-    "get_CaseTypes_GroupBy": "case_aggregation",
+    "get_CaseTypes_GroupBy": "case_grouping",
     "get_Demo": "demo",
     "get_Equipment_Available_from_to": "equipment_availability",
     "post_Equipment": "equipment_management",
@@ -3394,7 +3436,7 @@
     "get_Equipment_id_metadata": "equipment_metadata",
     "get_Equipment_ProjectTo": "equipment_management",
     "get_Equipment_Agg": "equipment_aggregation",
-    "get_Equipment_GroupBy": "equipment_aggregation",
+    "get_Equipment_GroupBy": "equipment_grouping",
     "post_EquipmentCalendar": "equipment_calendar_management",
     "delete_EquipmentCalendar": "equipment_calendar_management",
     "get_EquipmentCalendar": "equipment_calendar_management",
@@ -3414,11 +3456,11 @@
     "get_EquipmentCalendar_id_metadata": "equipment_calendar_metadata",
     "get_EquipmentCalendar_ProjectTo": "equipment_calendar_management",
     "get_EquipmentCalendar_Agg": "equipment_calendar_aggregation",
-    "get_EquipmentCalendar_GroupBy": "equipment_calendar_aggregation",
-    "get_EquipmentCalendarOn_on": "equipment_calendar_on",
-    "get_EquipmentCalendarOn_on_ProjectTo": "equipment_calendar_on",
-    "get_EquipmentCalendarOn_on_Agg": "equipment_calendar_on",
-    "get_EquipmentCalendarOn_on_GroupBy": "equipment_calendar_on",
+    "get_EquipmentCalendar_GroupBy": "equipment_calendar_grouping",
+    "get_EquipmentCalendarOn_on": "equipment_calendar_management",
+    "get_EquipmentCalendarOn_on_ProjectTo": "equipment_calendar_management",
+    "get_EquipmentCalendarOn_on_Agg": "equipment_calendar_aggregation",
+    "get_EquipmentCalendarOn_on_GroupBy": "equipment_calendar_grouping",
     "get_EquipmentCalendarOnPersonVehicle_on": "equipment_calendar",
     "get_EquipmentCalendarOnPersonVehicle_on_ProjectTo": "equipment_calendar",
     "get_EquipmentCalendarOnPersonVehicle_on_Agg": "equipment_calendar",
@@ -3484,7 +3526,7 @@
     "get_Expenses_ProjectTo": "expense_management",
     "get_Expenses_Agg": "expense_aggregation",
     "get_Expenses_GroupBy": "expense_aggregation",
-    "get_ExpensesInputHelper_CompanyVehicles_companyId_date": "vehicle_info",
+    "get_ExpensesInputHelper_CompanyVehicles_companyId_date": "vehicle_management",
     "post_ExpenseTypes": "expense_type_management",
     "delete_ExpenseTypes": "expense_type_management",
     "get_ExpenseTypes": "expense_type_management",
@@ -3514,61 +3556,61 @@
     "get_LatestEquipmentCalendar_ProjectTo": "equipment_management",
     "get_LatestEquipmentCalendar_Agg": "equipment_aggregation",
     "get_LatestEquipmentCalendar_GroupBy": "equipment_aggregation",
-    "delete_LatestMileageReports_id": "mileage_tracking",
-    "get_LatestMileageReports_id": "mileage_tracking",
-    "delete_LatestMileageReports": "mileage_tracking",
-    "get_LatestMileageReports": "mileage_tracking",
-    "delete_LatestMileageReports_DeleteByCriteria": "mileage_tracking",
-    "get_LatestMileageReports_id_metadata": "mileage_reports",
-    "get_LatestMileageReports_ProjectTo": "mileage_reports",
-    "get_LatestMileageReports_Agg": "mileage_reports",
-    "get_LatestMileageReports_GroupBy": "mileage_reports",
-    "delete_LatestPeriodicActivities_id": "periodic_activities",
-    "get_LatestPeriodicActivities_id": "periodic_activities",
-    "delete_LatestPeriodicActivities": "periodic_activities",
-    "get_LatestPeriodicActivities": "periodic_activities",
-    "delete_LatestPeriodicActivities_DeleteByCriteria": "periodic_activities",
-    "get_LatestPeriodicActivities_id_metadata": "periodic_activities",
-    "get_LatestPeriodicActivities_ProjectTo": "periodic_activities",
-    "get_LatestPeriodicActivities_Agg": "periodic_activities",
-    "get_LatestPeriodicActivities_GroupBy": "periodic_activities",
-    "delete_LatestVehicleCalendar_id": "vehicle_calendar",
-    "get_LatestVehicleCalendar_id": "vehicle_calendar",
-    "delete_LatestVehicleCalendar": "vehicle_calendar",
-    "get_LatestVehicleCalendar": "vehicle_calendar",
-    "delete_LatestVehicleCalendar_DeleteByCriteria": "vehicle_calendar",
-    "get_LatestVehicleCalendar_id_metadata": "vehicle_calendar",
-    "get_LatestVehicleCalendar_ProjectTo": "vehicle_calendar",
-    "get_LatestVehicleCalendar_Agg": "vehicle_calendar",
-    "get_LatestVehicleCalendar_GroupBy": "vehicle_calendar",
-    "delete_LatestVehicleContracts_id": "vehicle_contracts",
-    "get_LatestVehicleContracts_id": "vehicle_contracts",
-    "delete_LatestVehicleContracts": "vehicle_contracts",
-    "get_LatestVehicleContracts": "vehicle_contracts",
-    "delete_LatestVehicleContracts_DeleteByCriteria": "vehicle_contracts",
-    "get_LatestVehicleContracts_id_metadata": "vehicle_contracts",
-    "get_LatestVehicleContracts_ProjectTo": "vehicle_contracts",
-    "get_LatestVehicleContracts_Agg": "vehicle_contracts",
-    "get_LatestVehicleContracts_GroupBy": "vehicle_contracts",
-    "get_Lookup_ActivityCategories": "lookup",
-    "get_Lookup_AcquiringType": "lookup",
-    "get_Lookup_AcquiringTypeId": "lookup",
-    "get_Lookup_CaseSeverities": "lookup",
-    "get_Lookup_GeneralStatuses": "lookup",
-    "get_Lookup_EntityTypes": "lookup",
-    "get_Lookup_CalendarEntryTypes": "lookup",
-    "get_Lookup_Availabilities": "lookup",
-    "get_Lookup_CaseStatuses": "lookup",
-    "get_Lookup_EquipmentAvailabities": "lookup",
-    "get_Lookup_EquipmentId": "lookup",
-    "get_Lookup_EquipmentStatuses": "lookup",
-    "get_Lookup_EquipmentTypeId": "lookup",
-    "get_Lookup_ExpenseCategories": "lookup",
-    "get_Lookup_ExpenseCategoryId": "lookup",
-    "get_Lookup_ExpenseStatuses": "lookup",
-    "get_Lookup_PeriodicActivityStatuses": "lookup",
-    "get_Lookup_MileageSources": "lookup",
-    "get_Lookup_SearchTypes": "lookup",
+    "delete_LatestMileageReports_id": "mileage_management",
+    "get_LatestMileageReports_id": "mileage_management",
+    "delete_LatestMileageReports": "mileage_management",
+    "get_LatestMileageReports": "mileage_management",
+    "delete_LatestMileageReports_DeleteByCriteria": "mileage_management",
+    "get_LatestMileageReports_id_metadata": "mileage_report_management",
+    "get_LatestMileageReports_ProjectTo": "mileage_report_management",
+    "get_LatestMileageReports_Agg": "mileage_report_management",
+    "get_LatestMileageReports_GroupBy": "mileage_report_management",
+    "delete_LatestPeriodicActivities_id": "periodic_activity_management",
+    "get_LatestPeriodicActivities_id": "periodic_activity_management",
+    "delete_LatestPeriodicActivities": "periodic_activity_management",
+    "get_LatestPeriodicActivities": "periodic_activity_management",
+    "delete_LatestPeriodicActivities_DeleteByCriteria": "periodic_activity_management",
+    "get_LatestPeriodicActivities_id_metadata": "periodic_activity_management",
+    "get_LatestPeriodicActivities_ProjectTo": "periodic_activity_management",
+    "get_LatestPeriodicActivities_Agg": "periodic_activity_management",
+    "get_LatestPeriodicActivities_GroupBy": "periodic_activity_management",
+    "delete_LatestVehicleCalendar_id": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar_id": "vehicle_calendar_management",
+    "delete_LatestVehicleCalendar": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar": "vehicle_calendar_management",
+    "delete_LatestVehicleCalendar_DeleteByCriteria": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar_id_metadata": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar_ProjectTo": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar_Agg": "vehicle_calendar_management",
+    "get_LatestVehicleCalendar_GroupBy": "vehicle_calendar_management",
+    "delete_LatestVehicleContracts_id": "vehicle_contract_management",
+    "get_LatestVehicleContracts_id": "vehicle_contract_management",
+    "delete_LatestVehicleContracts": "vehicle_contract_management",
+    "get_LatestVehicleContracts": "vehicle_contract_management",
+    "delete_LatestVehicleContracts_DeleteByCriteria": "vehicle_contract_management",
+    "get_LatestVehicleContracts_id_metadata": "vehicle_contract_management",
+    "get_LatestVehicleContracts_ProjectTo": "vehicle_contract_management",
+    "get_LatestVehicleContracts_Agg": "vehicle_contract_management",
+    "get_LatestVehicleContracts_GroupBy": "vehicle_contract_management",
+    "get_Lookup_ActivityCategories": "lookup_management",
+    "get_Lookup_AcquiringType": "lookup_management",
+    "get_Lookup_AcquiringTypeId": "lookup_management",
+    "get_Lookup_CaseSeverities": "lookup_management",
+    "get_Lookup_GeneralStatuses": "lookup_management",
+    "get_Lookup_EntityTypes": "lookup_management",
+    "get_Lookup_CalendarEntryTypes": "lookup_management",
+    "get_Lookup_Availabilities": "lookup_management",
+    "get_Lookup_CaseStatuses": "lookup_management",
+    "get_Lookup_EquipmentAvailabities": "lookup_management",
+    "get_Lookup_EquipmentId": "lookup_management",
+    "get_Lookup_EquipmentStatuses": "lookup_management",
+    "get_Lookup_EquipmentTypeId": "lookup_management",
+    "get_Lookup_ExpenseCategories": "lookup_management",
+    "get_Lookup_ExpenseCategoryId": "lookup_management",
+    "get_Lookup_ExpenseStatuses": "lookup_management",
+    "get_Lookup_PeriodicActivityStatuses": "lookup_management",
+    "get_Lookup_MileageSources": "lookup_management",
+    "get_Lookup_SearchTypes": "lookup_management",
     "get_Lookup_AssigneeId": "lookup_management",
     "get_Lookup_AssignedToId": "lookup_management",
     "get_Lookup_CaseId": "lookup_management",
@@ -3577,6 +3619,7 @@
     "get_Lookup_PeriodicActivityTypeId": "lookup_management",
     "get_Lookup_PeriodicActivityTypeName": "lookup_management",
     "get_Lookup_PoolId": "lookup_management",
+    "get_Lookup_SchedulingModelId": "lookup_management",
     "get_Lookup_VehiclePoolId": "lookup_management",
     "get_Lookup_VehicleTypeId": "lookup_management",
     "get_Lookup_TripTypeId": "lookup_management",
@@ -3611,14 +3654,14 @@
     "delete_MileageReports_id_documents_documentId": "document_management",
     "get_MileageReports_id_documents_documentId_thumb": "document_management",
     "put_MileageReports_id_documents_documentId_SetAsDefault": "document_management",
-    "get_MileageReports_id_metadata": "metadata_management",
+    "get_MileageReports_id_metadata": "mileage_tracking",
     "get_MileageReports_ProjectTo": "mileage_tracking",
     "get_MileageReports_Agg": "mileage_tracking",
     "get_MileageReports_GroupBy": "mileage_tracking",
     "get_MonthlyFuelExpensesAndMileages": "fuel_management",
     "get_MonthlyFuelExpensesAndMileages_ProjectTo": "fuel_management",
     "get_MonthlyFuelExpensesAndMileages_Agg": "fuel_management",
-    "get_MonthlyFuelExpensesAndMileages_GroupBy": "fuel_management",
+    "get_MonthlyFuelExpensesAndMileages_GroupBy": "fuel_expense_tracking",
     "post_MonthlyMileages_Recalculate_vehicleId": "mileage_tracking",
     "post_MonthlyMileages_RecalculateAll": "mileage_tracking",
     "post_MonthlyMileages_RequestMileageEstimation": "mileage_tracking",
@@ -3626,19 +3669,19 @@
     "get_MonthlyMileages_ProjectTo": "mileage_tracking",
     "get_MonthlyMileages_Agg": "mileage_tracking",
     "get_MonthlyMileages_GroupBy": "mileage_tracking",
-    "get_MonthlyMileagesAssigned": "mileage_tracking",
-    "get_MonthlyMileagesAssigned_ProjectTo": "mileage_tracking",
-    "get_MonthlyMileagesAssigned_Agg": "mileage_tracking",
-    "get_MonthlyMileagesAssigned_GroupBy": "mileage_tracking",
-    "post_PeriodicActivities": "activity_management",
-    "delete_PeriodicActivities": "activity_management",
-    "get_PeriodicActivities": "activity_management",
-    "put_PeriodicActivities_id": "activity_management",
-    "patch_PeriodicActivities_id": "activity_management",
-    "delete_PeriodicActivities_id": "activity_management",
-    "get_PeriodicActivities_id": "activity_management",
-    "post_PeriodicActivities_multipatch": "activity_management",
-    "delete_PeriodicActivities_DeleteByCriteria": "activity_management",
+    "get_MonthlyMileagesAssigned": "mileage_assignment",
+    "get_MonthlyMileagesAssigned_ProjectTo": "mileage_assignment",
+    "get_MonthlyMileagesAssigned_Agg": "mileage_assignment",
+    "get_MonthlyMileagesAssigned_GroupBy": "mileage_assignment",
+    "post_PeriodicActivities": "periodic_activity_management",
+    "delete_PeriodicActivities": "periodic_activity_management",
+    "get_PeriodicActivities": "periodic_activity_management",
+    "put_PeriodicActivities_id": "periodic_activity_management",
+    "patch_PeriodicActivities_id": "periodic_activity_management",
+    "delete_PeriodicActivities_id": "periodic_activity_management",
+    "get_PeriodicActivities_id": "periodic_activity_management",
+    "post_PeriodicActivities_multipatch": "periodic_activity_management",
+    "delete_PeriodicActivities_DeleteByCriteria": "periodic_activity_management",
     "post_PeriodicActivities_id_documents": "document_management",
     "get_PeriodicActivities_id_documents": "document_management",
     "get_PeriodicActivities_id_documents_documentId": "document_management",
@@ -3647,9 +3690,29 @@
     "get_PeriodicActivities_id_documents_documentId_thumb": "document_management",
     "put_PeriodicActivities_id_documents_documentId_SetAsDefault": "document_management",
     "get_PeriodicActivities_id_metadata": "metadata_management",
-    "get_PeriodicActivities_ProjectTo": "activity_management",
-    "get_PeriodicActivities_Agg": "activity_management",
-    "get_PeriodicActivities_GroupBy": "activity_management",
+    "get_PeriodicActivities_ProjectTo": "periodic_activity_management",
+    "get_PeriodicActivities_Agg": "periodic_activity_management",
+    "get_PeriodicActivities_GroupBy": "periodic_activity_management",
+    "post_PeriodicActivitiesSchedules": "periodic_activity_schedule_management",
+    "delete_PeriodicActivitiesSchedules": "periodic_activity_schedule_management",
+    "get_PeriodicActivitiesSchedules": "periodic_activity_schedule_management",
+    "put_PeriodicActivitiesSchedules_id": "periodic_activity_schedule_management",
+    "patch_PeriodicActivitiesSchedules_id": "periodic_activity_schedule_management",
+    "delete_PeriodicActivitiesSchedules_id": "periodic_activity_schedule_management",
+    "get_PeriodicActivitiesSchedules_id": "periodic_activity_schedule_management",
+    "post_PeriodicActivitiesSchedules_multipatch": "periodic_activity_schedule_management",
+    "delete_PeriodicActivitiesSchedules_DeleteByCriteria": "periodic_activity_schedule_management",
+    "post_PeriodicActivitiesSchedules_id_documents": "document_management",
+    "get_PeriodicActivitiesSchedules_id_documents": "document_management",
+    "get_PeriodicActivitiesSchedules_id_documents_documentId": "document_management",
+    "put_PeriodicActivitiesSchedules_id_documents_documentId": "document_management",
+    "delete_PeriodicActivitiesSchedules_id_documents_documentId": "document_management",
+    "get_PeriodicActivitiesSchedules_id_documents_documentId_thumb": "document_management",
+    "put_PeriodicActivitiesSchedules_id_documents_documentId_SetAsDefault": "document_management",
+    "get_PeriodicActivitiesSchedules_id_metadata": "metadata_management",
+    "get_PeriodicActivitiesSchedules_ProjectTo": "periodic_activity_schedule_management",
+    "get_PeriodicActivitiesSchedules_Agg": "activity_scheduling",
+    "get_PeriodicActivitiesSchedules_GroupBy": "activity_scheduling",
     "post_PeriodicActivityTypes": "activity_type_management",
     "delete_PeriodicActivityTypes": "activity_type_management",
     "get_PeriodicActivityTypes": "activity_type_management",
@@ -3669,7 +3732,7 @@
     "get_PeriodicActivityTypes_id_metadata": "metadata_management",
     "get_PeriodicActivityTypes_ProjectTo": "activity_type_management",
     "get_PeriodicActivityTypes_Agg": "activity_type_management",
-    "get_PeriodicActivityTypes_GroupBy": "activity_management",
+    "get_PeriodicActivityTypes_GroupBy": "activity_type_management",
     "post_Pools": "pool_management",
     "delete_Pools": "pool_management",
     "get_Pools": "pool_management",
@@ -3690,9 +3753,29 @@
     "get_Pools_ProjectTo": "pool_management",
     "get_Pools_Agg": "pool_management",
     "get_Pools_GroupBy": "pool_management",
+    "post_SchedulingModels": "scheduling_model_management",
+    "delete_SchedulingModels": "scheduling_model_management",
+    "get_SchedulingModels": "scheduling_model_management",
+    "put_SchedulingModels_id": "scheduling_model_management",
+    "patch_SchedulingModels_id": "scheduling_model_management",
+    "delete_SchedulingModels_id": "scheduling_model_management",
+    "get_SchedulingModels_id": "scheduling_model_management",
+    "post_SchedulingModels_multipatch": "scheduling_model_management",
+    "delete_SchedulingModels_DeleteByCriteria": "scheduling_management",
+    "post_SchedulingModels_id_documents": "document_management",
+    "get_SchedulingModels_id_documents": "document_management",
+    "get_SchedulingModels_id_documents_documentId": "document_management",
+    "put_SchedulingModels_id_documents_documentId": "document_management",
+    "delete_SchedulingModels_id_documents_documentId": "document_management",
+    "get_SchedulingModels_id_documents_documentId_thumb": "document_management",
+    "put_SchedulingModels_id_documents_documentId_SetAsDefault": "document_management",
+    "get_SchedulingModels_id_metadata": "metadata_management",
+    "get_SchedulingModels_ProjectTo": "scheduling_management",
+    "get_SchedulingModels_Agg": "data_aggregation",
+    "get_SchedulingModels_GroupBy": "data_aggregation",
     "get_Stats_FleetAverageMonthlyMileage_year_month": "mileage_tracking",
-    "get_Stats_FleetAverageMonthlyExpenses": "expense_tracking",
-    "get_Stats_VehicleAverageMonthlyExpenses_vehicleId": "expense_tracking",
+    "get_Stats_FleetAverageMonthlyExpenses": "expenses_tracking",
+    "get_Stats_VehicleAverageMonthlyExpenses_vehicleId": "expenses_tracking",
     "get_Stats_NoMileageSince": "mileage_tracking",
     "get_Stats_NumOfVehiclesWithoutMileageSince": "mileage_tracking",
     "post_Tags": "tag_management",
@@ -3713,8 +3796,8 @@
     "put_Tags_id_documents_documentId_SetAsDefault": "document_management",
     "get_Tags_id_metadata": "metadata_management",
     "get_Tags_ProjectTo": "tag_management",
-    "get_Tags_Agg": "tag_management",
-    "get_Tags_GroupBy": "tag_management",
+    "get_Tags_Agg": "data_aggregation",
+    "get_Tags_GroupBy": "data_aggregation",
     "get_Trips_FileIds": "trip_management",
     "post_Trips": "trip_management",
     "delete_Trips": "trip_management",
@@ -3725,17 +3808,17 @@
     "get_Trips_id": "trip_management",
     "post_Trips_multipatch": "trip_management",
     "delete_Trips_DeleteByCriteria": "trip_management",
-    "post_Trips_id_documents": "trip_document_management",
-    "get_Trips_id_documents": "trip_document_management",
-    "get_Trips_id_documents_documentId": "trip_document_management",
-    "put_Trips_id_documents_documentId": "trip_document_management",
-    "delete_Trips_id_documents_documentId": "trip_document_management",
-    "get_Trips_id_documents_documentId_thumb": "trip_document_management",
-    "put_Trips_id_documents_documentId_SetAsDefault": "trip_document_management",
-    "get_Trips_id_metadata": "trip_metadata",
-    "get_Trips_ProjectTo": "trip_data_projection",
-    "get_Trips_Agg": "trip_data_aggregation",
-    "get_Trips_GroupBy": "trip_data_grouping",
+    "post_Trips_id_documents": "document_management",
+    "get_Trips_id_documents": "document_management",
+    "get_Trips_id_documents_documentId": "document_management",
+    "put_Trips_id_documents_documentId": "document_management",
+    "delete_Trips_id_documents_documentId": "document_management",
+    "get_Trips_id_documents_documentId_thumb": "document_management",
+    "put_Trips_id_documents_documentId_SetAsDefault": "document_management",
+    "get_Trips_id_metadata": "metadata_management",
+    "get_Trips_ProjectTo": "data_projection",
+    "get_Trips_Agg": "data_aggregation",
+    "get_Trips_GroupBy": "data_grouping",
     "post_TripTypes": "trip_type_management",
     "delete_TripTypes": "trip_type_management",
     "get_TripTypes": "trip_type_management",
@@ -3745,20 +3828,20 @@
     "get_TripTypes_id": "trip_type_management",
     "post_TripTypes_multipatch": "trip_type_management",
     "delete_TripTypes_DeleteByCriteria": "trip_type_management",
-    "post_TripTypes_id_documents": "trip_type_document_management",
-    "get_TripTypes_id_documents": "trip_type_document_management",
-    "get_TripTypes_id_documents_documentId": "trip_type_document_management",
-    "put_TripTypes_id_documents_documentId": "trip_type_document_management",
-    "delete_TripTypes_id_documents_documentId": "trip_type_document_management",
-    "get_TripTypes_id_documents_documentId_thumb": "trip_type_document_management",
-    "put_TripTypes_id_documents_documentId_SetAsDefault": "trip_type_document_management",
-    "get_TripTypes_id_metadata": "trip_type_metadata",
-    "get_TripTypes_ProjectTo": "trip_type_data_projection",
-    "get_TripTypes_Agg": "trip_type_data_aggregation",
-    "get_TripTypes_GroupBy": "trip_type_data_grouping",
-    "get_VehicleBoard_id": "vehicle_board_management",
-    "post_VehicleBoard_Defleet": "vehicle_board_management",
-    "post_VehicleBoard_Infleet": "vehicle_board_management",
+    "post_TripTypes_id_documents": "document_management",
+    "get_TripTypes_id_documents": "document_management",
+    "get_TripTypes_id_documents_documentId": "document_management",
+    "put_TripTypes_id_documents_documentId": "document_management",
+    "delete_TripTypes_id_documents_documentId": "document_management",
+    "get_TripTypes_id_documents_documentId_thumb": "document_management",
+    "put_TripTypes_id_documents_documentId_SetAsDefault": "document_management",
+    "get_TripTypes_id_metadata": "metadata_management",
+    "get_TripTypes_ProjectTo": "data_projection",
+    "get_TripTypes_Agg": "data_aggregation",
+    "get_TripTypes_GroupBy": "data_grouping",
+    "get_VehicleBoard_id": "vehicle_management",
+    "post_VehicleBoard_Defleet": "vehicle_management",
+    "post_VehicleBoard_Infleet": "vehicle_management",
     "post_VehicleCalendar": "vehicle_calendar_management",
     "delete_VehicleCalendar": "vehicle_calendar_management",
     "get_VehicleCalendar": "vehicle_calendar_management",
@@ -3768,7 +3851,7 @@
     "get_VehicleCalendar_id": "vehicle_calendar_management",
     "post_VehicleCalendar_multipatch": "vehicle_calendar_management",
     "delete_VehicleCalendar_DeleteByCriteria": "vehicle_calendar_management",
-    "post_VehicleCalendar_id_documents": "vehicle_calendar_document_management",
+    "post_VehicleCalendar_id_documents": "document_management",
     "get_VehicleCalendar_id_documents": "document_management",
     "get_VehicleCalendar_id_documents_documentId": "document_management",
     "put_VehicleCalendar_id_documents_documentId": "document_management",
@@ -3778,11 +3861,11 @@
     "get_VehicleCalendar_id_metadata": "metadata_management",
     "get_VehicleCalendar_ProjectTo": "data_projection",
     "get_VehicleCalendar_Agg": "data_aggregation",
-    "get_VehicleCalendar_GroupBy": "data_grouping",
-    "get_VehicleCalendarOn_on": "vehicle_management",
-    "get_VehicleCalendarOn_on_ProjectTo": "data_projection",
-    "get_VehicleCalendarOn_on_Agg": "data_aggregation",
-    "get_VehicleCalendarOn_on_GroupBy": "data_grouping",
+    "get_VehicleCalendar_GroupBy": "vehicle_calendar_management",
+    "get_VehicleCalendarOn_on": "vehicle_calendar_management",
+    "get_VehicleCalendarOn_on_ProjectTo": "vehicle_calendar_management",
+    "get_VehicleCalendarOn_on_Agg": "vehicle_calendar_management",
+    "get_VehicleCalendarOn_on_GroupBy": "vehicle_calendar_management",
     "post_VehicleContracts": "contract_management",
     "delete_VehicleContracts": "contract_management",
     "get_VehicleContracts": "contract_management",
@@ -3800,14 +3883,14 @@
     "get_VehicleContracts_id_documents_documentId_thumb": "document_management",
     "put_VehicleContracts_id_documents_documentId_SetAsDefault": "document_management",
     "get_VehicleContracts_id_metadata": "metadata_management",
-    "get_VehicleContracts_ProjectTo": "data_projection",
-    "get_VehicleContracts_Agg": "data_aggregation",
-    "get_VehicleContracts_GroupBy": "data_grouping",
-    "get_VehicleInputHelper_DistinctBrands": "input_helper",
-    "get_VehicleInputHelper_DistinctModels": "input_helper",
-    "get_VehicleInputHelper_DistinctMakes": "input_helper",
-    "get_VehicleInputHelper_PreviousVehicle_fullModelName": "input_helper",
-    "get_Vehicles_vehicleId_external_info": "external_data",
+    "get_VehicleContracts_ProjectTo": "contract_management",
+    "get_VehicleContracts_Agg": "contract_management",
+    "get_VehicleContracts_GroupBy": "contract_management",
+    "get_VehicleInputHelper_DistinctBrands": "vehicle_input_management",
+    "get_VehicleInputHelper_DistinctModels": "vehicle_input_management",
+    "get_VehicleInputHelper_DistinctMakes": "vehicle_input_management",
+    "get_VehicleInputHelper_PreviousVehicle_fullModelName": "vehicle_input_management",
+    "get_Vehicles_vehicleId_external_info": "vehicle_info",
     "post_Vehicles": "vehicle_management",
     "delete_Vehicles": "vehicle_management",
     "get_Vehicles": "vehicle_management",
@@ -3824,60 +3907,60 @@
     "delete_Vehicles_id_documents_documentId": "document_management",
     "get_Vehicles_id_documents_documentId_thumb": "document_management",
     "put_Vehicles_id_documents_documentId_SetAsDefault": "document_management",
-    "get_Vehicles_id_metadata": "vehicle_info",
-    "get_Vehicles_ProjectTo": "vehicle_info",
-    "get_Vehicles_Agg": "vehicle_info",
-    "get_Vehicles_GroupBy": "vehicle_info",
-    "get_VehiclesAssignmentsOverview_on": "assignment_management",
-    "get_VehiclesAssignmentsOverview_on_ProjectTo": "assignment_management",
-    "get_VehiclesAssignmentsOverview_on_Agg": "assignment_management",
-    "get_VehiclesAssignmentsOverview_on_GroupBy": "assignment_management",
-    "post_VehiclesHistoricalEntries": "historical_data_management",
-    "delete_VehiclesHistoricalEntries": "historical_data_management",
-    "get_VehiclesHistoricalEntries": "historical_data_management",
-    "put_VehiclesHistoricalEntries_id": "historical_data_management",
-    "patch_VehiclesHistoricalEntries_id": "historical_data_management",
-    "delete_VehiclesHistoricalEntries_id": "historical_data_management",
-    "get_VehiclesHistoricalEntries_id": "historical_data_management",
-    "post_VehiclesHistoricalEntries_multipatch": "historical_data_management",
-    "delete_VehiclesHistoricalEntries_DeleteByCriteria": "historical_data_management",
-    "post_VehiclesHistoricalEntries_id_documents": "document_management",
-    "get_VehiclesHistoricalEntries_id_documents": "document_management",
-    "get_VehiclesHistoricalEntries_id_documents_documentId": "document_management",
-    "put_VehiclesHistoricalEntries_id_documents_documentId": "document_management",
-    "delete_VehiclesHistoricalEntries_id_documents_documentId": "document_management",
-    "get_VehiclesHistoricalEntries_id_documents_documentId_thumb": "document_management",
-    "put_VehiclesHistoricalEntries_id_documents_documentId_SetAsDefault": "document_management",
-    "get_VehiclesHistoricalEntries_id_metadata": "historical_data_info",
-    "get_VehiclesHistoricalEntries_ProjectTo": "historical_data_management",
-    "get_VehiclesHistoricalEntries_Agg": "historical_data_management",
-    "get_VehiclesHistoricalEntries_GroupBy": "historical_data_management",
-    "get_VehiclesMonthlyExpenses_id": "expense_management",
-    "get_VehiclesMonthlyExpenses_id_metadata": "expense_management",
-    "get_VehiclesMonthlyExpenses": "expense_management",
-    "get_VehiclesMonthlyExpenses_ProjectTo": "expense_management",
-    "get_VehiclesMonthlyExpenses_Agg": "expense_management",
-    "get_VehiclesMonthlyExpenses_GroupBy": "expense_management",
-    "post_VehicleTypes": "vehicle_type_management",
-    "delete_VehicleTypes": "vehicle_type_management",
-    "get_VehicleTypes": "vehicle_type_management",
-    "put_VehicleTypes_id": "vehicle_type_management",
-    "patch_VehicleTypes_id": "vehicle_type_management",
-    "delete_VehicleTypes_id": "vehicle_type_management",
-    "get_VehicleTypes_id": "vehicle_type_management",
-    "post_VehicleTypes_multipatch": "vehicle_type_management",
-    "delete_VehicleTypes_DeleteByCriteria": "vehicle_type_management",
-    "post_VehicleTypes_id_documents": "document_management",
-    "get_VehicleTypes_id_documents": "document_management",
-    "get_VehicleTypes_id_documents_documentId": "document_management",
-    "put_VehicleTypes_id_documents_documentId": "document_management",
-    "delete_VehicleTypes_id_documents_documentId": "document_management",
-    "get_VehicleTypes_id_documents_documentId_thumb": "document_management",
-    "put_VehicleTypes_id_documents_documentId_SetAsDefault": "document_management",
-    "get_VehicleTypes_id_metadata": "metadata_retrieval",
-    "get_VehicleTypes_ProjectTo": "data_projection",
-    "get_VehicleTypes_Agg": "data_aggregation",
-    "get_VehicleTypes_GroupBy": "data_aggregation"
+    "get_Vehicles_id_metadata": "metadata_management",
+    "get_Vehicles_ProjectTo": "vehicle_management",
+    "get_Vehicles_Agg": "vehicle_management",
+    "get_Vehicles_GroupBy": "vehicle_management",
+    "get_VehiclesAssignmentsOverview_on": "vehicle_assignments",
+    "get_VehiclesAssignmentsOverview_on_ProjectTo": "vehicle_assignments",
+    "get_VehiclesAssignmentsOverview_on_Agg": "vehicle_assignments",
+    "get_VehiclesAssignmentsOverview_on_GroupBy": "vehicle_assignments",
+    "post_VehiclesHistoricalEntries": "vehicle_history",
+    "delete_VehiclesHistoricalEntries": "vehicle_history",
+    "get_VehiclesHistoricalEntries": "vehicle_history",
+    "put_VehiclesHistoricalEntries_id": "vehicle_history",
+    "patch_VehiclesHistoricalEntries_id": "vehicle_history",
+    "delete_VehiclesHistoricalEntries_id": "vehicle_history",
+    "get_VehiclesHistoricalEntries_id": "vehicle_history",
+    "post_VehiclesHistoricalEntries_multipatch": "vehicle_history",
+    "delete_VehiclesHistoricalEntries_DeleteByCriteria": "vehicle_history",
+    "post_VehiclesHistoricalEntries_id_documents": "vehicle_documents",
+    "get_VehiclesHistoricalEntries_id_documents": "vehicle_documents",
+    "get_VehiclesHistoricalEntries_id_documents_documentId": "vehicle_documents",
+    "put_VehiclesHistoricalEntries_id_documents_documentId": "vehicle_documents",
+    "delete_VehiclesHistoricalEntries_id_documents_documentId": "vehicle_documents",
+    "get_VehiclesHistoricalEntries_id_documents_documentId_thumb": "vehicle_documents",
+    "put_VehiclesHistoricalEntries_id_documents_documentId_SetAsDefault": "vehicle_documents",
+    "get_VehiclesHistoricalEntries_id_metadata": "vehicle_metadata",
+    "get_VehiclesHistoricalEntries_ProjectTo": "vehicle_history",
+    "get_VehiclesHistoricalEntries_Agg": "vehicle_history",
+    "get_VehiclesHistoricalEntries_GroupBy": "vehicle_history",
+    "get_VehiclesMonthlyExpenses_id": "vehicle_expenses",
+    "get_VehiclesMonthlyExpenses_id_metadata": "vehicle_metadata",
+    "get_VehiclesMonthlyExpenses": "vehicle_expenses",
+    "get_VehiclesMonthlyExpenses_ProjectTo": "vehicle_expenses",
+    "get_VehiclesMonthlyExpenses_Agg": "vehicle_expenses",
+    "get_VehiclesMonthlyExpenses_GroupBy": "vehicle_expenses",
+    "post_VehicleTypes": "vehicle_types",
+    "delete_VehicleTypes": "vehicle_types",
+    "get_VehicleTypes": "vehicle_types",
+    "put_VehicleTypes_id": "vehicle_types",
+    "patch_VehicleTypes_id": "vehicle_types",
+    "delete_VehicleTypes_id": "vehicle_types",
+    "get_VehicleTypes_id": "vehicle_types",
+    "post_VehicleTypes_multipatch": "vehicle_types",
+    "delete_VehicleTypes_DeleteByCriteria": "vehicle_types",
+    "post_VehicleTypes_id_documents": "vehicle_documents",
+    "get_VehicleTypes_id_documents": "vehicle_documents",
+    "get_VehicleTypes_id_documents_documentId": "vehicle_documents",
+    "put_VehicleTypes_id_documents_documentId": "vehicle_documents",
+    "delete_VehicleTypes_id_documents_documentId": "vehicle_documents",
+    "get_VehicleTypes_id_documents_documentId_thumb": "vehicle_documents",
+    "put_VehicleTypes_id_documents_documentId_SetAsDefault": "vehicle_documents",
+    "get_VehicleTypes_id_metadata": "vehicle_metadata",
+    "get_VehicleTypes_ProjectTo": "vehicle_types",
+    "get_VehicleTypes_Agg": "vehicle_types",
+    "get_VehicleTypes_GroupBy": "vehicle_types"
   },
-  "generated_at": "2025-12-26T02:51:36.709841"
+  "generated_at": "2026-01-05T01:15:29.472526"
 }

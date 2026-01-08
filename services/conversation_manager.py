@@ -91,7 +91,7 @@ class ConversationState(str, Enum):
 
 # Mapiranje sinonima parametara - rješava problem kad AI izvuče "mileage" ali missing_params ima "Value"
 KEY_ALIASES = {
-    # Mileage variations
+    # Mileage variations (Swagger field is "Value")
     "mileage": ["kilometraža", "km", "Value", "Mileage", "mileage_value"],
     "Value": ["mileage", "kilometraža", "km", "Mileage"],
     "kilometraža": ["mileage", "Value", "km", "Mileage"],
@@ -103,11 +103,16 @@ KEY_ALIASES = {
     "to": ["ToTime", "end", "do", "to_time"],
     "ToTime": ["to", "end", "do"],
     # Description variations
-    "description": ["Description", "opis", "napomena"],
-    "Description": ["description", "opis"],
+    "description": ["Description", "opis", "napomena", "Message"],
+    "Description": ["description", "opis", "Message"],
     # Vehicle variations
     "vehicleId": ["VehicleId", "vehicle_id"],
     "VehicleId": ["vehicleId", "vehicle_id"],
+    # Case/Damage variations (Swagger: User, Subject, Message)
+    "User": ["user", "korisnik", "osoba"],
+    "Subject": ["subject", "naslov", "tema"],
+    "Message": ["message", "poruka", "opis", "description", "Description"],
+    "opis": ["Message", "Description", "description"],
 }
 
 

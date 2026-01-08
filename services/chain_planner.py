@@ -238,12 +238,13 @@ class ChainPlanner:
 
         vehicle = user_context.get("vehicle", {})
         if vehicle:
-            if vehicle.get("id"):
-                parts.append(f"vehicle_id: {vehicle['id']}")
-            if vehicle.get("plate"):
-                parts.append(f"tablica: {vehicle['plate']}")
-            if vehicle.get("name"):
-                parts.append(f"vozilo: {vehicle['name']}")
+            # Use Swagger field names directly
+            if vehicle.get("Id"):
+                parts.append(f"vehicle_id: {vehicle['Id']}")
+            if vehicle.get("LicencePlate"):
+                parts.append(f"tablica: {vehicle['LicencePlate']}")
+            if vehicle.get("FullVehicleName") or vehicle.get("DisplayName"):
+                parts.append(f"vozilo: {vehicle.get('FullVehicleName') or vehicle.get('DisplayName')}")
 
         if not parts:
             return "Nema dodatnih podataka o korisniku."

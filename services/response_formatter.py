@@ -1,19 +1,14 @@
 """
 Response Formatter
-Version: 10.2 (Extended Leasing Keywords)
+Version: 11.0 (Schema-Aware)
 
 Formats API responses for WhatsApp.
-NO DEPENDENCIES on other services.
+Uses field names from data as-is (schema-driven via output_keys).
 
-v10.2:
-- Extended leasing/lizing keyword detection
-- More field name variations for provider lookup
-- Contract end date support
-
-v10.1:
-- Intent-aware formatting based on user query
-- Specific responses for kilometraža, registracija, VIN queries
-- Falls back to list formatting only when no specific intent detected
+v11.0:
+- Simplified field access - no fallback chains
+- Field names come from Swagger schema via ToolRegistry.output_keys
+- Cleaner, more maintainable code
 """
 
 import logging
@@ -30,14 +25,12 @@ class ResponseFormatter:
     - Dynamic formatting based on data type
     - Croatian language
     - Emoji support
-    - List formatting
-    - FIX v13.2: Message length limits for WhatsApp
+    - WhatsApp message length limits
     """
 
-    # FIX v13.2: WhatsApp message limits
-    MAX_MESSAGE_LENGTH = 3500  # Leave buffer for emojis/markdown
-    MAX_LIST_ITEMS = 5  # Reduced from 10 to prevent flooding
-    MAX_FIELD_VALUE_LENGTH = 80  # Truncate long field values
+    MAX_MESSAGE_LENGTH = 3500
+    MAX_LIST_ITEMS = 10
+    MAX_FIELD_VALUE_LENGTH = 80
 
     def _truncate_message(self, message: str) -> str:
         """
@@ -153,6 +146,8 @@ class ResponseFormatter:
                         return self._format_masterdata(nested_data)
                     elif self._is_vehicle(nested_data):
                         return self._format_vehicle_details(nested_data)
+                    elif self._is_person(nested_data):
+                        return self._format_person_details(nested_data)
                     return self._format_generic_object(nested_data)
 
             # CRITICAL FIX: Type guard - only check structure on dict/list, not primitives
@@ -166,6 +161,8 @@ class ResponseFormatter:
                     return self._format_vehicle_details(data)
                 elif self._is_masterdata(data):
                     return self._format_masterdata(data)
+                elif self._is_person(data):
+                    return self._format_person_details(data)
                 else:
                     return self._format_generic_object(data)
             elif isinstance(data, list):
@@ -223,25 +220,23 @@ class ResponseFormatter:
         return msg
     
     def format_vehicle_list(self, vehicles: List[Dict]) -> str:
-        """Format vehicle list for selection."""
+        """Format vehicle list for selection using actual field names from data."""
         if not vehicles:
             return "Nema dostupnih vozila."
         
         lines = [f"🚗 **Pronađeno {len(vehicles)} vozila:**\n"]
         
-        for i, v in enumerate(vehicles[:10], 1):
-            name = (
-                v.get("FullVehicleName") or
-                v.get("DisplayName") or
-                v.get("Name") or
-                f"{v.get('Manufacturer', '')} {v.get('Model', '')}".strip() or
-                "Vozilo"
-            )
-            plate = v.get("LicencePlate") or v.get("Plate") or "N/A"
+        for i, v in enumerate(vehicles[:self.MAX_LIST_ITEMS], 1):
+            # Use field names as they appear in data (from Swagger schema)
+            name = v.get("FullVehicleName") or v.get("DisplayName") or v.get("Name") or "Vozilo"
+            plate = v.get("LicencePlate") or "N/A"
             
             lines.append(f"**{i}.** {name}")
             lines.append(f"   📋 Registracija: {plate}")
             lines.append("")
+        
+        if len(vehicles) > self.MAX_LIST_ITEMS:
+            lines.append(f"_...i još {len(vehicles) - self.MAX_LIST_ITEMS} vozila_\n")
         
         lines.append("_Odaberite vozilo brojem (npr. '1') ili imenom._")
         
@@ -258,6 +253,37 @@ class ResponseFormatter:
             lines.append(f"{i}. {name}")
             if phone:
                 lines.append(f"   📱 {phone}")
+        
+        return "\n".join(lines)
+    
+    def _format_person_details(self, data: Dict) -> str:
+        """Format single person details from PersonData endpoint (Swagger: PersonDto)."""
+        first_name = data.get("FirstName") or ""
+        last_name = data.get("LastName") or ""
+        display_name = data.get("DisplayName") or f"{first_name} {last_name}".strip() or "Korisnik"
+        
+        lines = [f"👤 **{display_name}**\n"]
+        
+        # Basic info from Swagger PersonDto
+        email = data.get("Email")
+        phone = data.get("Phone")
+        if email:
+            lines.append(f"📧 Email: {email}")
+        if phone:
+            lines.append(f"📱 Telefon: {phone}")
+        
+        # Organization info
+        company = data.get("CompanyName")
+        org_unit = data.get("OrgUnitName")
+        if company:
+            lines.append(f"🏛️ Tvrtka: {company}")
+        if org_unit:
+            lines.append(f"🏢 Org. jedinica: {org_unit}")
+        
+        # Code (employee ID)
+        code = data.get("Code")
+        if code:
+            lines.append(f"🔢 Šifra: {code}")
         
         return "\n".join(lines)
     
@@ -281,17 +307,25 @@ class ResponseFormatter:
         return "\n".join(lines)
     
     def _format_vehicle_details(self, data: Dict) -> str:
-        """Format single vehicle."""
+        """Format single vehicle using schema field names."""
         name = data.get("FullVehicleName") or data.get("DisplayName") or "Vozilo"
-        plate = data.get("LicencePlate") or data.get("Plate") or "N/A"
-        mileage = data.get("Mileage") or data.get("CurrentMileage") or data.get("LastMileage")
+        plate = data.get("LicencePlate") or "N/A"
+        mileage = data.get("LastMileage") or data.get("Mileage")  # Swagger uses LastMileage
         vin = data.get("VIN")
-        driver = data.get("Driver") or data.get("DriverName")
+        driver = data.get("Driver")
+        manufacturer = data.get("Manufacturer")
+        model = data.get("Model")
+        year = data.get("ProductionYear")
 
         lines = [f"🚗 **{name}**\n"]
         lines.append(f"📋 Registracija: {plate}")
         
-        if mileage:
+        # Manufacturer/model info if different from FullVehicleName
+        if manufacturer and model:
+            lines.append(f"🏭 Proizvođač: {manufacturer} {model}")
+        if year:
+            lines.append(f"📅 Godina: {year}")
+        if mileage is not None:
             lines.append(f"📏 Kilometraža: {mileage:,} km")
         if vin:
             lines.append(f"🔑 VIN: {vin}")
@@ -301,33 +335,67 @@ class ResponseFormatter:
         return "\n".join(lines)
     
     def _format_masterdata(self, data: Dict) -> str:
-        """Format master data."""
+        """Format master data using schema field names from Swagger."""
         name = data.get("FullVehicleName") or data.get("DisplayName") or "Vozilo"
-        plate = data.get("LicencePlate") or data.get("Plate") or "N/A"
-        mileage = data.get("Mileage") or data.get("CurrentMileage") or data.get("LastMileage")
+        plate = data.get("LicencePlate") or "N/A"
+        mileage = data.get("LastMileage") or data.get("Mileage")  # Swagger uses LastMileage
         vin = data.get("VIN")
-        driver = data.get("Driver") or data.get("DriverName")
+        driver = data.get("Driver")
         
         lines = ["📊 **Podaci o vozilu:**\n"]
         lines.append(f"🚗 {name}")
         lines.append(f"📋 Registracija: {plate}")
         
-        if mileage:
+        # Basic vehicle info from Swagger MasterData schema
+        manufacturer = data.get("Manufacturer")
+        model = data.get("Model")
+        year = data.get("ProductionYear")
+        if manufacturer or model:
+            lines.append(f"🏭 Proizvođač: {manufacturer or ''} {model or ''}")
+        if year:
+            lines.append(f"📅 Godina proizvodnje: {year}")
+            
+        if mileage is not None:
             lines.append(f"📏 Kilometraža: **{mileage:,} km**")
         if vin:
             lines.append(f"🔑 VIN: {vin}")
         if driver:
             lines.append(f"👤 Vozač: {driver}")
         
-        provider = data.get("ProviderName") or data.get("LeasingProvider")
-        monthly = data.get("MonthlyAmount")
+        # Status info from Swagger
+        status = data.get("GeneralStatusName")
+        availability = data.get("Availability")
+        if status:
+            lines.append(f"📌 Status: {status}")
+        if availability:
+            lines.append(f"✅ Dostupnost: {availability}")
         
-        if provider or monthly:
+        # Organization info
+        org_unit = data.get("OrgUnit")
+        company = data.get("Company")
+        if org_unit:
+            lines.append(f"🏢 Org. jedinica: {org_unit}")
+        if company:
+            lines.append(f"🏛️ Tvrtka: {company}")
+        
+        # Contract info - field names from Swagger schema
+        provider = data.get("ProviderName")
+        monthly = data.get("MonthlyAmount")
+        contract_end = data.get("ContractEnd")
+        
+        if provider or monthly or contract_end:
             lines.append("\n💼 **Ugovor:**")
             if provider:
                 lines.append(f"   Leasing: {provider}")
             if monthly:
                 lines.append(f"   Rata: {monthly} EUR/mj")
+            if contract_end:
+                lines.append(f"   Istek ugovora: {contract_end}")
+        
+        # Cases/maintenance
+        unresolved = data.get("UnresolvedCasesCount")
+        if unresolved and unresolved > 0:
+            lines.append(f"\n⚠️ Neriješeni slučajevi: {unresolved}")
         
         return "\n".join(lines)
     
@@ -428,7 +496,7 @@ class ResponseFormatter:
 
         # MILEAGE query
         if any(kw in q for kw in ["kilometraž", "mileage", "koliko km", "koliko kilometara", "km ima"]):
-            mileage = data.get("Mileage") or data.get("CurrentMileage") or data.get("LastMileage")
+            mileage = data.get("LastMileage") or data.get("Mileage") or data.get("CurrentMileage")
             if mileage:
                 return (
                     f"🚗 **{name}**\n"
@@ -470,6 +538,20 @@ class ResponseFormatter:
             if driver:
                 return f"🚗 **{name}**\n👤 Vozač: **{driver}**"
             return f"❌ Vozač nije dodijeljen vozilu {name}."
+        
+        # PERSONAL NAME query (PersonData response)
+        if any(kw in q for kw in ["kako se zovem", "moje ime", "tko sam", "moji podaci", "my name"]):
+            first_name = data.get("FirstName")
+            last_name = data.get("LastName")
+            display_name = data.get("DisplayName") or f"{first_name or ''} {last_name or ''}".strip()
+            if display_name:
+                return self._format_person_details(data)
+            # If it's vehicle data, can't answer name
+            return None
+
+        # GENERAL "what else" / "što još znaš" query - show ALL available fields
+        if any(kw in q for kw in ["što još", "sto jos", "što znaš", "sto znas", "sve što", "sve sto", "svi podaci"]):
+            return self._format_masterdata(data) if self._is_vehicle(data) else None
 
         # LEASING / CONTRACT query - PROŠIRENO za sve varijacije
         if any(kw in q for kw in [

@@ -415,10 +415,10 @@ class ExecutorWithFallback:
         user_context: Dict[str, Any]
     ) -> Optional[str]:
         """Try to fix VehicleId parameter."""
-        # From user context
+        # From user context - use Swagger field names
         vehicle = user_context.get("vehicle", {})
-        if vehicle.get("id"):
-            return vehicle["id"]
+        if vehicle.get("Id"):
+            return vehicle["Id"]
 
         # From parameters (plate -> id)
         plate = None

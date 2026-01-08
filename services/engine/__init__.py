@@ -278,6 +278,9 @@ class MessageEngine:
         try:
             # 1. Identify user
             user_context = await self._identify_user(sender)
+            logger.error(f"🔍 TRACE: user_context keys={list(user_context.keys()) if user_context else None}")
+            logger.warning(f"[TRACE] handle_request: user_context keys={list(user_context.keys()) if user_context else None}")
+            print(f"[DEBUG] handle_request: user_context={user_context}", flush=True)
 
             if not user_context:
                 return (
@@ -340,7 +343,9 @@ class MessageEngine:
         user = await user_service.get_active_identity(phone)
 
         if user:
+            print(f"[DEBUG] User found: api_identity={user.api_identity}, display_name={user.display_name}", flush=True)
             ctx = await user_service.build_context(user.api_identity, phone)
+            print(f"[DEBUG] Context built: keys={list(ctx.keys())}, person_id={ctx.get('person_id')}", flush=True)
             ctx["display_name"] = user.display_name
             ctx["is_new"] = False
             return ctx
@@ -348,14 +353,15 @@ class MessageEngine:
         result = await user_service.try_auto_onboard(phone)
 
         if result:
-            display_name, vehicle_info = result
+            display_name, vehicle_data = result
             user = await user_service.get_active_identity(phone)
 
             if user:
                 ctx = await user_service.build_context(user.api_identity, phone)
                 ctx["display_name"] = display_name
                 ctx["is_new"] = True
-                ctx["vehicle_info"] = vehicle_info
+                # vehicle_data is now a Dict with all Swagger fields
+                # It's already set in build_context as ctx["vehicle"]
                 return ctx
 
         return None
@@ -470,10 +476,11 @@ class MessageEngine:
         greeting = f"Pozdrav {name}!\n\n"
         greeting += "Ja sam MobilityOne AI asistent.\n\n"
 
-        if vehicle.get("plate"):
-            plate = vehicle.get("plate")
-            v_name = vehicle.get("name", "vozilo")
-            mileage = vehicle.get("mileage", "N/A")
+        # Use Swagger field names directly
+        if vehicle.get("LicencePlate"):
+            plate = vehicle.get("LicencePlate")
+            v_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "vozilo")
+            mileage = vehicle.get("Mileage", "N/A")
 
             greeting += f"Vidim da vam je dodijeljeno vozilo:\n"
             greeting += f"   **{v_name}** ({plate})\n"
@@ -483,8 +490,10 @@ class MessageEngine:
             greeting += "* Prijava kvara\n"
             greeting += "* Rezervacija vozila\n"
             greeting += "* Pitanja o vozilu"
-        elif vehicle_info and "nema" not in vehicle_info.lower():
-            greeting += f"{vehicle_info}\n\n"
+        elif vehicle.get("Id"):
+            # Has vehicle but no plate - still show something
+            v_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "vozilo")
+            greeting += f"Vidim da vam je dodijeljeno vozilo: {v_name}\n\n"
             greeting += "Kako vam mogu pomoci?"
         else:
             greeting += "Trenutno nemate dodijeljeno vozilo.\n\n"
@@ -547,6 +556,9 @@ class MessageEngine:
         # Initialize unified router lazily
         if not self._unified_router_initialized:
             self.unified_router = await get_unified_router()
+            # v2.0: Connect registry for semantic search
+            if self.registry and self.registry.is_ready:
+                self.unified_router.set_registry(self.registry)
             self._unified_router_initialized = True
 
         # Build conversation state for router
@@ -674,12 +686,81 @@ class MessageEngine:
         # === v16.1: DETERMINISTIC ROUTING - Try rules FIRST ===
         # This guarantees correct responses for known patterns WITHOUT LLM
         route = self.query_router.route(text, user_context)
+        
+        # FILE DEBUG - bypass logging completely
+        with open('/tmp/routing_debug.txt', 'a') as f:
+            f.write(f"=== ROUTING CALLED ===\n")
+            f.write(f"Query: {text}\n")
+            f.write(f"Matched: {route.matched}\n")
+            f.write(f"Flow: {route.flow_type if route.matched else None}\n")
+            f.write(f"Template: {route.response_template[:100] if route.response_template else None}\n")
+            f.write(f"Context keys: {list(user_context.keys())}\n")
+            f.write(f"person_id in context: {user_context.get('person_id', 'MISSING')}\n")
+            f.write("\n")
+        
+        logger.error(f"🔍 TRACE ROUTING: matched={route.matched}, flow={route.flow_type if route.matched else None}")
+        logger.warning(f"[TRACE] ROUTING: matched={route.matched}, flow={route.flow_type if route.matched else None}")
+        print(f"[DEBUG] ROUTING: route.matched={route.matched}, route.flow_type={route.flow_type if route.matched else None}", flush=True)
 
         if route.matched:
             logger.info(f"ROUTER: Deterministic match → {route.tool_name or route.flow_type}")
+            
+            # FILE DEBUG
+            with open('/tmp/routing_debug.txt', 'a') as f:
+                f.write(f"=== MATCHED ===\n")
+                f.write(f"flow_type: {route.flow_type}\n")
+                f.write(f"template: {route.response_template}\n\n")
+            
+            logger.error(f"🔍 TRACE MATCHED: flow={route.flow_type}, template={route.response_template[:30] if route.response_template else None}")
+            logger.warning(f"[TRACE] ROUTING MATCHED: flow={route.flow_type}, template={route.response_template[:30] if route.response_template else None}")
+            print(f"[DEBUG] ROUTING MATCHED: flow_type={route.flow_type}, template={route.response_template[:50] if route.response_template else None}", flush=True)
 
-            # Direct response (greetings, thanks, help)
+            # Direct response (greetings, thanks, help, context queries)
             if route.flow_type == "direct_response":
+                # FILE DEBUG
+                with open('/tmp/routing_debug.txt', 'a') as f:
+                    f.write(f"=== DIRECT_RESPONSE BRANCH ===\n")
+                    f.write(f"Has template: {bool(route.response_template)}\n")
+                
+                # Format template with user context
+                if route.response_template:
+                    with open('/tmp/routing_debug.txt', 'a') as f:
+                        f.write(f"Template contains person_id: {'person_id' in route.response_template}\n")
+                    
+                    print(f"[DEBUG] ROUTER: template={route.response_template[:50]}, context_keys={list(user_context.keys())}", flush=True)
+                    print(f"[DEBUG] ROUTER: user_context full={user_context}", flush=True)
+                    # DIRECT EXTRACTION - bypass format() completely for context queries
+                    if 'person_id' in route.response_template:
+                        val = user_context.get('person_id', 'N/A')
+                        with open('/tmp/routing_debug.txt', 'a') as f:
+                            f.write(f"person_id extracted: {val}\n")
+                        print(f"[DEBUG] ROUTER: person_id extraction -> '{val}'", flush=True)
+                        result = f"👤 **Person ID:** {val}"
+                        print(f"[DEBUG] ROUTER: returning result='{result}'", flush=True)
+                        with open('/tmp/routing_debug.txt', 'a') as f:
+                            f.write(f"RETURNING: {result}\n\n")
+                        return result
+                    elif 'phone' in route.response_template:
+                        val = user_context.get('phone', 'N/A')
+                        logger.info(f"ROUTER: Direct extraction phone={val}, full_context={user_context}")
+                        return f"📱 **Telefon:** {val}"
+                    elif 'tenant_id' in route.response_template:
+                        val = user_context.get('tenant_id', 'N/A')
+                        logger.info(f"ROUTER: Direct extraction tenant_id={val}, full_context={user_context}")
+                        return f"🏢 **Tenant ID:** {val}"
+                    
+                    # For other templates, try format()
+                    simple_context = {
+                        k: v for k, v in user_context.items() 
+                        if not isinstance(v, (dict, list))
+                    }
+                    try:
+                        response = route.response_template.format(**simple_context)
+                        logger.info(f"ROUTER: Direct response formatted")
+                        return response
+                    except (KeyError, ValueError) as e:
+                        logger.error(f"ROUTER: Format error {e}. Template: {route.response_template}")
+                        return route.response_template
                 return route.response_template
 
             # Booking flow
@@ -949,6 +1030,60 @@ class MessageEngine:
                             result, user_context, conv_manager
                         )
 
+                # ============================================================
+                # CRITICAL FIX v20.0: BLOCK DIRECT POST VehicleCalendar
+                # ============================================================
+                # LLM sometimes tries to call post_VehicleCalendar directly with
+                # fabricated parameters (VehicleId, FromTime, ToTime).
+                # We MUST force it through the booking flow to ensure:
+                # 1. VehicleId comes from get_AvailableVehicles (not invented)
+                # 2. User explicitly confirms the booking
+                # ============================================================
+                if tool_name == "post_VehicleCalendar" and method == "POST":
+                    params = result.get("parameters", {})
+                    vehicle_id = params.get("VehicleId") or params.get("vehicleId")
+                    
+                    # Check if VehicleId was validated (exists in tool_outputs from get_AvailableVehicles)
+                    validated_vehicle_id = None
+                    if hasattr(conv_manager.context, 'tool_outputs'):
+                        validated_vehicle_id = conv_manager.context.tool_outputs.get("VehicleId")
+                        
+                        # Also check if it's in all_available_vehicles
+                        all_vehicles = conv_manager.context.tool_outputs.get("all_available_vehicles", [])
+                        if vehicle_id and all_vehicles:
+                            for v in all_vehicles:
+                                if v.get("Id") == vehicle_id:
+                                    validated_vehicle_id = vehicle_id
+                                    break
+                    
+                    # If VehicleId is NOT validated (fabricated by LLM), redirect to booking flow
+                    if not validated_vehicle_id or vehicle_id != validated_vehicle_id:
+                        logger.warning(
+                            f"🚫 BLOCKED direct post_VehicleCalendar: VehicleId={vehicle_id} "
+                            f"is NOT validated (expected={validated_vehicle_id}). "
+                            f"Redirecting to booking flow."
+                        )
+                        
+                        # Extract any time params LLM may have provided
+                        from_time = params.get("FromTime") or params.get("from")
+                        to_time = params.get("ToTime") or params.get("to")
+                        
+                        # Redirect to proper booking flow
+                        return await self._handle_booking_flow(text, user_context, conv_manager)
+                    
+                    # Even if VehicleId is validated, ensure we're in confirmation state
+                    state = conv_manager.get_state()
+                    if state != ConversationState.EXECUTING:
+                        logger.warning(
+                            f"🚫 BLOCKED post_VehicleCalendar: state={state.value} "
+                            f"(expected EXECUTING after user confirmation)"
+                        )
+                        # User hasn't confirmed - ask for confirmation
+                        confirmation_result = await self._flow_handler.request_confirmation(
+                            tool_name, params, user_context, conv_manager
+                        )
+                        return confirmation_result.get("prompt", "Molim potvrdite rezervaciju s 'Da' ili 'Ne'.")
+
                 if method in ("POST", "PUT", "PATCH"):
                     if self._tool_handler.requires_confirmation(tool_name):
                         flow_result = await self._flow_handler.request_confirmation(
@@ -1190,9 +1325,21 @@ class MessageEngine:
         params = {}
         vehicle = user_context.get("vehicle", {})
 
-        # Inject VehicleId if needed and available
-        if "VehicleId" in [p.name for p in tool.parameters.values() if p.required]:
-            vehicle_id = vehicle.get("id")
+        # FIX v21.1: Inject personIdOrEmail for PersonData endpoint
+        # This is a PATH parameter that needs person_id from context
+        if "personIdOrEmail" in tool.parameters:
+            person_id = user_context.get("person_id")
+            if person_id:
+                params["personIdOrEmail"] = person_id
+                logger.info(f"DETERMINISTIC: Injected personIdOrEmail={person_id[:8]}... for {route.tool_name}")
+            else:
+                logger.warning("DETERMINISTIC: No person_id in user_context for PersonData")
+                return "Molim vas prijavite se kako bih mogao dohvatiti vaše podatke."
+
+        # Inject VehicleId if needed and available - use Swagger field name
+        vehicle_id_param = tool.parameters.get("VehicleId")
+        if vehicle_id_param and getattr(vehicle_id_param, 'required', False):
+            vehicle_id = vehicle.get("Id")
             if vehicle_id:
                 params["VehicleId"] = vehicle_id
             else:
@@ -1213,6 +1360,12 @@ class MessageEngine:
         # Execute tool
         logger.info(f"DETERMINISTIC: Executing {route.tool_name} with {list(params.keys())}")
         result = await self.executor.execute(tool, params, execution_context)
+
+        logger.info(f"DETERMINISTIC: Result success={result.success}, data_type={type(result.data)}")
+        if result.data:
+            # Log first 500 chars of data for debugging
+            data_preview = str(result.data)[:500]
+            logger.info(f"DETERMINISTIC: Data preview: {data_preview}")
 
         if not result.success:
             logger.warning(f"DETERMINISTIC: {route.tool_name} failed: {result.error_message}")
@@ -1292,11 +1445,11 @@ class MessageEngine:
             ]
         )
 
-        # Try to get vehicle from multiple sources
+        # Try to get vehicle from multiple sources - use Swagger field names
         vehicle = user_context.get("vehicle", {})
-        vehicle_id = vehicle.get("id")
-        vehicle_name = vehicle.get("name", "")
-        plate = vehicle.get("plate", "")
+        vehicle_id = vehicle.get("Id")
+        vehicle_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "")
+        plate = vehicle.get("LicencePlate", "")
 
         # 1. Check if we have vehicle from recent booking/context
         if not vehicle_id and hasattr(conv_manager.context, 'tool_outputs'):
@@ -1412,9 +1565,9 @@ class MessageEngine:
         )
 
         vehicle = user_context.get("vehicle", {})
-        vehicle_id = vehicle.get("id")
-        vehicle_name = vehicle.get("name", "vozilo")
-        plate = vehicle.get("plate", "")
+        vehicle_id = vehicle.get("Id")
+        vehicle_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "vozilo")
+        plate = vehicle.get("LicencePlate", "")
 
         # Build subject from text if not extracted
         subject = case_params.get("Subject")

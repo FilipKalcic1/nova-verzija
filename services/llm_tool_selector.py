@@ -170,19 +170,44 @@ class LLMToolSelector:
         return examples[:max_examples]
 
     def _build_tools_description(self, tools: List[str], registry) -> str:
-        """Build a concise description of available tools."""
+        """Build a concise description of available tools with origin guide."""
         descriptions = []
+
+        # Load tool documentation for origin guides
+        tool_documentation = self._load_tool_documentation()
 
         for tool_name in tools[:30]:  # Limit to 30 tools for token efficiency
             tool = registry.get_tool(tool_name)
             if tool:
                 desc = tool.description[:100] if tool.description else "No description"
-                descriptions.append(f"- {tool_name}: {desc}")
+
+                # PILLAR 3: Include origin guide if available
+                origin_hint = ""
+                if tool_documentation and tool_name in tool_documentation:
+                    origin_guide = tool_documentation[tool_name].get("parameter_origin_guide", {})
+                    if origin_guide:
+                        # Summarize context params (don't fill these!)
+                        context_params = [k for k, v in origin_guide.items() if "CONTEXT" in str(v).upper()]
+                        if context_params:
+                            origin_hint = f" [AUTO: {', '.join(context_params[:3])}]"
+
+                descriptions.append(f"- {tool_name}: {desc}{origin_hint}")
 
         if len(tools) > 30:
             descriptions.append(f"... and {len(tools) - 30} more tools")
 
         return "\n".join(descriptions)
+
+    def _load_tool_documentation(self) -> Optional[Dict]:
+        """Load tool documentation from config file."""
+        try:
+            doc_path = Path(__file__).parent.parent / "config" / "tool_documentation.json"
+            if doc_path.exists():
+                with open(doc_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception:
+            pass
+        return None
 
     async def select_tool(
         self,
@@ -254,6 +279,19 @@ PRAVILA ZA ODABIR ALATA:
 
 5. DOSTUPNOST:
    - Slobodna vozila → get_AvailableVehicles
+
+KRITIČNO - PARAMETER ORIGIN GUIDE:
+Prije popunjavanja parametara OBAVEZNO provjeri parameter_origin_guide iz dokumentacije!
+
+Ako je izvor parametra:
+- "CONTEXT" → NE POPUNJAVAJ! Sustav automatski ubacuje (personId, tenantId). Ostavi prazno!
+- "USER" → Korisnik mora dati vrijednost. Ako nedostaje, vrati null i pitaj korisnika.
+- "OUTPUT" → Dolazi iz prethodnog API poziva. Ne izmišljaj!
+
+ZABRANJENO:
+- NIKAD ne izmišljaj UUID-ove, email adrese, ili bilo koje ID-eve
+- Ako parametar zahtijeva podatak koji korisnik nije dao → vrati null
+- Bolje je pitati korisnika nego pogriješiti
 
 VAŽNO:
 - Odaberi SAMO alate iz ponuđene liste

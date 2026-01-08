@@ -256,11 +256,11 @@ Izvuci SAMO ono što korisnik traži. Budi koncizan."""
 
         # Try to match known patterns
         patterns = {
-            "kilometra": ["LastMileage", "Mileage", "CurrentMileage", "mileage"],
-            "registraci": ["RegistrationExpirationDate", "RegistrationExpiry", "ExpirationDate"],
-            "tablice": ["LicencePlate", "Plate", "RegistrationNumber"],
-            "vozilo": ["FullVehicleName", "Name", "VehicleName", "DisplayName"],
-            "lizing": ["LeasingProvider", "Leasing", "LeasingCompany"],
+            "kilometra": ["LastMileage", "Mileage"],
+            "registraci": ["PeriodicActivities"],
+            "tablice": ["LicencePlate"],
+            "vozilo": ["FullVehicleName", "DisplayName"],
+            "lizing": ["ProviderName", "SupplierName"],
         }
 
         for keyword, fields in patterns.items():
@@ -272,6 +272,18 @@ Izvuci SAMO ono što korisnik traži. Budi koncizan."""
                             readable_key = self._humanize_key(field)
                             formatted = self._format_value(key, value)
                             return f"**{readable_key}:** {formatted}"
+                
+                # If no value found for this keyword pattern, return explicit message
+                if keyword == "lizing":
+                    return "Podaci o lizing kući nisu dostupni za vaše vozilo."
+                elif keyword == "registraci":
+                    # Check PeriodicActivities for registration
+                    activities = data.get("PeriodicActivities", {})
+                    if activities and "Registracija" in activities:
+                        reg = activities["Registracija"]
+                        expiry = reg.get("ExpiryDate", "N/A")
+                        return f"**Istek registracije:** {self._format_value('ExpiryDate', expiry)}"
+                    return "Podaci o registraciji nisu dostupni."
 
         # Generic fallback - show first 5 non-null fields
         lines = []
@@ -308,9 +320,9 @@ Izvuci SAMO ono što korisnik traži. Budi koncizan."""
             "RegistrationExpiry": "Istek registracije",
             "ExpirationDate": "Datum isteka",
 
-            # Leasing
-            "LeasingProvider": "Lizing kuća",
-            "LeasingCompany": "Lizing kuća",
+            # Leasing - use actual Swagger field names
+            "ProviderName": "Lizing kuća",
+            "SupplierName": "Dobavljač",
 
             # Person
             "PersonName": "Ime",

@@ -283,6 +283,7 @@ READ_INTENT_PATTERNS = [
     r'\bkoj[aei]?\s+\w+\s+je', # koja tablica je, koji broj je
     r'što\s+je', r'sto\s+je',  # what is
     r'^koliko\b',              # koliko at start (how much/many)
+    r'kolik[ao]?\s+\w*\s*(mi|imam)',  # kolika mi je, koliko imam (FIX: flexible word order)
     r'koliko?\s+je', r'kolika?\s+je',  # how much is
     r'kakv[aoi]?\s+je',        # what kind is
     r'koliko\s+ima',           # how many are there
@@ -303,6 +304,11 @@ READ_INTENT_PATTERNS = [
     r'\bmoje?\s+rezervacij',   # moje rezervacije
     r'\bmoje?\s+vozil',        # moje vozilo
     r'\bmoja\s+',              # moja (anything)
+    # Personal info questions
+    r'kako\s+se\s+zovem',       # kako se zovem (what's my name)
+    r'tko\s+sam\s+ja',          # tko sam ja (who am I)
+    r'moje\s+ime',               # moje ime (my name)
+    r'moji\s+podaci',            # moji podaci (my data)
     # Status/expiry questions
     r'\bisti[cč]e\b',          # istice/ističe (expires)
     r'\btrenutn[aio]\b',       # trenutna/trenutno/trenutni (current)

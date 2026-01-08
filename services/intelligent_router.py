@@ -169,12 +169,13 @@ LIST_TOOLS: Set[str] = {
 }
 
 # Parameters that trigger flows (if missing)
+# FIX: Use actual Swagger field names!
 FLOW_REQUIRED_PARAMS: Dict[str, List[str]] = {
     "post_VehicleCalendar": ["VehicleId", "FromTime", "ToTime"],
     "post_Booking": ["VehicleId", "FromTime", "ToTime"],
-    "post_AddCase": ["Description"],  # Need damage description
-    "post_AddMileage": ["Mileage", "VehicleId"],
-    "get_AvailableVehicles": ["from", "to"],  # Optional but nice to have
+    "post_AddCase": ["User", "Subject", "Message"],  # Swagger: AddCaseDto requires User, Subject, Message
+    "post_AddMileage": ["Value", "VehicleId"],  # Swagger: AddMileageDto requires Value (not Mileage!)
+    "get_AvailableVehicles": ["from", "to"],  # Required in Swagger
 }
 
 

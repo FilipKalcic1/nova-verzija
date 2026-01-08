@@ -125,6 +125,17 @@ class APIGateway:
         Returns:
             APIResponse
         """
+        # Ensure params is a dict
+        if params is None:
+            params = {}
+
+        # For GET requests, enforce Rows=1 if not specified, for efficiency
+        if method == HttpMethod.GET:
+            # Case-insensitive check for 'Rows'
+            if not any(k.lower() == 'rows' for k in params):
+                params['Rows'] = 1
+                logger.debug("Default 'Rows=1' added for GET request.")
+        
         url = self._build_url(path, params)
         effective_tenant = tenant_id or self.tenant_id
         retries = max_retries if max_retries is not None else self.DEFAULT_MAX_RETRIES

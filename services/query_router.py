@@ -51,6 +51,47 @@ class QueryRouter:
     def _build_rules(self) -> List[Dict[str, Any]]:
         """Build deterministic routing rules."""
         return [
+            # === CONTEXT QUERIES (tenant_id, person_id, phone) ===
+            {
+                "patterns": [
+                    r"koji.*moj.*tenant",
+                    r"[sš]to.*moj.*tenant",
+                    r"koji.*je.*tenant.*id",
+                    r"[sš]to.*je.*tenant",
+                    r"moj.*tenant",
+                ],
+                "intent": "GET_TENANT_ID",
+                "tool": None,
+                "extract_fields": [],
+                "response_template": "🏢 **Tenant ID:** {tenant_id}",
+                "flow_type": "direct_response",
+            },
+            {
+                "patterns": [
+                    r"koji.*moj.*person.*id",
+                    r"[sš]to.*moj.*person.*id",
+                    r"moj.*person.*id",
+                    r"koji.*je.*person",
+                ],
+                "intent": "GET_PERSON_ID",
+                "tool": None,
+                "extract_fields": [],
+                "response_template": "👤 **Person ID:** {person_id}",
+                "flow_type": "direct_response",
+            },
+            {
+                "patterns": [
+                    r"koji.*moj.*broj.*telefon",
+                    r"[sš]to.*moj.*broj",
+                    r"moj.*telefon",
+                    r"koji.*je.*telefon",
+                ],
+                "intent": "GET_PHONE",
+                "tool": None,
+                "extract_fields": [],
+                "response_template": "📱 **Telefon:** {phone}",
+                "flow_type": "direct_response",
+            },
             # === MILEAGE INPUT (must be BEFORE GET_MILEAGE to catch "unesi" first) ===
             {
                 "patterns": [
@@ -116,11 +157,15 @@ class QueryRouter:
                     r"moje.*vozilo",
                     r"koje.*vozilo",
                     r"detalji.*vozil",
+                    r"[sš]to.*jo[sš].*zna[sš]",  # što još znaš (about vehicle)
+                    r"[sš]to.*sve.*zna",         # što sve znaš
+                    r"svi.*podaci",              # svi podaci
+                    r"sve.*o.*vozil",            # sve o vozilu
                 ],
                 "intent": "GET_VEHICLE_INFO",
                 "tool": "get_MasterData",
-                "extract_fields": ["FullVehicleName", "LicencePlate", "LastMileage", "RegistrationExpirationDate"],
-                "response_template": None,  # Use LLM extraction for complex response
+                "extract_fields": ["FullVehicleName", "LicencePlate", "LastMileage", "Manufacturer", "Model", "ProductionYear", "VIN", "Driver", "ProviderName", "MonthlyAmount", "GeneralStatusName"],
+                "response_template": None,  # Use _format_masterdata for comprehensive response
                 "flow_type": "simple",
             },
             # === LICENCE PLATE ===
@@ -147,8 +192,28 @@ class QueryRouter:
                 ],
                 "intent": "GET_LEASING",
                 "tool": "get_MasterData",
-                "extract_fields": ["LeasingProvider", "LeasingCompany", "Leasing"],
+                "extract_fields": ["ProviderName", "SupplierName"],
                 "response_template": "🏢 **Lizing kuća:** {value}",
+                "flow_type": "simple",
+            },
+            # === PERSONAL INFO (PersonData) ===
+            {
+                "patterns": [
+                    r"kako.*se.*zovem",            # kako se zovem
+                    r"moje.*ime",                  # moje ime
+                    r"tko.*sam.*ja",               # tko sam ja
+                    r"moji.*podaci",               # moji podaci
+                    r"moj.*profil",                # moj profil
+                    r"osobni.*podaci",             # osobni podaci
+                    r"moj.*email",                 # moj email
+                    r"moj.*telefon",               # moj telefon
+                    r"moja.*tvrtka",               # moja tvrtka/firma
+                    r"u.*kojoj.*firmi",            # u kojoj sam firmi
+                ],
+                "intent": "GET_PERSON_INFO",
+                "tool": "get_PersonData_personIdOrEmail",
+                "extract_fields": ["FirstName", "LastName", "DisplayName", "Email", "Phone", "CompanyName"],
+                "response_template": None,  # Use _format_person_details
                 "flow_type": "simple",
             },
             # === SERVICE / MAINTENANCE ===
@@ -355,6 +420,8 @@ class QueryRouter:
 
         # Try to extract value
         value = self._extract_value(api_response, route.extract_fields)
+        
+        logger.info(f"FORMAT_RESPONSE: fields={route.extract_fields}, value={value}, data_keys={list(api_response.keys()) if isinstance(api_response, dict) else 'not_dict'}")
 
         if value is None:
             return None  # Let LLM handle it

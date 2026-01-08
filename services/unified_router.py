@@ -28,13 +28,16 @@ The LLM outputs:
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from pathlib import Path
 
 from openai import AsyncAzureOpenAI
 
 from config import get_settings
 from services.query_router import QueryRouter, RouteResult
+
+if TYPE_CHECKING:
+    from services.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -57,6 +60,9 @@ PRIMARY_TOOLS = {
     # Vehicle Info (READ)
     "get_MasterData": "Dohvati podatke o vozilu (registracija, kilometraža, servis)",
     "get_Vehicles_id": "Dohvati detalje specifičnog vozila",
+    
+    # Person Info (READ) - name, email, phone, company
+    "get_PersonData_personIdOrEmail": "Dohvati podatke o korisniku (ime, prezime, email, telefon)",
 
     # Availability & Booking
     "get_AvailableVehicles": "Provjeri dostupna/slobodna vozila za period",
@@ -107,10 +113,13 @@ class UnifiedRouter:
 
     This is the ONLY decision point - no keyword matching, no filtering.
     The LLM sees everything and decides.
+    
+    v2.0: Uses semantic search to find relevant tools from ALL 950+ tools,
+    not just hardcoded PRIMARY_TOOLS.
     """
 
-    def __init__(self):
-        """Initialize router."""
+    def __init__(self, registry: Optional["ToolRegistry"] = None):
+        """Initialize router with optional tool registry for semantic search."""
         self.client = AsyncAzureOpenAI(
             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
             api_key=settings.AZURE_OPENAI_API_KEY,
@@ -120,12 +129,20 @@ class UnifiedRouter:
         )
         self.model = settings.AZURE_OPENAI_DEPLOYMENT_NAME
 
+        # Tool Registry for semantic search (injected)
+        self._registry = registry
+
         # Query Router - brza staza za poznate patterne
         self.query_router = QueryRouter()
 
         # Training examples
         self._training_examples: List[Dict] = []
         self._initialized = False
+
+    def set_registry(self, registry: "ToolRegistry"):
+        """Set tool registry for semantic search (allows late binding)."""
+        self._registry = registry
+        logger.info("UnifiedRouter: Registry set for semantic search")
 
     async def initialize(self):
         """Load training data."""
@@ -143,6 +160,57 @@ class UnifiedRouter:
             logger.error(f"Failed to load training data: {e}")
 
         self._initialized = True
+
+    async def _get_relevant_tools(self, query: str, top_k: int = 20) -> Dict[str, str]:
+        """
+        Use semantic search to find relevant tools for this query.
+        
+        Returns dict of {tool_name: description} for top_k most relevant tools.
+        Falls back to PRIMARY_TOOLS if registry not available.
+        """
+        if not self._registry or not self._registry.is_ready:
+            logger.debug("Registry not ready, using PRIMARY_TOOLS fallback")
+            return PRIMARY_TOOLS
+        
+        try:
+            # Use SearchEngine to find relevant tools
+            results = await self._registry._search.find_relevant_tools_with_scores(
+                query=query,
+                tools=self._registry.tools,
+                embeddings=self._registry.embeddings,
+                dependency_graph=self._registry.dependency_graph,
+                retrieval_tools=self._registry.retrieval_tools,
+                mutation_tools=self._registry.mutation_tools,
+                top_k=top_k,
+                threshold=0.40  # Lower threshold for broader search
+            )
+            
+            if not results:
+                logger.debug("No semantic results, using PRIMARY_TOOLS fallback")
+                return PRIMARY_TOOLS
+            
+            # Build dict of tool_name -> description
+            relevant_tools = {}
+            for r in results:
+                tool_name = r["name"]
+                tool = self._registry.get_tool(tool_name)
+                if tool:
+                    # Use tool's summary or build from path/method
+                    desc = tool.summary or f"{tool.method} {tool.path}"
+                    relevant_tools[tool_name] = desc
+            
+            # Always include PRIMARY_TOOLS that are relevant to common operations
+            # This ensures core functionality is always available
+            for tool_name, desc in PRIMARY_TOOLS.items():
+                if tool_name not in relevant_tools:
+                    relevant_tools[tool_name] = desc
+            
+            logger.info(f"🔍 Semantic search found {len(results)} tools, total {len(relevant_tools)} with PRIMARY merge")
+            return relevant_tools
+            
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}, using PRIMARY_TOOLS fallback")
+            return PRIMARY_TOOLS
 
     def _check_exit_signal(self, query: str) -> bool:
         """Check if query contains exit/cancellation signal."""
@@ -248,6 +316,8 @@ class UnifiedRouter:
         """
         await self.initialize()
 
+        logger.info(f"UNIFIED ROUTER START: query='{query[:50]}', has_user_context={user_context is not None}, in_flow={conversation_state is not None}")
+
         # Quick checks before LLM
 
         # 1. Check for greeting
@@ -313,14 +383,16 @@ class UnifiedRouter:
 
         # 4. QUERY ROUTER - Brza staza za poznate patterne (0 tokena, <1ms)
         # Ovo štedi ~80% LLM poziva za jednostavne upite
+        logger.info(f"UNIFIED ROUTER: Trying QueryRouter for query='{query[:50]}'")
         qr_result = self.query_router.route(query, user_context)
+        logger.info(f"UNIFIED ROUTER: QR result: matched={qr_result.matched}, conf={qr_result.confidence}, flow={qr_result.flow_type if qr_result.matched else None}")
         if qr_result.matched and qr_result.confidence >= 1.0:
             # Samo ako je SIGURAN match (confidence=1.0) - izbjegavamo false positives
             logger.info(
                 f"UNIFIED ROUTER: Fast path via QueryRouter → "
                 f"{qr_result.tool_name or qr_result.flow_type} (conf={qr_result.confidence})"
             )
-            return self._query_result_to_decision(qr_result)
+            return self._query_result_to_decision(qr_result, user_context)
 
         # 5. LLM poziv - za kompleksne upite koje Query Router ne prepoznaje
         return await self._llm_route(query, user_context, conversation_state)
@@ -333,11 +405,14 @@ class UnifiedRouter:
     ) -> RouterDecision:
         """Make routing decision using LLM."""
 
-        # Build context description
+        # Build context description - use Swagger field names directly
         vehicle = user_context.get("vehicle", {})
         vehicle_info = ""
-        if vehicle.get("id"):
-            vehicle_info = f"Korisnikovo vozilo: {vehicle.get('name', 'N/A')} ({vehicle.get('plate', 'N/A')})"
+        if vehicle.get("Id"):
+            # Use actual Swagger field names: FullVehicleName, LicencePlate
+            name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "N/A")
+            plate = vehicle.get("LicencePlate", "N/A")
+            vehicle_info = f"Korisnikovo vozilo: {name} ({plate})"
         else:
             vehicle_info = "Korisnik NEMA dodijeljeno vozilo"
 
@@ -358,9 +433,12 @@ class UnifiedRouter:
                     f"  - Nedostaju parametri: {missing}"
                 )
 
+        # Get relevant tools via semantic search (v2.0)
+        relevant_tools = await self._get_relevant_tools(query, top_k=25)
+        
         # Build tools description
-        tools_desc = "Dostupni alati:\n"
-        for tool_name, description in PRIMARY_TOOLS.items():
+        tools_desc = f"Dostupni alati ({len(relevant_tools)} relevantnih):\n"
+        for tool_name, description in relevant_tools.items():
             tools_desc += f"  - {tool_name}: {description}\n"
 
         # Get few-shot examples
@@ -487,7 +565,7 @@ class UnifiedRouter:
 
         if qr_result.matched:
             logger.info(f"FALLBACK: QueryRouter matched → {qr_result.tool_name or qr_result.flow_type}")
-            return self._query_result_to_decision(qr_result, is_fallback=True)
+            return self._query_result_to_decision(qr_result, user_context, is_fallback=True)
 
         # Ultimate fallback - samo ako ni QueryRouter ne match-uje
         logger.warning(f"FALLBACK: QueryRouter no match, defaulting to get_MasterData")
@@ -501,6 +579,7 @@ class UnifiedRouter:
     def _query_result_to_decision(
         self,
         qr_result: RouteResult,
+        user_context: Optional[Dict[str, Any]] = None,
         is_fallback: bool = False
     ) -> RouterDecision:
         """
@@ -508,6 +587,7 @@ class UnifiedRouter:
 
         Args:
             qr_result: Result from QueryRouter
+            user_context: User context for template formatting
             is_fallback: True if called from fallback path (lower confidence)
 
         Returns:
@@ -519,11 +599,36 @@ class UnifiedRouter:
 
         flow_type = qr_result.flow_type
 
-        # 1. Direct response (greetings, help, thanks)
+        # 1. Direct response (greetings, help, thanks, context queries)
         if flow_type == "direct_response":
+            # FORMAT the template with user context
+            response_text = qr_result.response_template
+            if response_text and user_context:
+                # Direct extraction for context queries (person_id, phone, tenant_id)
+                if 'person_id' in response_text:
+                    val = user_context.get('person_id', 'N/A')
+                    response_text = f"👤 **Person ID:** {val}"
+                elif 'phone' in response_text:
+                    val = user_context.get('phone', 'N/A')
+                    response_text = f"📱 **Telefon:** {val}"
+                elif 'tenant_id' in response_text:
+                    val = user_context.get('tenant_id', 'N/A')
+                    response_text = f"🏢 **Tenant ID:** {val}"
+                else:
+                    # For other templates, use format() with simple context
+                    simple_context = {
+                        k: v for k, v in user_context.items() 
+                        if not isinstance(v, (dict, list))
+                    }
+                    try:
+                        response_text = response_text.format(**simple_context)
+                    except (KeyError, ValueError):
+                        # If format fails, return template as-is
+                        pass
+            
             return RouterDecision(
                 action="direct_response",
-                response=qr_result.response_template,
+                response=response_text,
                 reasoning=f"QueryRouter {path_type}: {qr_result.reason}",
                 confidence=confidence
             )

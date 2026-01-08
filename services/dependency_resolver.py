@@ -662,11 +662,12 @@ class DependencyResolver:
         # STRATEGY 1: Possessive - use user's default vehicle
         if reference.is_possessive or reference.reference_type == "possessive":
             vehicle = user_context.get("vehicle", {})
-            vehicle_id = vehicle.get("id") or vehicle.get("vehicle_id")
+            # Use Swagger field names directly
+            vehicle_id = vehicle.get("Id") or vehicle.get("VehicleId")
 
             if vehicle_id:
-                vehicle_name = vehicle.get("name") or vehicle.get("full_name") or "Vaše vozilo"
-                plate = vehicle.get("licence_plate") or vehicle.get("plate", "")
+                vehicle_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName") or "Vaše vozilo"
+                plate = vehicle.get("LicencePlate", "")
 
                 logger.info(
                     f"✅ Resolved possessive to user's vehicle: {vehicle_id}"

@@ -113,7 +113,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 180s
+      start_period: 600s
     labels:
       - "autoheal=true"
     networks:
@@ -146,8 +146,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'python worker.py' || exit 1"]
       interval: 30s
-      timeout: 5s
-      retries: 3
+      timeout: 10s
+      retries: 5
       start_period: 60s
     labels:
       - "autoheal=true"

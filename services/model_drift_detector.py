@@ -371,10 +371,21 @@ class ModelDriftDetector:
         await self._save_report(report)
 
         if alerts:
+            # Structured JSON logging for drift alerts
+            for alert in alerts:
+                logger.warning(
+                    f"🚨 DRIFT_ALERT: type={alert.drift_type}, severity={alert.severity}, "
+                    f"current={alert.current_value:.3f}, baseline={alert.baseline_value:.3f}, "
+                    f"deviation={alert.deviation_percentage:.1f}%"
+                )
+            
+            # Summary log
             logger.warning(
-                f"MODEL DRIFT DETECTED: severity={overall_severity.value}, "
-                f"alerts={len(alerts)}"
+                f"📊 DRIFT_SUMMARY: report_id={report.report_id}, "
+                f"severity={overall_severity.value}, alert_count={len(alerts)}, "
+                f"model={model_version or 'all'}, window_hours={int(self.analysis_window.total_seconds() / 3600)}"
             )
+            
             # Send alert via callback
             await self._send_alert(report)
 

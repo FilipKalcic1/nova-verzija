@@ -167,6 +167,22 @@ class ParameterManager:
         resolved.update(user_params)
         warnings.extend(user_warnings)
 
+        # Step 3.5: CONTEXT -> USER fallback
+        # If a parameter is defined as FROM_USER but is missing, try to
+        # resolve it from user_context as a last resort.
+        user_param_defs = tool.get_user_params()
+        for param_name in user_param_defs:
+            if param_name not in resolved or resolved[param_name] is None:
+                # Case-insensitive search in user_context
+                for key, value in execution_context.user_context.items():
+                    if key.lower() == param_name.lower():
+                        if value is not None:
+                            resolved[param_name] = value
+                            logger.debug(
+                                f"CONTEXT->USER fallback for '{param_name}'"
+                            )
+                            break
+
         # Step 4: Validate and cast types
         validated, cast_warnings = self._validate_and_cast(tool, resolved)
         warnings.extend(cast_warnings)
@@ -213,6 +229,11 @@ class ParameterManager:
             Result: {"filter": {"tenant_id": "abc123", "person_id": "user_456"}}
         """
         injected = {}
+
+        # DEBUG v21.1: Log what we're trying to inject
+        logger.info(f"🔍 _inject_context_params for {tool.operation_id}")
+        logger.info(f"🔍 user_context keys: {list(user_context.keys())}")
+        logger.info(f"🔍 person_id in context: {user_context.get('person_id', 'NOT FOUND')}")
 
         # FIX v13.3: Skip certain params that have incorrect context_key in Swagger metadata
         # VehicleId should come from user context vehicle.id, not person_id

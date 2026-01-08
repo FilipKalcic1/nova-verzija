@@ -37,6 +37,20 @@ class ParameterDefinition(BaseModel):
     # For context injection
     context_key: Optional[str] = None  # Key in user_context dict
 
+    # SURVIVAL KIT: Operator support for filter building
+    preferred_operator: str = Field(
+        default="(=)",
+        description="Preferred operator for filter: (=), (contains), (startsWith), (endsWith), (>), (<), (>=), (<=)"
+    )
+    is_filterable: bool = Field(
+        default=False,
+        description="Indicates if this parameter can be used for filtering"
+    )
+    filter_format: Optional[str] = Field(
+        default=None,
+        description="Filter format pattern, e.g., '{name}({operator}){value}' or 'OData'"
+    )
+
     @field_validator('location')
     @classmethod
     def validate_location(cls, v: str) -> str:

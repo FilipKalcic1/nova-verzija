@@ -448,7 +448,12 @@ class Worker:
             self._message_engine.db = db
 
             try:
-                return await self._message_engine.process(sender, text, message_id)
+                response = await self._message_engine.process(sender, text, message_id)
+                
+                # DEBUG: Log response
+                print(f"\n🔷 RESPONSE ({len(response) if response else 0} chars): {response[:200] if response else 'NONE'}...\n", flush=True)
+                
+                return response
             except Exception as e:
                 await db.rollback()
                 log("error", "engine_error_rollback", {"error": str(e)})

@@ -1,9 +1,11 @@
 """
 User Service
-Version: 10.0
+Version: 11.0
 
 User identity management.
 DEPENDS ON: api_gateway.py, cache_service.py, models.py, config.py
+
+v11.0: Uses SchemaExtractor for schema-driven field access
 """
 
 import logging
@@ -15,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from models import UserMapping
 from config import get_settings
+from services.schema_extractor import get_schema_extractor
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -115,7 +118,10 @@ class UserService:
         - Log API errors separately from bot errors
         """
         if not self.gateway:
+            logger.error(f"ONBOARD FAIL: Gateway is None! Cannot auto-onboard user {phone}")
             return None
+        
+        logger.info(f"🔍 AUTO-ONBOARD START for {phone}, gateway={type(self.gateway).__name__}")
 
         try:
             # Generate phone variations to maximize match chance
@@ -132,9 +138,9 @@ class UserService:
 
             from services.api_gateway import HttpMethod
 
-            # Fields to try - start with most reliable
-            # NOTE: "Mobile" often returns 500 on older MobilityOne versions
-            fields_to_try = ["Phone"]  # Mobile removed - not supported by all API versions
+            # Fields to try - Phone first, Mobile as fallback
+            # NOTE: Some MobilityOne versions return 500 for Mobile - handled gracefully
+            fields_to_try = ["Phone", "Mobile"]
 
             # Track API errors for monitoring
             api_errors = []
@@ -180,8 +186,17 @@ class UserService:
                             person = items[0]
                             person_id = person.get("Id")
                             display_name = person.get("DisplayName", "Korisnik")
+                            
+                            # CRITICAL: Validate phone matches!
+                            api_phone = str(person.get("Phone") or person.get("Mobile") or "")
+                            if not self._phones_match(phone, api_phone):
+                                logger.warning(
+                                    f"⚠️ Phone mismatch! Input: {phone[-4:]}, API: {api_phone[-4:] if api_phone else 'N/A'}. "
+                                    f"Skipping person {person_id[:8]}..."
+                                )
+                                continue  # Try next variation
 
-                            logger.info(f"✅ Korisnik pronađen preko polja '{field}': {display_name}")
+                            logger.info(f"✅ Korisnik pronađen i validiran preko polja '{field}': {display_name}")
 
                             # Spremanje u bazu
                             await self._upsert_mapping(phone, person_id, display_name)
@@ -223,8 +238,45 @@ class UserService:
         
         return name
     
-    async def _get_vehicle_info(self, person_id: str) -> str:
-        """Get vehicle description for person."""
+    def _phones_match(self, input_phone: str, api_phone: str) -> bool:
+        """
+        Validate that phone numbers match.
+        
+        Compares last 9 digits to handle different formats:
+        - +385955087196
+        - 385955087196
+        - 0955087196
+        
+        Args:
+            input_phone: Phone from user input
+            api_phone: Phone from API response
+            
+        Returns:
+            True if phones match
+        """
+        clean_input = "".join(c for c in str(input_phone) if c.isdigit())
+        clean_api = "".join(c for c in str(api_phone) if c.isdigit())
+        
+        # Exact match
+        if clean_input == clean_api:
+            return True
+        
+        # Last 9 digits match (handles country code differences)
+        if len(clean_input) >= 9 and len(clean_api) >= 9:
+            return clean_input[-9:] == clean_api[-9:]
+        
+        return False
+    
+    async def _get_vehicle_info(self, person_id: str) -> Dict[str, Any]:
+        """
+        Get ALL vehicle data for person.
+        
+        Returns complete data dict from API - no field filtering.
+        Schema-driven: returns whatever API provides.
+        
+        Returns:
+            Dict with ALL fields from MasterData API response
+        """
         try:
             from services.api_gateway import HttpMethod
             
@@ -235,25 +287,102 @@ class UserService:
             )
             
             if not response.success:
-                return "Nepoznato"
+                print(f"❌ MasterData API failed: {response}", flush=True)
+                return {}
             
-            data = response.data
+            print(f"✅ MasterData API success - extracting data...", flush=True)
             
-            if isinstance(data, list):
-                data = data[0] if data else {}
-            elif isinstance(data, dict) and "Data" in data:
-                items = data["Data"]
-                data = items[0] if items else {}
+            # DEBUG: Log raw MasterData response
+            print(f"🔍 RAW MasterData response keys: {list(response.data.keys()) if isinstance(response.data, dict) else type(response.data)}", flush=True)
+            if isinstance(response.data, dict):
+                raw_plate = response.data.get("LicencePlate", "N/A")
+                raw_id = response.data.get("Id", "N/A")
+                print(f"🔍 RAW MasterData - LicencePlate: {raw_plate}, ID: {str(raw_id)[:8]}...", flush=True)
             
-            plate = data.get("LicencePlate") or data.get("Plate")
-            name = data.get("FullVehicleName") or data.get("DisplayName")
+            # Use SchemaExtractor - returns ALL fields, no filtering
+            extractor = get_schema_extractor()
+            vehicle_data = extractor.extract_all(response.data, "get_MasterData")
             
-            if plate:
-                return f"{name or 'Vozilo'} ({plate})"
-            return name or "Nema dodijeljenog vozila"
+            # DEBUG: Log after extraction
+            print(f"🔍 AFTER extraction - LicencePlate: {vehicle_data.get('LicencePlate', 'N/A')}, ID: {str(vehicle_data.get('Id', 'N/A'))[:8]}...", flush=True)
             
-        except Exception:
-            return "Nepoznato"
+            print(f"✅ Extracted vehicle data: {list(vehicle_data.keys())[:10]}...", flush=True)
+            
+            # Get vehicle ID from MasterData response for matching
+            master_vehicle_id = vehicle_data.get("Id")
+            if not master_vehicle_id:
+                print("⚠️ No vehicle ID in MasterData, skipping PeriodicActivities update", flush=True)
+                return vehicle_data
+            
+            print(f"🔧 Fetching FRESH PeriodicActivities for vehicle {master_vehicle_id[:8]}...", flush=True)
+            
+            # WORKAROUND: Use /vehiclemgt/Vehicles endpoint which WORKS with 'vehicles' scope!
+            # This has fresh PeriodicActivities data (unlike automation/MasterData)
+            try:
+                # Use APIGateway execute method (already has token & tenant header management)
+                vehicles_response = await self.gateway.execute(
+                    method=HttpMethod.GET,
+                    path="/vehiclemgt/Vehicles",
+                    params={
+                        "Filter": [f"DriverId={person_id}"],
+                        "Rows": 20  # Get more vehicles in case person has multiple
+                    }
+                )
+                
+                print(f"📌 /vehiclemgt/Vehicles response: success={vehicles_response.success}", flush=True)
+                
+                if vehicles_response.success and vehicles_response.data:
+                    # Extract vehicles from response
+                    vehicles = vehicles_response.data.get("Data", []) if isinstance(vehicles_response.data, dict) else vehicles_response.data
+                    
+                    print(f"📌 Found {len(vehicles)} total vehicles for driver", flush=True)
+                    
+                    if vehicles:
+                        # CRITICAL: Match by vehicle ID, don't just take first!
+                        matching_vehicle = None
+                        for vehicle in vehicles:
+                            if vehicle.get("Id") == master_vehicle_id:
+                                matching_vehicle = vehicle
+                                print(f"✅ Found MATCHING vehicle by ID: {master_vehicle_id[:8]}...", flush=True)
+                                break
+                        
+                        if not matching_vehicle and len(vehicles) > 0:
+                            # Fallback: If no match, use first vehicle but warn
+                            matching_vehicle = vehicles[0]
+                            print(f"⚠️ No ID match! Using first vehicle {matching_vehicle.get('Id', 'unknown')[:8]}...", flush=True)
+                        
+                        if matching_vehicle:
+                            # Extract FRESH PeriodicActivities
+                            if "PeriodicActivities" in matching_vehicle and matching_vehicle["PeriodicActivities"]:
+                                fresh_activities = matching_vehicle["PeriodicActivities"]
+                                print(f"✅ FRESH PeriodicActivities found with {len(fresh_activities)} activities", flush=True)
+                                
+                                # OVERRIDE stale data with FRESH data
+                                vehicle_data["PeriodicActivities"] = fresh_activities
+                                
+                                # Log dates for verification
+                                for name, data in fresh_activities.items():
+                                    if isinstance(data, dict) and "ExpiryDate" in data:
+                                        print(f"  • {name}: {data['ExpiryDate']}", flush=True)
+                            else:
+                                print("⚠️ No PeriodicActivities in matched vehicle", flush=True)
+                        else:
+                            print("⚠️ No vehicles available to match", flush=True)
+                    else:
+                        print("⚠️ Empty vehicles list returned", flush=True)
+                else:
+                    print(f"⚠️ /vehiclemgt/Vehicles call failed or empty", flush=True)
+                        
+            except Exception as e:
+                print(f"❌ Could not fetch from /vehiclemgt/Vehicles: {e}", flush=True)
+                import traceback
+                traceback.print_exc()
+            
+            return vehicle_data
+            
+        except Exception as e:
+            logger.debug(f"Vehicle info failed: {e}")
+            return {}
     
 
     #self, phone: str, person_id: str, name: str
@@ -265,6 +394,7 @@ class UserService:
                 phone_number=phone,
                 api_identity=person_id,
                 display_name=name,
+                tenant_id=self.tenant_id,
                 is_active=True,
                 updated_at=datetime.utcnow()
             ).on_conflict_do_update(
@@ -272,6 +402,7 @@ class UserService:
                 set_={
                     'api_identity': person_id,
                     'display_name': name,
+                    'tenant_id': self.tenant_id,
                     'is_active': True,
                     'updated_at': datetime.utcnow()
                 }
@@ -291,6 +422,9 @@ class UserService:
         """
         Build operational context for user.
         
+        Uses SchemaExtractor for schema-driven field access.
+        Caches result for 5 minutes to reduce API calls.
+        
         Args:
             person_id: MobilityOne person ID
             phone: Phone number
@@ -298,6 +432,19 @@ class UserService:
         Returns:
             Context dictionary
         """
+        # Check cache first (5 min TTL)
+        cache_key = f"context:{person_id}"
+        if self.cache:
+            try:
+                cached = await self.cache.get(cache_key)
+                if cached:
+                    import json
+                    logger.info(f"BUILD_CONTEXT: Using cached context for {person_id[:8]}...")
+                    return json.loads(cached)
+            except Exception as e:
+                logger.debug(f"Cache read failed: {e}")
+        
+        logger.info(f"BUILD_CONTEXT: person_id={person_id}, phone={phone}, tenant_id={self.tenant_id}")
         context = {
             "person_id": person_id,
             "phone": phone,
@@ -305,39 +452,176 @@ class UserService:
             "display_name": "Korisnik",
             "vehicle": {}
         }
+        logger.info(f"BUILD_CONTEXT: Created context with keys: {list(context.keys())}")
         
         if not self.gateway:
             return context
         
         try:
-            from services.api_gateway import HttpMethod
+            # Get ALL vehicle data - no field filtering
+            vehicle_data = await self._get_vehicle_info(person_id)
             
-            response = await self.gateway.execute(
-                method=HttpMethod.GET,
-                path="/automation/MasterData",
-                params={"personId": person_id}
-            )
-            
-            if response.success:
-                data = response.data
+            if vehicle_data:
+                # Pass ALL data from API - schema-driven
+                context["vehicle"] = vehicle_data
                 
-                if isinstance(data, list):
-                    data = data[0] if data else {}
-                elif isinstance(data, dict) and "Data" in data:
-                    data = data["Data"][0] if data["Data"] else {}
-                
-                context["vehicle"] = {
-                    "id": data.get("Id") or data.get("VehicleId") or "",
-                    "plate": data.get("LicencePlate") or data.get("Plate") or "",
-                    "name": data.get("FullVehicleName") or "Vozilo",
-                    "vin": data.get("VIN") or "",
-                    "mileage": str(data.get("Mileage", "N/A"))
-                }
-                
-                if data.get("Driver"):
-                    context["display_name"] = self._extract_name({"DisplayName": data["Driver"]})
+                # Extract display name if available
+                if vehicle_data.get("Driver"):
+                    context["display_name"] = self._extract_name({"DisplayName": vehicle_data["Driver"]})
                     
         except Exception as e:
             logger.warning(f"Build context failed: {e}")
         
+        # Cache valid context for 5 minutes
+        if self.cache and context.get("vehicle"):
+            try:
+                import json
+                await self.cache.set(cache_key, json.dumps(context), ttl=300)
+                logger.info(f"BUILD_CONTEXT: Cached context for {person_id[:8]}... (5 min TTL)")
+            except Exception as e:
+                logger.debug(f"Cache write failed: {e}")
+        
         return context
+
+    async def invalidate_context_cache(self, person_id: str) -> bool:
+        """
+        Invalidate cached context for a user.
+        
+        Call this when:
+        - Vehicle data changes
+        - User reports stale data
+        - After refresh_user_from_api()
+        
+        Args:
+            person_id: MobilityOne person ID
+            
+        Returns:
+            True if cache was invalidated
+        """
+        if not self.cache:
+            return False
+            
+        cache_key = f"context:{person_id}"
+        try:
+            await self.cache.delete(cache_key)
+            logger.info(f"Invalidated context cache for {person_id[:8]}...")
+            return True
+        except Exception as e:
+            logger.warning(f"Cache invalidation failed: {e}")
+            return False
+
+    async def refresh_user_from_api(self, phone: str) -> Optional[Tuple[str, str]]:
+        """
+        Force refresh user data from API, ignoring database cache.
+        
+        Use this when:
+        - User reports wrong vehicle info
+        - Suspected stale data
+        - After vehicle change
+        
+        Args:
+            phone: Phone number
+            
+        Returns:
+            (display_name, vehicle_info) tuple or None
+        """
+        logger.info(f"🔄 FORCE REFRESH for {phone[-4:]}...")
+        
+        # Delete existing mapping to force fresh lookup
+        try:
+            from sqlalchemy import delete
+            stmt = delete(UserMapping).where(UserMapping.phone_number == phone)
+            await self.db.execute(stmt)
+            await self.db.commit()
+            logger.info(f"🗑️ Deleted old mapping for {phone[-4:]}")
+        except Exception as e:
+            logger.warning(f"Could not delete old mapping: {e}")
+            await self.db.rollback()
+        
+        # Also invalidate context cache for all possible person_ids
+        # We need to get old person_id first
+        old_user = await self.get_active_identity(phone)
+        if old_user and old_user.api_identity:
+            await self.invalidate_context_cache(old_user.api_identity)
+        
+        # Now do fresh onboard
+        return await self.try_auto_onboard(phone)
+    
+    async def verify_user_identity(self, phone: str) -> Dict[str, Any]:
+        """
+        Debug method to verify user identity chain.
+        
+        Returns detailed info about:
+        - Database record
+        - API lookup result
+        - Phone validation status
+        
+        Args:
+            phone: Phone number
+            
+        Returns:
+            Debug info dictionary
+        """
+        result = {
+            "phone": phone,
+            "database": None,
+            "api": None,
+            "phone_match": None,
+            "recommendation": None
+        }
+        
+        # 1. Check database
+        db_user = await self.get_active_identity(phone)
+        if db_user:
+            result["database"] = {
+                "person_id": db_user.api_identity,
+                "display_name": db_user.display_name,
+                "updated_at": str(db_user.updated_at) if db_user.updated_at else None
+            }
+        
+        # 2. Check API
+        if self.gateway:
+            from services.api_gateway import HttpMethod
+            
+            digits_only = "".join(c for c in phone if c.isdigit())
+            response = await self.gateway.execute(
+                HttpMethod.GET,
+                "/tenantmgt/Persons",
+                params={"Filter": f"Phone(=){digits_only}", "Rows": 5}
+            )
+            
+            if response.success:
+                items = response.data.get("Data", []) if isinstance(response.data, dict) else response.data
+                if items:
+                    api_person = items[0]
+                    api_phone = api_person.get("Phone") or api_person.get("Mobile") or ""
+                    
+                    result["api"] = {
+                        "person_id": api_person.get("Id"),
+                        "display_name": api_person.get("DisplayName"),
+                        "phone": api_phone,
+                        "total_matches": len(items)
+                    }
+                    
+                    # 3. Phone validation
+                    result["phone_match"] = self._phones_match(phone, api_phone)
+        
+        # 4. Recommendation
+        if result["database"] and result["api"]:
+            db_id = result["database"]["person_id"]
+            api_id = result["api"]["person_id"]
+            
+            if db_id != api_id:
+                result["recommendation"] = "⚠️ DATABASE STALE! person_id mismatch. Run refresh_user_from_api()"
+            elif not result["phone_match"]:
+                result["recommendation"] = "⚠️ PHONE MISMATCH! Wrong person may be linked. Run refresh_user_from_api()"
+            else:
+                result["recommendation"] = "✅ OK - database matches API"
+        elif result["api"] and not result["database"]:
+            result["recommendation"] = "ℹ️ User not in database yet - will be auto-onboarded"
+        elif result["database"] and not result["api"]:
+            result["recommendation"] = "⚠️ User in database but NOT in API! May be deleted in MobilityOne"
+        else:
+            result["recommendation"] = "❌ User not found anywhere"
+        
+        return result

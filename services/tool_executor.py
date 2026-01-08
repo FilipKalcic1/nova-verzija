@@ -98,11 +98,31 @@ class ToolExecutor:
                 for warning in warnings:
                     logger.warning(f"⚠️ {warning}")
 
+            # FIX v21.0: Inject PATH parameters from context BEFORE prepare_request
+            # PATH params like personIdOrEmail need to be in resolved_params for path substitution
+            person_id = execution_context.user_context.get("person_id")
+            if person_id:
+                for param_name, param_def in tool.parameters.items():
+                    if param_def.location == "path" and param_def.context_key == "person_id":
+                        if param_name not in resolved_params or not resolved_params.get(param_name):
+                            resolved_params[param_name] = person_id
+                            logger.info(f"🎯 PATH INJECT: {param_name}={person_id[:8]}... for {operation_id}")
+
             # Prepare request components
             path, query_params, body = self.param_manager.prepare_request(
                 tool=tool,
                 params=resolved_params
             )
+
+            # Build and inject filter string for GET requests
+            if tool.method == "GET":
+                from services.filter_builder import FilterBuilder
+                filter_string = FilterBuilder.build_filter_string(tool, resolved_params)
+                if filter_string:
+                    if query_params is None:
+                        query_params = {}
+                    query_params["Filter"] = filter_string
+                    logger.info(f"Built filter string: {filter_string}")
 
             # FIX v13.2: INJECT PERSON_ID DIRECTLY INTO QUERY PARAMS
             # This bypasses parameter_manager validation which was filtering out
@@ -165,7 +185,8 @@ class ToolExecutor:
                     logger.debug("Injected AssigneeType=1 (PERSON) for VehicleCalendar")
 
             # Build full URL using STRICT Master Prompt v3.1 formula
-            full_url = self._build_url(tool)
+            # FIX v21.4: Pass resolved path (with PATH params substituted) to _build_url
+            full_url = self._build_url(tool, resolved_path=path)
 
             # VALIDATE: HTTP Method and URL construction
             self._validate_http_request(
@@ -363,7 +384,7 @@ class ToolExecutor:
             f"(query={bool(query_params)}, body={bool(body)})"
         )
 
-    def _build_url(self, tool: "UnifiedToolDefinition") -> str:
+    def _build_url(self, tool: "UnifiedToolDefinition", resolved_path: str = None) -> str:
         """
         Build full URL using STRICT MASTER PROMPT v3.1 formula.
 
@@ -375,6 +396,7 @@ class ToolExecutor:
 
         Args:
             tool: UnifiedToolDefinition with swagger_name, service_url, path
+            resolved_path: Optional path with PATH parameters already substituted
 
         Returns:
             Relative URL string (APIGateway will prepend base_url)
@@ -383,7 +405,8 @@ class ToolExecutor:
         # Formula: base_url + "/" + swagger_name + "/" + path.lstrip('/')
 
         swagger_name = tool.swagger_name
-        path = tool.path
+        # FIX v21.4: Use resolved_path if provided (PATH params already substituted)
+        path = resolved_path if resolved_path else tool.path
         service_url = tool.service_url
 
         # Case 1: If path is absolute (complete URL), use it directly

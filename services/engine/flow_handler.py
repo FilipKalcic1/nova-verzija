@@ -111,22 +111,16 @@ class FlowHandler:
                 )
             }
 
-        # Show first vehicle
+        # Show first vehicle - use Swagger field names only
         first_vehicle = items[0]
 
         vehicle_name = (
             first_vehicle.get("FullVehicleName") or
             first_vehicle.get("DisplayName") or
-            first_vehicle.get("Name") or
             "Vozilo"
         )
-        plate = (
-            first_vehicle.get("LicencePlate") or
-            first_vehicle.get("Plate") or
-            first_vehicle.get("RegistrationNumber") or
-            "N/A"
-        )
-        vehicle_id = first_vehicle.get("Id") or first_vehicle.get("VehicleId")
+        plate = first_vehicle.get("LicencePlate", "N/A")
+        vehicle_id = first_vehicle.get("Id")
 
         # CRITICAL FIX v15.1: Store ALL items for later display
         await conv_manager.set_displayed_items(items)
@@ -277,10 +271,9 @@ class FlowHandler:
                         v_name = (
                             vehicle.get("FullVehicleName") or
                             vehicle.get("DisplayName") or
-                            vehicle.get("Name") or
                             "Vozilo"
                         )
-                        plate = vehicle.get("LicencePlate") or vehicle.get("Plate") or "N/A"
+                        plate = vehicle.get("LicencePlate", "N/A")
                         message += f"{idx}. **{v_name}** ({plate})\n"
 
                     message += "\n_Recite broj vozila koje želite (npr. '2') ili 'odustani' za povratak._"

@@ -80,14 +80,18 @@ class SearchEngine:
         "get_boost_on_read_intent": 0.05,
     }
 
-    MAX_TOOLS_PER_RESPONSE = 12
+    MAX_TOOLS_PER_RESPONSE = 20  # Increased from 12 to give LLM more options
 
     # Category matching configuration
+    # NOTE: Training boost REDUCED from 0.35 to 0.15 to prevent training examples
+    # from dominating tool selection. LLM should make the final decision based on
+    # understanding, not based on which tools have more training examples.
+    # See: https://github.com/MobilityOne/bot/issues/xxx - Fair tool selection
     CATEGORY_CONFIG = {
         "category_boost": 0.12,        # Boost for tools in matching category
         "keyword_match_boost": 0.08,   # Boost for keyword matches
         "documentation_boost": 0.10,   # Boost when query matches tool documentation
-        "training_match_boost": 0.35,  # Boost when similar to training examples (increased from 0.15)
+        "training_match_boost": 0.15,  # REDUCED from 0.35 - Let LLM decide, not training bias!
     }
 
     def __init__(self):
@@ -204,6 +208,11 @@ class SearchEngine:
 
         scored.sort(key=lambda x: x[0], reverse=True)
 
+        # INTENT-AWARE WILDCARD INJECTION
+        # Ensure tools matching detected intent are always considered by LLM
+        # This prevents training bias from excluding the correct HTTP method
+        scored = self._inject_intent_matching_tools(query, scored, tools, search_pool, embeddings)
+
         # Expansion search if needed
         if len(scored) < top_k and len(scored) > 0:
             keyword_matches = self._description_keyword_search(query, search_pool, tools)
@@ -224,20 +233,25 @@ class SearchEngine:
         boosted_tools = self._apply_dependency_boosting(base_tools, dependency_graph)
         final_tools = boosted_tools[:self.MAX_TOOLS_PER_RESPONSE]
 
-        # Build result
+        # Build result with PILLAR 6: Origin Guide injection
         result = []
         scored_dict = {op_id: score for score, op_id in scored}
 
         for tool_id in final_tools:
             schema = tools[tool_id].to_openai_function()
             score = scored_dict.get(tool_id, 0.0)
+
+            # PILLAR 6: Inject origin guide into result
+            origin_guide = self._get_origin_guide(tool_id)
+
             result.append({
                 "name": tool_id,
                 "score": score,
-                "schema": schema
+                "schema": schema,
+                "origin_guide": origin_guide  # NEW: Parameter origin info
             })
 
-        logger.info(f"📦 Returning {len(result)} tools with scores")
+        logger.info(f"📦 Returning {len(result)} tools with scores and origin guides")
         return result
 
     async def _get_query_embedding(self, query: str) -> Optional[List[float]]:
@@ -314,6 +328,84 @@ class SearchEngine:
                 adjusted.append((score, op_id))
 
         return adjusted
+
+    def _inject_intent_matching_tools(
+        self,
+        query: str,
+        scored: List[Tuple[float, str]],
+        tools: Dict[str, UnifiedToolDefinition],
+        search_pool: set,
+        embeddings: Dict[str, List[float]]
+    ) -> List[Tuple[float, str]]:
+        """
+        INTENT-AWARE WILDCARD INJECTION
+        
+        Ensures that tools matching detected intent are ALWAYS in candidate list,
+        even if they don't have training examples. This prevents training bias
+        from completely excluding correct tools.
+        
+        Example:
+        - Query: "obriši vozilo" (DELETE intent)
+        - Training only has examples for VehicleMgt_UpdateVehicle
+        - Without this: delete_Vehicles_id might not reach LLM
+        - With this: delete_Vehicles_id is injected with minimum score
+        
+        The LLM (not embeddings) should make the final decision!
+        """
+        query_lower = query.lower().strip()
+        scored_tools = {op_id for _, op_id in scored}
+        
+        # Detect DELETE intent
+        delete_keywords = ["obriši", "obrisi", "delete", "ukloni", "makni", "izbriši", "izbrisi"]
+        is_delete_intent = any(kw in query_lower for kw in delete_keywords)
+        
+        # Detect CREATE/POST intent  
+        create_keywords = ["dodaj", "kreiraj", "napravi", "novi", "nova", "prijavi", "unesi"]
+        is_create_intent = any(kw in query_lower for kw in create_keywords)
+        
+        # Detect UPDATE intent
+        update_keywords = ["ažuriraj", "azuriraj", "promijeni", "izmijeni", "update", "edit"]
+        is_update_intent = any(kw in query_lower for kw in update_keywords)
+        
+        injected = list(scored)  # Copy
+        injection_score = 0.50  # Minimum score to be considered
+        max_injections = 5  # Don't flood with wildcards
+        injections_count = 0
+        
+        for op_id in search_pool:
+            if op_id in scored_tools:
+                continue  # Already in results
+            if injections_count >= max_injections:
+                break
+                
+            tool = tools.get(op_id)
+            if not tool:
+                continue
+            
+            should_inject = False
+            
+            # DELETE intent → inject delete_ tools
+            if is_delete_intent and (tool.method == "DELETE" or "delete" in op_id.lower()):
+                should_inject = True
+                
+            # CREATE intent → inject post_ tools (but not search POSTs)
+            elif is_create_intent and tool.method == "POST":
+                is_search_post = any(x in op_id.lower() for x in ["search", "query", "filter", "find"])
+                if not is_search_post:
+                    should_inject = True
+                    
+            # UPDATE intent → inject put_/patch_ tools
+            elif is_update_intent and tool.method in ("PUT", "PATCH"):
+                should_inject = True
+            
+            if should_inject:
+                injected.append((injection_score, op_id))
+                injections_count += 1
+                logger.info(f"🎯 WILDCARD INJECT: {op_id} (intent match, no training)")
+        
+        # Re-sort after injection
+        injected.sort(key=lambda x: x[0], reverse=True)
+        return injected
 
     def _apply_user_specific_boosting(
         self,
@@ -611,6 +703,23 @@ class SearchEngine:
             return None
         return self._tool_documentation.get(tool_id)
 
+    def _get_origin_guide(self, tool_id: str) -> Dict[str, str]:
+        """
+        PILLAR 6: Get parameter origin guide for a tool.
+
+        Returns dict mapping parameter names to their origins:
+        {
+            "personId": "CONTEXT: Sustav automatski ubacuje",
+            "vehicleId": "USER: Korisnik mora navesti",
+            ...
+        }
+        """
+        if not self._tool_documentation:
+            return {}
+
+        doc = self._tool_documentation.get(tool_id, {})
+        return doc.get("parameter_origin_guide", {})
+
     def get_tool_category(self, tool_id: str) -> Optional[str]:
         """Get category for a specific tool."""
         return self._tool_to_category.get(tool_id)
@@ -906,7 +1015,7 @@ class SearchEngine:
         boosted_tools = self._apply_dependency_boosting(base_tools, dependency_graph)
         final_tools = boosted_tools[:self.MAX_TOOLS_PER_RESPONSE]
 
-        # Build result
+        # Build result with PILLAR 6: Origin Guide injection
         result = []
         scored_dict = {op_id: score for score, op_id in scored}
 
@@ -915,11 +1024,16 @@ class SearchEngine:
                 continue
             schema = tools[tool_id].to_openai_function()
             score = scored_dict.get(tool_id, 0.0)
+
+            # PILLAR 6: Inject origin guide into result
+            origin_guide = self._get_origin_guide(tool_id)
+
             result.append({
                 "name": tool_id,
                 "score": score,
-                "schema": schema
+                "schema": schema,
+                "origin_guide": origin_guide  # NEW: Parameter origin info
             })
 
-        logger.info(f"📦 Returning {len(result)} tools (filtered search)")
+        logger.info(f"📦 Returning {len(result)} tools (filtered search with origin guides)")
         return result
