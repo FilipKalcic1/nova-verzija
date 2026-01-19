@@ -150,8 +150,6 @@ class UnifiedRouter:
         # v2.0: Ambiguity detector for disambiguation
         self._ambiguity_detector: Optional[AmbiguityDetector] = None
 
-        # Training examples
-        self._training_examples: List[Dict] = []
         self._initialized = False
 
     def set_registry(self, registry: "ToolRegistry"):
@@ -160,15 +158,10 @@ class UnifiedRouter:
         logger.info("UnifiedRouter: Registry set for semantic search")
 
     async def initialize(self):
-        """Initialize router (v4.0 - no training_queries.json)."""
+        """Initialize router."""
         if self._initialized:
             return
-
-        # v4.0: training_queries.json REMOVED (unreliable, only 55% coverage)
-        # Now using tool_documentation.json exclusively via FAISS
-        self._training_examples = []  # Deprecated
-        logger.info("UnifiedRouter: Initialized (v4.0 - uses tool_documentation.json)")
-
+        logger.info("UnifiedRouter: Initialized (uses tool_documentation.json via FAISS)")
         self._initialized = True
 
     async def _get_relevant_tools_with_ambiguity(
@@ -298,51 +291,6 @@ class UnifiedRouter:
                 return response
 
         return None
-
-    def _get_few_shot_examples(self, query: str, current_flow: Optional[str] = None) -> str:
-        """Get relevant few-shot examples."""
-        examples = []
-        query_lower = query.lower()
-
-        # Keywords to match examples
-        keywords_map = {
-            "kilometr": ["post_AddMileage", "get_MasterData", "get_MileageReports"],
-            "km": ["post_AddMileage", "get_MasterData"],
-            "registracij": ["get_MasterData"],
-            "tablica": ["get_MasterData"],
-            "rezerv": ["post_VehicleCalendar", "get_VehicleCalendar", "get_AvailableVehicles"],
-            "booking": ["post_VehicleCalendar", "get_VehicleCalendar"],
-            "slobodn": ["get_AvailableVehicles"],
-            "dostupn": ["get_AvailableVehicles"],
-            "šteta": ["post_AddCase"],
-            "kvar": ["post_AddCase"],
-            "prijavi": ["post_AddCase"],
-            "troskov": ["get_Expenses"],
-            "trip": ["get_Trips"],
-            "putovanj": ["get_Trips"],
-        }
-
-        # Find matching tools
-        matching_tools = set()
-        for keyword, tools in keywords_map.items():
-            if keyword in query_lower:
-                matching_tools.update(tools)
-
-        # Get examples for matching tools
-        for ex in self._training_examples:
-            if ex.get("primary_tool") in matching_tools:
-                examples.append(ex)
-                if len(examples) >= 5:
-                    break
-
-        if not examples:
-            return ""
-
-        result = "Primjeri sličnih upita:\n"
-        for ex in examples[:5]:
-            result += f'- "{ex["query"]}" → {ex["primary_tool"]}\n'
-
-        return result
 
     async def route(
         self,
@@ -490,9 +438,6 @@ class UnifiedRouter:
         for tool_name, description in relevant_tools.items():
             tools_desc += f"  - {tool_name}: {description}\n"
 
-        # Get few-shot examples
-        examples = self._get_few_shot_examples(query, conversation_state.get("flow") if conversation_state else None)
-
         # v2.0: Build disambiguation hints if ambiguity detected
         disambiguation_section = ""
         if ambiguity_result and ambiguity_result.is_ambiguous:
@@ -519,8 +464,6 @@ class UnifiedRouter:
         {flow_info}
 
         {tools_desc}
-
-        {examples}
         {disambiguation_section}
 
         PRAVILA:
