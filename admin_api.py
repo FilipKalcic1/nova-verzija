@@ -1,6 +1,6 @@
 """
 Admin API - DATABASE-BACKED, Physically Isolated from Bot API
-Version: 2.2 - Enterprise Security + Database + Drift Detection + Cost Tracking
+Version: 2.3 - Enterprise Security + Database + Drift Detection + Cost Tracking
 
 SIGURNOSNA ARHITEKTURA:
 - Ovaj API radi na ZASEBNOM PORTU (8080)
@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("Cannot start without database")
 
     # Initialize Redis for drift detector
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_url = os.environ["REDIS_URL"]  # REQUIRED - no default
     try:
         app.state.redis = aioredis.from_url(
             redis_url,
@@ -145,11 +145,7 @@ app = FastAPI(
 # CORS - Restrict to internal domains only
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://admin.mobilityone.io",
-        "http://localhost:3000",
-        "http://localhost:8080",
-    ],
+    allow_origins=os.getenv("ADMIN_CORS_ORIGINS", "https://admin.mobilityone.io").split(","),
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["X-Admin-Token", "Content-Type"],
@@ -194,7 +190,7 @@ class RedisRateLimiter:
         self._init_redis()
 
     def _init_redis(self):
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis_url = os.environ["REDIS_URL"]  # REQUIRED - no default
         try:
             self.redis = aioredis.from_url(redis_url, decode_responses=True)
             logging.info(f"Rate limiter connected to Redis: {redis_url}")

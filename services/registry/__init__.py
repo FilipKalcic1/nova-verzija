@@ -367,7 +367,7 @@ class ToolRegistry:
         if use_faiss:
             try:
                 from services.faiss_vector_store import get_faiss_store
-                from services.action_intent_detector import detect_action_intent
+                from services.intent_classifier import detect_action_intent
 
                 faiss_store = get_faiss_store()
 

@@ -35,6 +35,7 @@ from services.parameter_manager import ParameterManager, ParameterValidationErro
 from services.circuit_breaker import CircuitBreaker, CircuitOpenError
 from services.error_parser import ErrorParser
 from services.patterns import should_skip_person_id_injection
+from services.context import UserContextManager
 
 if TYPE_CHECKING:
     from services.tool_registry import ToolRegistry
@@ -118,7 +119,9 @@ class ToolExecutor:
 
             # FIX v21.0: Inject PATH parameters from context BEFORE prepare_request
             # PATH params like personIdOrEmail need to be in resolved_params for path substitution
-            person_id = execution_context.user_context.get("person_id")
+            # v22.0: Use UserContextManager for validated access
+            ctx_manager = UserContextManager(execution_context.user_context)
+            person_id = ctx_manager.person_id  # Returns None if missing or invalid UUID
             if person_id:
                 for param_name, param_def in tool.parameters.items():
                     if param_def.location == "path" and param_def.context_key == "person_id":
@@ -148,7 +151,8 @@ class ToolExecutor:
             # The injection happens HERE, not in message_engine, so it goes
             # directly to the API call without being filtered.
             if tool.method == "GET":
-                person_id = execution_context.user_context.get("person_id")
+                # v22.0: Reuse ctx_manager from above (validated access)
+                person_id = ctx_manager.person_id
                 if person_id:
                     # Use APICapabilityRegistry to check if tool supports PersonId
                     from services.api_capabilities import get_capability_registry, ParameterSupport
@@ -233,7 +237,7 @@ class ToolExecutor:
                 query_params=query_params,
                 body=body,
                 headers=headers,
-                tenant_id=execution_context.user_context.get("tenant_id")
+                tenant_id=ctx_manager.tenant_id  # v22.0: Use ctx_manager from above
             )
 
             # Process response

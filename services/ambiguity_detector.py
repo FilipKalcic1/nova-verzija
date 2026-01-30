@@ -17,6 +17,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
 
+from services.context import UserContextManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -216,9 +218,10 @@ class AmbiguityDetector:
                 return entity
 
         # Check user context for vehicle
+        # v22.0: Use UserContextManager for validated access
         if user_context:
-            vehicle = user_context.get("vehicle", {})
-            if vehicle.get("Id"):
+            ctx = UserContextManager(user_context)
+            if ctx.vehicle_id:
                 # User has a vehicle - might be vehicle-related
                 # Only infer if query doesn't mention other entities
                 return None  # Don't assume, let LLM decide

@@ -16,12 +16,9 @@ from openai import AsyncAzureOpenAI
 from config import get_settings
 from services.tool_contracts import UnifiedToolDefinition, DependencyGraph
 from services.scoring_utils import cosine_similarity
-from services.patterns import (
-    READ_INTENT_PATTERNS,
-    MUTATION_INTENT_PATTERNS,
-    USER_SPECIFIC_PATTERNS,
-    USER_FILTER_PARAMS
-)
+# ML-based intent detection (replaces regex patterns)
+from services.intent_classifier import detect_action_intent, ActionIntent
+from services.patterns import USER_SPECIFIC_PATTERNS, USER_FILTER_PARAMS
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -342,13 +339,14 @@ class SearchEngine:
         scored: List[Tuple[float, str]],
         tools: Dict[str, UnifiedToolDefinition]
     ) -> List[Tuple[float, str]]:
-        """Apply penalties/boosts based on detected intent."""
-        query_lower = query.lower().strip()
-
-        # Use pre-compiled patterns for performance
-        from services.patterns import is_read_intent as check_read, is_mutation_intent as check_mutation
-        is_read_intent = check_read(query_lower)
-        is_mutation_intent = check_mutation(query_lower)
+        """Apply penalties/boosts based on detected intent using ML."""
+        # Use ML-based intent detection (replaces 100+ regex patterns)
+        intent_result = detect_action_intent(query)
+        is_read_intent = intent_result.intent == ActionIntent.READ
+        is_mutation_intent = intent_result.intent in (
+            ActionIntent.CREATE, ActionIntent.UPDATE,
+            ActionIntent.PATCH, ActionIntent.DELETE
+        )
 
         if is_mutation_intent:
             return scored
@@ -853,22 +851,23 @@ class SearchEngine:
 
     def detect_intent(self, query: str) -> str:
         """
-        Detect query intent: READ, WRITE, or UNKNOWN.
+        Detect query intent using ML classifier.
 
         Returns:
             'READ' - user wants information (GET)
             'WRITE' - user wants to create/update/delete (POST/PUT/DELETE)
             'UNKNOWN' - unclear intent
         """
-        query_lower = query.lower().strip()
+        # ML-based intent detection (replaces 100+ regex patterns)
+        intent_result = detect_action_intent(query)
 
-        # Check for mutation intent first (more specific)
-        if any(re.search(pattern, query_lower) for pattern in MUTATION_INTENT_PATTERNS):
-            return "WRITE"
-
-        # Check for read intent
-        if any(re.search(pattern, query_lower) for pattern in READ_INTENT_PATTERNS):
+        if intent_result.intent == ActionIntent.READ:
             return "READ"
+        elif intent_result.intent in (
+            ActionIntent.CREATE, ActionIntent.UPDATE,
+            ActionIntent.PATCH, ActionIntent.DELETE
+        ):
+            return "WRITE"
 
         return "UNKNOWN"
 

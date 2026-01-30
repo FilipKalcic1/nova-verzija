@@ -153,21 +153,33 @@ class ToolRoutingTester:
         return queries[:3]  # Limit to 3 queries per tool
 
     async def search_faiss(self, query: str, top_k: int = 5) -> List[tuple]:
-        """Search using FAISS vector store."""
-        if not self.faiss_store or not self.faiss_store.is_initialized():
-            return []
-
+        """Search using UnifiedSearch (includes all boosts)."""
+        # v3.1: Use UnifiedSearch instead of direct FAISS for proper boost application
         try:
-            results = await self.faiss_store.search(
-                query=query,
-                top_k=top_k,
-                action_filter=None
-            )
-            return [(r.tool_id, r.score) for r in results]
+            from services.unified_search import UnifiedSearch
+            if not hasattr(self, '_unified_search'):
+                self._unified_search = UnifiedSearch(registry=self.registry)
+                await self._unified_search.initialize()
+
+            response = await self._unified_search.search(query, top_k=top_k)
+            return [(r.tool_id, r.score) for r in response.results]
         except Exception as e:
             if self.verbose:
-                print(f"    FAISS error: {e}")
-            return []
+                print(f"    UnifiedSearch error: {e}")
+            # Fallback to direct FAISS
+            if not self.faiss_store or not self.faiss_store.is_initialized():
+                return []
+            try:
+                results = await self.faiss_store.search(
+                    query=query,
+                    top_k=top_k,
+                    action_filter=None
+                )
+                return [(r.tool_id, r.score) for r in results]
+            except Exception as e2:
+                if self.verbose:
+                    print(f"    FAISS fallback error: {e2}")
+                return []
 
     def search_query_router(self, query: str) -> List[tuple]:
         """Search using QueryRouter patterns."""

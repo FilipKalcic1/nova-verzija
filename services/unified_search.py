@@ -25,12 +25,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Any, TYPE_CHECKING
 
-from services.action_intent_detector import (
+# ML-based intent detection (replaces regex-based action_intent_detector.py)
+from services.intent_classifier import (
     detect_action_intent,
     ActionIntent,
-    IntentDetectionResult
+    IntentDetectionResult,
+    # v3.0: ML-based query type classification (replaces regex)
+    classify_query_type_ml,
+    QueryTypePrediction
 )
 from services.faiss_vector_store import get_faiss_store, SearchResult
+# v3.0: Keep old imports for backwards compatibility, but use ML
 from services.query_type_classifier import (
     get_query_type_classifier,
     classify_query_type,
@@ -84,11 +89,12 @@ class UnifiedSearch:
     REMOVED: training_queries.json boosting (unreliable)
     """
 
-    # Boost multipliers
-    CATEGORY_BOOST = 1.15       # 15% boost for matching category
-    DOCUMENTATION_BOOST = 1.10  # 10% boost for documentation match
-    QUERY_TYPE_BOOST = 1.25     # 25% boost for matching query type suffix
-    BASE_ENTITY_BOOST = 1.35    # 35% boost for base entity tools (no complex suffixes)
+    # Boost multipliers - v3.1: Aggressive boosts for better differentiation
+    CATEGORY_BOOST = 1.25       # 25% boost for matching category
+    DOCUMENTATION_BOOST = 1.20  # 20% boost for documentation match
+    QUERY_TYPE_BOOST = 2.00     # 100% boost for matching query type suffix (was 50%)
+    QUERY_TYPE_PENALTY = 0.40   # 60% penalty for wrong query type suffix (was 40%)
+    BASE_ENTITY_BOOST = 1.50    # 50% boost for base entity tools (no complex suffixes)
 
     def __init__(self, registry: Optional["ToolRegistry"] = None):
         """Initialize unified search."""
@@ -155,23 +161,63 @@ class UnifiedSearch:
         """
         await self.initialize()
 
-        # Step 1: ACTION INTENT GATE
+        # Step 1: ACTION INTENT DETECTION (v16.0: less aggressive filtering)
         intent_result = detect_action_intent(query)
+
+        # v16.0: Only filter by intent if confidence is very high (95%+)
+        # Otherwise, show all tools and let LLM decide
+        # This prevents filtering out valid tools when ML is uncertain
+        INTENT_FILTER_THRESHOLD = 0.95
         action_filter = (
             intent_result.intent.value
             if intent_result.intent != ActionIntent.UNKNOWN
-            else None
+            and intent_result.confidence >= INTENT_FILTER_THRESHOLD
+            else None  # Don't filter - show all tools, let LLM decide
         )
 
-        # Step 2: QUERY TYPE CLASSIFICATION (NEW in v2.0)
-        query_type_result = classify_query_type(query)
+        # Step 2: QUERY TYPE CLASSIFICATION
+        # v3.0: Use ML-based classifier (replaces 91 regex patterns)
+        ml_query_type = classify_query_type_ml(query)
+
+        # Convert ML result to QueryTypeResult for backwards compatibility
+        query_type_result = QueryTypeResult(
+            query_type=QueryType[ml_query_type.query_type] if ml_query_type.query_type in QueryType.__members__ else QueryType.UNKNOWN,
+            confidence=ml_query_type.confidence,
+            matched_pattern="ML",  # No regex pattern - using ML
+            preferred_suffixes=ml_query_type.preferred_suffixes,
+            excluded_suffixes=ml_query_type.excluded_suffixes
+        )
 
         logger.info(
-            f"UnifiedSearch v2.0: Intent={intent_result.intent.value} "
+            f"UnifiedSearch v16.0: Intent={intent_result.intent.value} "
             f"(conf={intent_result.confidence:.2f}), "
-            f"QueryType={query_type_result.query_type.value} "
-            f"(conf={query_type_result.confidence:.2f})"
+            f"QueryType={query_type_result.query_type.value} [ML] "
+            f"(conf={query_type_result.confidence:.2f}), "
+            f"ActionFilter={'YES: ' + action_filter if action_filter else 'NO - LLM decides'}"
         )
+
+        # Step 2.5: EXACT MATCH DETECTION
+        # If query exactly matches an example query, boost that tool significantly
+        exact_match_tool = None
+        query_normalized = query.lower().strip().rstrip('.')
+
+        if self._tool_documentation:
+            for tool_id, doc in self._tool_documentation.items():
+                examples = doc.get('example_queries_hr', [])
+                for example in examples:
+                    example_normalized = example.lower().strip().rstrip('.')
+                    # Check for exact or near-exact match
+                    if query_normalized == example_normalized:
+                        exact_match_tool = tool_id
+                        logger.info(f"UnifiedSearch: EXACT MATCH found: {tool_id}")
+                        break
+                    # Also check if query contains example or vice versa (for partial matches)
+                    elif len(query_normalized) > 10 and len(example_normalized) > 10:
+                        if query_normalized in example_normalized or example_normalized in query_normalized:
+                            if exact_match_tool is None:
+                                exact_match_tool = tool_id
+                if exact_match_tool:
+                    break
 
         # Step 3: FAISS search with intent filter
         faiss_store = get_faiss_store()
@@ -215,7 +261,27 @@ class UnifiedSearch:
         # Step 4: Apply all boosts (including query type boost)
         boosted_results = self._apply_boosts(query, faiss_results, query_type_result)
 
-        # Step 5: Sort by final score
+        # Step 4.5: EXACT MATCH INJECTION
+        # If we found an exact match, ensure it's #1 regardless of FAISS
+        if exact_match_tool:
+            # Check if tool is already in results
+            found = False
+            for result in boosted_results:
+                if result.tool_id == exact_match_tool:
+                    result.score = 100.0  # Maximum score to ensure #1
+                    found = True
+                    break
+
+            # If not in results, inject it
+            if not found:
+                from services.faiss_vector_store import SearchResult
+                boosted_results.insert(0, SearchResult(
+                    tool_id=exact_match_tool,
+                    score=100.0,
+                    method=self._tool_methods.get(exact_match_tool, "GET") if hasattr(self, '_tool_methods') else "GET"
+                ))
+
+        # Step 5: Sort by final score (boost system already applied entity/suffix boosts)
         boosted_results.sort(key=lambda r: r.score, reverse=True)
 
         # Step 6: Convert to final format
@@ -317,6 +383,32 @@ class UnifiedSearch:
             "keywords": ["moji podaci", "moj profil", "moje ime", "tko sam"],
             "boost": 1.5
         },
+        # v3.0: Added more primary tools
+        "get_cases": {
+            "keywords": ["slučaj", "slucaj", "štete", "stete", "prijave", "kvarovi", "moji slučajevi"],
+            "boost": 1.5
+        },
+        "delete_vehiclecalendar_id": {
+            "keywords": ["obriši rezerv", "obrisi rezerv", "otkaži booking", "otkazi booking",
+                        "cancel booking", "poništi rezerv", "ponisti rezerv"],
+            "boost": 1.8
+        },
+        "get_vehicles": {
+            "keywords": ["sva vozila", "popis vozila", "lista vozila", "vozila u floti"],
+            "boost": 1.5
+        },
+        "get_vehicles_agg": {
+            "keywords": ["statistika vozila", "ukupno vozila", "broj vozila", "agregacija vozil"],
+            "boost": 1.5
+        },
+        "get_companies": {
+            "keywords": ["sve kompanije", "popis kompanija", "lista kompanija", "tvrtke"],
+            "boost": 1.5
+        },
+        "get_persons": {
+            "keywords": ["sve osobe", "popis osoba", "lista osoba", "zaposlenici", "korisnici"],
+            "boost": 1.5
+        },
     }
 
     def _apply_boosts(
@@ -336,6 +428,30 @@ class UnifiedSearch:
         excluded_suffixes = query_type_result.excluded_suffixes
         query_type_confidence = query_type_result.confidence
 
+        # v3.1: ENTITY DETECTION - boost tools that match entity mentioned in query
+        ENTITY_KEYWORDS = {
+            "companies": ["kompanij", "tvrtk", "firm", "poduzeć"],
+            "vehicles": ["vozil", "auto", "automobil", "flot"],
+            "persons": ["osob", "korisnik", "zaposlenik", "radnik", "voditelj"],
+            "expenses": ["trošk", "troška", "izdatak", "račun", "cijena"],
+            "trips": ["putovanj", "trip", "vožnj", "putni"],
+            "cases": ["slučaj", "šteta", "steta", "kvar", "incident"],
+            "equipment": ["oprem", "uređaj", "stroj"],
+            "partners": ["partner", "dobavljač", "klijent"],
+            "teams": ["tim", "grupa", "odjel"],
+            "orgunits": ["organizacij", "jedinic", "odjel"],
+            "costcenters": ["troškovn", "centar troška", "cost center"],
+            "vehiclecalendar": ["rezervacij", "booking", "kalendar"],
+            "documents": ["dokument", "prilog", "datoteka", "pdf"],
+            "metadata": ["metapodac", "struktur", "shema", "polja"],
+        }
+
+        detected_entity = None
+        for entity, keywords in ENTITY_KEYWORDS.items():
+            if any(kw in query_lower for kw in keywords):
+                detected_entity = entity
+                break
+
         for result in results:
             boosts = []
             tool_lower = result.tool_id.lower()
@@ -347,6 +463,21 @@ class UnifiedSearch:
                 if any(kw in query_lower for kw in tool_config["keywords"]):
                     result.score *= tool_config["boost"]
                     boosts.append("primary_action")
+
+            # v3.1: ENTITY MATCH BOOST - AGGRESSIVE
+            # If query mentions specific entity, strongly boost/penalize tools
+            if detected_entity:
+                # Extract entity from tool_id (e.g., get_Companies_id -> companies)
+                tool_parts = result.tool_id.split("_")
+                if len(tool_parts) >= 2:
+                    tool_entity = tool_parts[1].lower()
+                    if tool_entity == detected_entity or detected_entity in tool_entity:
+                        result.score *= 2.50  # 150% boost for entity match (was 80%)
+                        boosts.append("entity_match")
+                    else:
+                        # Penalize tools that don't match detected entity
+                        result.score *= 0.50  # 50% penalty (was 30%)
+                        boosts.append("entity_mismatch")
 
             # V3.0: GENERIC CRUD PENALTY
             # Penalize generic CRUD endpoints when specific action tools are more appropriate
@@ -387,7 +518,8 @@ class UnifiedSearch:
                     boosts.append("doc")
 
             # Query Type boost (NEW in v2.0) - replaces example boost
-            if query_type_confidence >= 0.7 and preferred_suffixes:
+            # v3.1: Lowered threshold from 0.7 to 0.4 for broader coverage
+            if query_type_confidence >= 0.4 and preferred_suffixes:
                 # Boost if tool matches preferred suffix
                 is_preferred = any(
                     tool_lower.endswith(suffix.lower())
@@ -403,7 +535,7 @@ class UnifiedSearch:
                     for suffix in excluded_suffixes
                 )
                 if is_excluded:
-                    result.score *= 0.7  # 30% penalty
+                    result.score *= self.QUERY_TYPE_PENALTY  # 40% penalty (v3.0: increased)
                     boosts.append("excluded")
 
             # Base Entity Boost (NEW in v2.0)

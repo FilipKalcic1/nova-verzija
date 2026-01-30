@@ -1,6 +1,6 @@
 """
 Configuration Module
-Version: 11.0.1
+Version: 11.0.2
 
 Centralized configuration with validation.
 NO HARDCODED SECRETS - all sensitive values must come from environment.
@@ -24,15 +24,15 @@ class Settings(BaseSettings):
 
     APP_ENV: str = Field(default="development")
     APP_NAME: str = Field(default="MobilityOne Bot")
-    APP_VERSION: str = Field(default="11.0.0")
+    APP_VERSION: str = Field(default="11.0.2")
     
     # =========================================================================
-    # DATABASE (Obavezno ako nema defaulta, ali ovdje često stavljamo default za local)
+    # DATABASE - REQUIRED (no localhost defaults for production safety!)
     # =========================================================================
 
     DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://appuser:password@localhost:5432/mobility_db",
-        description="PostgreSQL connection string"
+        ...,  # REQUIRED - must be set via environment variable
+        description="PostgreSQL connection string (e.g., postgresql+asyncpg://user:pass@host:5432/db)"
     )
     DB_POOL_SIZE: int = Field(default=10)
     DB_MAX_OVERFLOW: int = Field(default=20)
@@ -46,7 +46,10 @@ class Settings(BaseSettings):
     # =========================================================================
     # REDIS
     # =========================================================================
-    REDIS_URL: str = Field(default="redis://localhost:6379/0")
+    REDIS_URL: str = Field(
+        ...,  # REQUIRED - must be set via environment variable
+        description="Redis connection string (e.g., redis://host:6379/0)"
+    )
     REDIS_MAX_CONNECTIONS: int = Field(default=50)
     REDIS_STATS_KEY_TOOLS: str = Field(default="stats:tools_loaded")
     
@@ -87,12 +90,18 @@ class Settings(BaseSettings):
     EMBEDDING_BATCH_SIZE: int = Field(default=5)
     SIMILARITY_THRESHOLD: float = Field(default=0.55)
 
-    # ACTION-FIRST PROTOCOL: Force tool call when similarity >= this threshold
-    # MASTER PROMPT v9.0: Bot MUST execute tool_call, NOT generic text response
-    # v13.1: LOWERED from 0.85 to 0.75 - AI was ignoring our best matches!
+    # v16.0: LLM DECISION MODE - Let LLM actually decide which tool to use
+    # REMOVED forced execution - LLM is smarter than our embeddings
+    # We RANK and SUGGEST tools, LLM DECIDES
     ACTION_THRESHOLD: float = Field(
-        default=0.75,
-        description="Similarity threshold for forced tool execution (no text fallback)"
+        default=1.1,  # > 1.0 = never force, LLM always decides
+        description="Disabled (1.1) - LLM decides freely. Set < 1.0 to force high-confidence matches."
+    )
+
+    # How many tools should LLM see? More = better decisions, but more tokens
+    MAX_TOOLS_FOR_LLM: int = Field(
+        default=25,  # Increased from 10 - let LLM see more options
+        description="Maximum tools shown to LLM. Higher = better decisions, more tokens."
     )
     
     # =========================================================================

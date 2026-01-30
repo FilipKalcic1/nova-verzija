@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Dict, Any, List, Optional, Callable
 
 from services.tool_contracts import ToolExecutionContext
+from services.context import UserContextManager
 
 logger = logging.getLogger(__name__)
 
@@ -380,32 +381,23 @@ class ExecutorWithFallback:
 
     def _get_from_context(self, param_name: str, user_context: Dict[str, Any]) -> Optional[Any]:
         """Get parameter value from user context."""
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
         param_lower = param_name.lower()
 
-        # Direct mappings
-        mappings = {
-            "personid": "person_id",
-            "driverid": "person_id",
-            "vehicleid": lambda ctx: ctx.get("vehicle", {}).get("id"),
-            "tenantid": "tenant_id",
-        }
+        # Direct mappings using UserContextManager properties
+        if param_lower in ("personid", "driverid"):
+            return ctx.person_id
+        elif param_lower == "vehicleid":
+            return ctx.vehicle_id
+        elif param_lower == "tenantid":
+            return ctx.tenant_id
+        elif param_lower == "licenceplate":
+            return ctx.vehicle_plate
 
-        if param_lower in mappings:
-            mapping = mappings[param_lower]
-            if callable(mapping):
-                return mapping(user_context)
-            return user_context.get(mapping)
-
-        # Try direct match
+        # Try direct match from raw dict (for custom params)
         if param_name in user_context:
             return user_context[param_name]
-
-        # Try from vehicle
-        vehicle = user_context.get("vehicle", {})
-        if param_lower == "vehicleid" and "id" in vehicle:
-            return vehicle["id"]
-        if param_lower == "licenceplate" and "plate" in vehicle:
-            return vehicle["plate"]
 
         return None
 
@@ -415,10 +407,10 @@ class ExecutorWithFallback:
         user_context: Dict[str, Any]
     ) -> Optional[str]:
         """Try to fix VehicleId parameter."""
-        # From user context - use Swagger field names
-        vehicle = user_context.get("vehicle", {})
-        if vehicle.get("Id"):
-            return vehicle["Id"]
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
+        if ctx.vehicle_id:
+            return ctx.vehicle_id
 
         # From parameters (plate -> id)
         plate = None
@@ -440,7 +432,8 @@ class ExecutorWithFallback:
         user_context: Dict[str, Any]
     ) -> Optional[str]:
         """Try to fix PersonId parameter."""
-        return user_context.get("person_id")
+        # v22.0: Use UserContextManager for validated access
+        return UserContextManager(user_context).person_id
 
     async def _fix_datetime(
         self,

@@ -1,0 +1,176 @@
+# =============================================================================
+# MobilityOne WhatsApp Bot - Kubernetes Services
+# =============================================================================
+
+---
+# =============================================================================
+# API SERVICE - Public facing (via Ingress)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mobility-api
+  labels:
+    app: mobility-bot
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: mobility-bot
+    component: api
+
+---
+# =============================================================================
+# ADMIN SERVICE - Internal only (no Ingress)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mobility-admin
+  labels:
+    app: mobility-bot
+    component: admin
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: mobility-bot
+    component: admin
+
+---
+# =============================================================================
+# REDIS SERVICE (if deploying Redis in-cluster)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+      name: redis
+  selector:
+    app: redis
+
+---
+# =============================================================================
+# INGRESS - External access to API
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mobility-ingress
+  annotations:
+    # For NGINX Ingress Controller
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # For cert-manager TLS
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - bot.mobilityone.example.com
+      secretName: mobility-tls
+  rules:
+    - host: bot.mobilityone.example.com
+      http:
+        paths:
+          # WhatsApp webhook endpoint
+          - path: /webhook
+            pathType: Prefix
+            backend:
+              service:
+                name: mobility-api
+                port:
+                  number: 80
+          # Health check (for external monitoring)
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: mobility-api
+                port:
+                  number: 80
+          # Metrics (for Prometheus)
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: mobility-api
+                port:
+                  number: 80
+
+---
+# =============================================================================
+# NETWORK POLICY - Restrict traffic
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mobility-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: mobility-bot
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress traffic
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow internal traffic between pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: mobility-bot
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow external HTTPS (for MobilityOne API, Azure OpenAI)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
