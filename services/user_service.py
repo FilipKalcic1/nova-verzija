@@ -18,6 +18,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from models import UserMapping
 from config import get_settings
 from services.schema_extractor import get_schema_extractor
+from services.tenant_service import get_tenant_service, TenantService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -37,20 +38,26 @@ class UserService:
         self,
         db: AsyncSession,
         gateway=None,
-        cache=None
+        cache=None,
+        redis_client=None
     ):
         """
         Initialize user service.
-        
+
         Args:
             db: Database session
             gateway: API Gateway (optional)
             cache: Cache service (optional)
+            redis_client: Redis client for tenant caching (optional)
         """
         self.db = db
         self.gateway = gateway
         self.cache = cache
-        self.tenant_id = settings.tenant_id
+        self.redis = redis_client
+        self.default_tenant_id = settings.tenant_id
+
+        # Initialize tenant service for dynamic tenant resolution
+        self._tenant_service = get_tenant_service(db_session=db, redis_client=redis_client)
 
     async def get_active_identity(self, phone: str) -> Optional['UserMapping']:
         """
@@ -325,8 +332,19 @@ class UserService:
                                 break
 
                         if not matching_vehicle and len(vehicles) > 0:
-                            # Fallback: If no match, use first vehicle
-                            matching_vehicle = vehicles[0]
+                            # CRITICAL FIX: DON'T take first vehicle blindly!
+                            # If user has exactly ONE vehicle, use it (safe)
+                            # If user has MULTIPLE vehicles, DON'T guess - leave None
+                            if len(vehicles) == 1:
+                                matching_vehicle = vehicles[0]
+                                logger.info(f"Single vehicle found for driver, using it")
+                            else:
+                                # Multiple vehicles, no match - DON'T guess!
+                                logger.warning(
+                                    f"VEHICLE_SELECTION_NEEDED: Driver has {len(vehicles)} vehicles, "
+                                    f"expected ID {master_vehicle_id} not found. "
+                                    f"Available: {[v.get('RegistrationNumber', v.get('Id', 'unknown')[:8]) for v in vehicles[:3]]}"
+                                )
                         
                         if matching_vehicle:
                             # Extract FRESH PeriodicActivities
@@ -345,16 +363,23 @@ class UserService:
             return {}
     
 
-    #self, phone: str, person_id: str, name: str
-    # Promijeni ime u _upsert_mapping (da odgovara pozivu):
     async def _upsert_mapping(self, phone: str, person_id: str, name: str) -> None:
-        """Save user mapping to database."""
+        """
+        Save user mapping to database with dynamic tenant resolution.
+
+        MULTI-TENANCY (v11.1):
+        - Resolves tenant from phone prefix rules
+        - Stores tenant_id in UserMapping for future use
+        """
+        # Resolve tenant dynamically from phone
+        tenant_id = self._tenant_service.resolve_tenant_from_phone(phone)
+
         try:
             stmt = pg_insert(UserMapping).values(
                 phone_number=phone,
                 api_identity=person_id,
                 display_name=name,
-                tenant_id=self.tenant_id,
+                tenant_id=tenant_id,  # Dynamic tenant!
                 is_active=True,
                 updated_at=datetime.utcnow()
             ).on_conflict_do_update(
@@ -362,14 +387,14 @@ class UserService:
                 set_={
                     'api_identity': person_id,
                     'display_name': name,
-                    'tenant_id': self.tenant_id,
+                    # NOTE: Don't overwrite tenant_id on conflict - admin may have changed it
                     'is_active': True,
                     'updated_at': datetime.utcnow()
                 }
             )
             await self.db.execute(stmt)
             await self.db.commit()
-            logger.info(f"Saved mapping for {phone[-4:]}")
+            logger.info(f"Saved mapping for {phone[-4:]}... with tenant={tenant_id}")
         except Exception as e:
             logger.error(f"Save mapping failed: {e}")
             await self.db.rollback()
@@ -377,20 +402,27 @@ class UserService:
     async def build_context(
         self,
         person_id: str,
-        phone: str
+        phone: str,
+        user_mapping: 'UserMapping' = None
     ) -> Dict[str, Any]:
         """
         Build operational context for user.
-        
+
         Uses SchemaExtractor for schema-driven field access.
         Caches result for 5 minutes to reduce API calls.
-        
+
+        MULTI-TENANCY (v11.1):
+        - Uses tenant_id from UserMapping if available
+        - Falls back to phone-prefix rules
+        - Finally falls back to default tenant
+
         Args:
             person_id: MobilityOne person ID
             phone: Phone number
-            
+            user_mapping: Optional UserMapping instance for tenant resolution
+
         Returns:
-            Context dictionary
+            Context dictionary with correct tenant_id
         """
         # Check cache first (5 min TTL)
         cache_key = f"context:{person_id}"
@@ -403,16 +435,19 @@ class UserService:
                     return json.loads(cached)
             except Exception as e:
                 logger.debug(f"Cache read failed: {e}")
-        
-        logger.info(f"BUILD_CONTEXT: person_id={person_id}, phone={phone}, tenant_id={self.tenant_id}")
+
+        # DYNAMIC TENANT RESOLUTION (v11.1)
+        tenant_id = await self._tenant_service.get_tenant_for_user(phone, user_mapping)
+
+        logger.info(f"BUILD_CONTEXT: person_id={person_id}, phone={phone}, tenant_id={tenant_id} (dynamic)")
         context = {
             "person_id": person_id,
             "phone": phone,
-            "tenant_id": self.tenant_id,
+            "tenant_id": tenant_id,
             "display_name": "Korisnik",
             "vehicle": {}
         }
-        logger.info(f"BUILD_CONTEXT: Created context with keys: {list(context.keys())}")
+        logger.info(f"BUILD_CONTEXT: Created context with keys: {list(context.keys())}, tenant={tenant_id}")
         
         if not self.gateway:
             return context

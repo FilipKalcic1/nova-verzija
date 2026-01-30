@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional, List
 from services.api_capabilities import get_capability_registry
 from services.error_translator import get_error_translator
 from services.tool_evaluator import get_tool_evaluator
+from services.context import UserContextManager
 
 logger = logging.getLogger(__name__)
 
@@ -259,13 +260,15 @@ class ToolHandler:
             params_used=parameters
         )
 
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
         await self.error_learning.record_error(
             error_code=error_code,
             operation_id=tool_name,
             error_message=error,
             context={
                 "parameters": list(parameters.keys()),
-                "user_id": user_context.get("person_id"),
+                "user_id": ctx.person_id,
                 "chain_depth": chain_depth
             },
             was_corrected=False
@@ -312,7 +315,8 @@ class ToolHandler:
         if tool.method != "GET":
             return parameters
 
-        person_id = user_context.get("person_id")
+        # v22.0: Use UserContextManager for validated access
+        person_id = UserContextManager(user_context).person_id
         if not person_id:
             return parameters
 

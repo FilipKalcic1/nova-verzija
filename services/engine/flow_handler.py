@@ -17,6 +17,7 @@ from typing import Dict, Any, List, Optional
 from services.booking_contracts import AssigneeType, EntryType
 from services.error_translator import get_error_translator
 from services.confirmation_dialog import get_confirmation_dialog, ConfirmationDialog
+from services.context import get_multiple_missing_prompts
 
 logger = logging.getLogger(__name__)
 
@@ -390,8 +391,10 @@ class FlowHandler:
                 await conv_manager.reset()
                 return "Greska: Nedostaje vrijeme rezervacije. Pokusajte ponovno."
 
+            # v22.0: Use UserContextManager for validated access
+            ctx = UserContextManager(user_context)
             params = {
-                "AssignedToId": user_context.get("person_id"),
+                "AssignedToId": ctx.person_id,
                 "VehicleId": vehicle_id,
                 "FromTime": from_time,
                 "ToTime": to_time,
@@ -632,9 +635,11 @@ class FlowHandler:
         subject = params.get("Subject", "Prijava slučaja")
         description = params.get("Description") or params.get("Message", "")
 
-        vehicle = user_context.get("vehicle", {})
-        vehicle_name = vehicle.get("name", "")
-        plate = vehicle.get("plate", "")
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
+        vehicle = ctx.vehicle
+        vehicle_name = vehicle.name if vehicle else ""
+        plate = vehicle.plate if vehicle else ""
         vehicle_line = f"Vozilo: {vehicle_name} ({plate})\n" if vehicle_name else ""
 
         message = (
@@ -666,36 +671,13 @@ class FlowHandler:
         return items
 
     def _build_param_prompt(self, missing: List[str]) -> str:
-        """Build prompt for missing parameters."""
-        prompts = {
-            # Time parameters
-            "from": "Od kada vam treba? (npr. 'sutra u 9:00')",
-            "to": "Do kada? (npr. 'sutra u 17:00')",
-            "FromTime": "Od kada vam treba?",
-            "ToTime": "Do kada?",
-            # Description & Subject (Case creation)
-            "Description": "Možete li opisati problem ili situaciju?",
-            "description": "Opišite situaciju",
-            "Subject": "Koji je naslov prijave? (npr. 'Kvar klime')",
-            "subject": "Naslov slučaja",
-            # Vehicle
-            "VehicleId": "Koje vozilo želite?",
-            "vehicleId": "Koje vozilo?",
-            # Mileage parameters
-            "Value": "Kolika je kilometraža? (npr. '14000 km')",
-            "mileage": "Kolika je trenutna kilometraža?",
-            "Mileage": "Unesite kilometražu vozila",
-            "kilometraža": "Koliko kilometara ima vozilo?",
-        }
+        """
+        Build prompt for missing parameters.
 
-        if len(missing) == 1:
-            return prompts.get(missing[0], f"Trebam jos: {missing[0]}")
-
-        lines = ["Za nastavak trebam jos informacije:"]
-        for param in missing[:3]:
-            lines.append(f"* {prompts.get(param, param)}")
-
-        return "\n".join(lines)
+        Uses centralized param_prompts from services.context module.
+        Supports 30+ parameter types with Croatian user-friendly messages.
+        """
+        return get_multiple_missing_prompts(missing)
 
     def _is_question(self, text: str) -> bool:
         """

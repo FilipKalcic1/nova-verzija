@@ -1,0 +1,265 @@
+# =============================================================================
+# MobilityOne WhatsApp Bot - Kubernetes Deployment
+# Version: 1.0
+#
+# COMPONENTS:
+# - API (FastAPI webhook receiver)
+# - Worker (message processor)
+# - Admin API (separate internal service)
+#
+# RESOURCE LIMITS:
+# - Prevents noisy neighbor issues in shared cluster
+# - CPU/Memory requests guarantee minimum resources
+# - Limits prevent runaway pods from affecting others
+# =============================================================================
+
+---
+# =============================================================================
+# API DEPLOYMENT - Receives WhatsApp webhooks
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mobility-api
+  labels:
+    app: mobility-bot
+    component: api
+spec:
+  replicas: 2  # Minimum for HA
+  selector:
+    matchLabels:
+      app: mobility-bot
+      component: api
+  template:
+    metadata:
+      labels:
+        app: mobility-bot
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Run DB migrations before starting API
+      initContainers:
+        - name: db-migrate
+          image: ghcr.io/mobilityone/bot:latest
+          command: ["python", "-m", "alembic", "upgrade", "head"]
+          envFrom:
+            - secretRef:
+                name: mobility-secrets
+            - configMapRef:
+                name: mobility-config
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+      containers:
+        - name: api
+          image: ghcr.io/mobilityone/bot:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: SERVICE_TYPE
+              value: "api"
+          envFrom:
+            - secretRef:
+                name: mobility-secrets
+            - configMapRef:
+                name: mobility-config
+
+          # Resource limits - CRITICAL for shared cluster
+          resources:
+            requests:
+              cpu: "250m"      # 0.25 CPU guaranteed
+              memory: "512Mi"  # 512MB guaranteed
+            limits:
+              cpu: "1000m"     # Max 1 CPU
+              memory: "1Gi"    # Max 1GB (OOM kill if exceeded)
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Graceful shutdown
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+
+      # Pod anti-affinity - spread across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: mobility-bot
+                    component: api
+                topologyKey: kubernetes.io/hostname
+
+      terminationGracePeriodSeconds: 30
+
+---
+# =============================================================================
+# WORKER DEPLOYMENT - Processes messages from Redis queue
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mobility-worker
+  labels:
+    app: mobility-bot
+    component: worker
+spec:
+  replicas: 2  # Scaled by KEDA based on queue depth
+  selector:
+    matchLabels:
+      app: mobility-bot
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: mobility-bot
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/mobilityone/bot:latest
+          command: ["python", "worker.py"]
+          env:
+            - name: SERVICE_TYPE
+              value: "worker"
+          envFrom:
+            - secretRef:
+                name: mobility-secrets
+            - configMapRef:
+                name: mobility-config
+
+          # Workers need more resources for AI processing
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "768Mi"
+            limits:
+              cpu: "2000m"     # AI processing can be CPU-intensive
+              memory: "2Gi"    # FAISS embeddings + LLM context
+
+          # Workers don't have HTTP endpoint - use shell to read env var
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - 'python -c "import os,redis; r=redis.from_url(os.environ[\"REDIS_URL\"]); r.ping()"'
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+
+      terminationGracePeriodSeconds: 60  # Allow time for message completion
+
+---
+# =============================================================================
+# ADMIN API DEPLOYMENT - Internal admin interface
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mobility-admin
+  labels:
+    app: mobility-bot
+    component: admin
+spec:
+  replicas: 1  # Single replica for admin
+  selector:
+    matchLabels:
+      app: mobility-bot
+      component: admin
+  template:
+    metadata:
+      labels:
+        app: mobility-bot
+        component: admin
+    spec:
+      containers:
+        - name: admin
+          image: ghcr.io/mobilityone/bot:latest
+          command: ["uvicorn", "admin_api:app", "--host", "0.0.0.0", "--port", "8080"]
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SERVICE_TYPE
+              value: "admin"
+          envFrom:
+            - secretRef:
+                name: mobility-secrets
+            - configMapRef:
+                name: mobility-config
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# =============================================================================
+# POD DISRUPTION BUDGET - Ensure availability during updates
+# =============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mobility-api-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mobility-bot
+      component: api
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mobility-worker-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mobility-bot
+      component: worker

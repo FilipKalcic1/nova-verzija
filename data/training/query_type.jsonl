@@ -1,0 +1,199 @@
+{"text": "dokument vozila", "query_type": "DOCUMENTS"}
+{"text": "prilog", "query_type": "DOCUMENTS"}
+{"text": "datoteka", "query_type": "DOCUMENTS"}
+{"text": "upload dokumenta", "query_type": "DOCUMENTS"}
+{"text": "preuzmi dokument", "query_type": "DOCUMENTS"}
+{"text": "dodaj prilog", "query_type": "DOCUMENTS"}
+{"text": "prilozi kompanije", "query_type": "DOCUMENTS"}
+{"text": "dokumentacija vozila", "query_type": "DOCUMENTS"}
+{"text": "pdf vozila", "query_type": "DOCUMENTS"}
+{"text": "dokumenti partnera", "query_type": "DOCUMENTS"}
+{"text": "prilog slucaja", "query_type": "DOCUMENTS"}
+{"text": "dokumenti osobe", "query_type": "DOCUMENTS"}
+{"text": "preuzmi pdf", "query_type": "DOCUMENTS"}
+{"text": "dodaj datoteku", "query_type": "DOCUMENTS"}
+{"text": "uploadaj dokument", "query_type": "DOCUMENTS"}
+{"text": "thumb slike", "query_type": "THUMBNAIL"}
+{"text": "slicica dokumenta", "query_type": "THUMBNAIL"}
+{"text": "preview dokumenta", "query_type": "THUMBNAIL"}
+{"text": "mala slika", "query_type": "THUMBNAIL"}
+{"text": "ikona dokumenta", "query_type": "THUMBNAIL"}
+{"text": "pregled slike", "query_type": "THUMBNAIL"}
+{"text": "thumbnail", "query_type": "THUMBNAIL"}
+{"text": "sličica", "query_type": "THUMBNAIL"}
+{"text": "mali pregled", "query_type": "THUMBNAIL"}
+{"text": "metapodaci vozila", "query_type": "METADATA"}
+{"text": "struktura podataka", "query_type": "METADATA"}
+{"text": "shema tablice", "query_type": "METADATA"}
+{"text": "polja tablice", "query_type": "METADATA"}
+{"text": "kolone entiteta", "query_type": "METADATA"}
+{"text": "definicija podataka", "query_type": "METADATA"}
+{"text": "atributi vozila", "query_type": "METADATA"}
+{"text": "konfiguracija", "query_type": "METADATA"}
+{"text": "metadata", "query_type": "METADATA"}
+{"text": "schema", "query_type": "METADATA"}
+{"text": "tipovi polja", "query_type": "METADATA"}
+{"text": "ukupno troskova", "query_type": "AGGREGATION"}
+{"text": "suma kilometara", "query_type": "AGGREGATION"}
+{"text": "prosjecna kilometraza", "query_type": "AGGREGATION"}
+{"text": "statistika vozila", "query_type": "AGGREGATION"}
+{"text": "broj vozila", "query_type": "AGGREGATION"}
+{"text": "koliko ima troskova", "query_type": "AGGREGATION"}
+{"text": "izvjestaj kilometraze", "query_type": "AGGREGATION"}
+{"text": "agregirani podaci", "query_type": "AGGREGATION"}
+{"text": "grupiraj po mjesecu", "query_type": "AGGREGATION"}
+{"text": "po godini", "query_type": "AGGREGATION"}
+{"text": "ukupno", "query_type": "AGGREGATION"}
+{"text": "prosjek", "query_type": "AGGREGATION"}
+{"text": "maksimalna vrijednost", "query_type": "AGGREGATION"}
+{"text": "minimalna cijena", "query_type": "AGGREGATION"}
+{"text": "statistika", "query_type": "AGGREGATION"}
+{"text": "hijerarhija organizacije", "query_type": "TREE"}
+{"text": "stablo lokacija", "query_type": "TREE"}
+{"text": "tree struktura", "query_type": "TREE"}
+{"text": "parent organizacija", "query_type": "TREE"}
+{"text": "child elementi", "query_type": "TREE"}
+{"text": "roditeljska jedinica", "query_type": "TREE"}
+{"text": "podredeni elementi", "query_type": "TREE"}
+{"text": "nadredena organizacija", "query_type": "TREE"}
+{"text": "hijerarhija", "query_type": "TREE"}
+{"text": "obrisi sve stare", "query_type": "DELETE_CRITERIA"}
+{"text": "izbrisi sve neaktivne", "query_type": "DELETE_CRITERIA"}
+{"text": "obrisi po kriterijima", "query_type": "DELETE_CRITERIA"}
+{"text": "bulk delete", "query_type": "DELETE_CRITERIA"}
+{"text": "masovno brisanje", "query_type": "DELETE_CRITERIA"}
+{"text": "obrisi gdje je status", "query_type": "DELETE_CRITERIA"}
+{"text": "obrisi stare zapise", "query_type": "DELETE_CRITERIA"}
+{"text": "azuriraj sve vozila", "query_type": "BULK_UPDATE"}
+{"text": "bulk update", "query_type": "BULK_UPDATE"}
+{"text": "masovno azuriranje", "query_type": "BULK_UPDATE"}
+{"text": "multipatch", "query_type": "BULK_UPDATE"}
+{"text": "izmijeni vise zapisa", "query_type": "BULK_UPDATE"}
+{"text": "promijeni sve statuse", "query_type": "BULK_UPDATE"}
+{"text": "postavi kao zadano", "query_type": "DEFAULT_SET"}
+{"text": "set as default", "query_type": "DEFAULT_SET"}
+{"text": "zadani dokument", "query_type": "DEFAULT_SET"}
+{"text": "default slika", "query_type": "DEFAULT_SET"}
+{"text": "primarni dokument", "query_type": "DEFAULT_SET"}
+{"text": "glavni dokument", "query_type": "DEFAULT_SET"}
+{"text": "oznaci kao zadano", "query_type": "DEFAULT_SET"}
+{"text": "samo ime i email", "query_type": "PROJECTION"}
+{"text": "projekcija polja", "query_type": "PROJECTION"}
+{"text": "odredena polja", "query_type": "PROJECTION"}
+{"text": "select fields", "query_type": "PROJECTION"}
+{"text": "vrati samo naziv", "query_type": "PROJECTION"}
+{"text": "samo id i ime", "query_type": "PROJECTION"}
+{"text": "sve kompanije", "query_type": "LIST"}
+{"text": "svi zaposlenici", "query_type": "LIST"}
+{"text": "sva vozila", "query_type": "LIST"}
+{"text": "lista vozila", "query_type": "LIST"}
+{"text": "popis partnera", "query_type": "LIST"}
+{"text": "pregled svih", "query_type": "LIST"}
+{"text": "dohvati sve", "query_type": "LIST"}
+{"text": "prikazi sve osobe", "query_type": "LIST"}
+{"text": "lista troskova", "query_type": "LIST"}
+{"text": "dohvati kompaniju po id", "query_type": "SINGLE_ENTITY"}
+{"text": "kompanija s id-em", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati vozilo 123", "query_type": "SINGLE_ENTITY"}
+{"text": "prikazi osobu 456", "query_type": "SINGLE_ENTITY"}
+{"text": "info o vozilu", "query_type": "SINGLE_ENTITY"}
+{"text": "detalji kompanije", "query_type": "SINGLE_ENTITY"}
+{"text": "prikazi detalje", "query_type": "SINGLE_ENTITY"}
+{"text": "podaci o partneru", "query_type": "SINGLE_ENTITY"}
+{"text": "jedna kompanija", "query_type": "SINGLE_ENTITY"}
+{"text": "konkretno vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "moje vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "moji podaci", "query_type": "SINGLE_ENTITY"}
+{"text": "moja kilometraza", "query_type": "SINGLE_ENTITY"}
+{"text": "koliko imam kilometara", "query_type": "SINGLE_ENTITY"}
+{"text": "moje rezervacije", "query_type": "LIST"}
+{"text": "moji troskovi", "query_type": "LIST"}
+{"text": "moji slucajevi", "query_type": "LIST"}
+{"text": "hello", "query_type": "UNKNOWN"}
+{"text": "bok", "query_type": "UNKNOWN"}
+{"text": "pomoc", "query_type": "UNKNOWN"}
+{"text": "kako si", "query_type": "UNKNOWN"}
+{"text": "dobar dan", "query_type": "UNKNOWN"}
+{"text": "daj mi dokumente", "query_type": "DOCUMENTS"}
+{"text": "pokazi dokumente", "query_type": "DOCUMENTS"}
+{"text": "prilog za slucaj", "query_type": "DOCUMENTS"}
+{"text": "datoteke vozila", "query_type": "DOCUMENTS"}
+{"text": "ukupno kilometara", "query_type": "AGGREGATION"}
+{"text": "koliko troskova", "query_type": "AGGREGATION"}
+{"text": "suma troskova", "query_type": "AGGREGATION"}
+{"text": "prosjecni km", "query_type": "AGGREGATION"}
+{"text": "broj slucajeva", "query_type": "AGGREGATION"}
+{"text": "statistika po mjesecu", "query_type": "AGGREGATION"}
+{"text": "grupirano po godini", "query_type": "AGGREGATION"}
+{"text": "sve vozila", "query_type": "LIST"}
+{"text": "popis vozila", "query_type": "LIST"}
+{"text": "lista osoba", "query_type": "LIST"}
+{"text": "svi partneri", "query_type": "LIST"}
+{"text": "pregled troskova", "query_type": "LIST"}
+{"text": "daj mi listu", "query_type": "LIST"}
+{"text": "pokazi sve", "query_type": "LIST"}
+{"text": "moja kilometraza", "query_type": "SINGLE_ENTITY"}
+{"text": "koliko imam km", "query_type": "SINGLE_ENTITY"}
+{"text": "moje vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "podaci o meni", "query_type": "SINGLE_ENTITY"}
+{"text": "moj auto", "query_type": "SINGLE_ENTITY"}
+{"text": "status mog auta", "query_type": "SINGLE_ENTITY"}
+{"text": "info o vozilu", "query_type": "SINGLE_ENTITY"}
+{"text": "detalji vozila", "query_type": "SINGLE_ENTITY"}
+{"text": "konkretno vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "jedno vozilo", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati po id", "query_type": "SINGLE_ENTITY"}
+{"text": "meta podaci", "query_type": "METADATA"}
+{"text": "struktura entiteta", "query_type": "METADATA"}
+{"text": "koja polja ima", "query_type": "METADATA"}
+{"text": "atributi tablice", "query_type": "METADATA"}
+{"text": "shema entiteta", "query_type": "METADATA"}
+{"text": "slicica", "query_type": "THUMBNAIL"}
+{"text": "preview slike", "query_type": "THUMBNAIL"}
+{"text": "mali prikaz", "query_type": "THUMBNAIL"}
+{"text": "stablo organizacije", "query_type": "TREE"}
+{"text": "hijerarhija", "query_type": "TREE"}
+{"text": "parent child", "query_type": "TREE"}
+{"text": "nadredena jedinica", "query_type": "TREE"}
+{"text": "obrisi po kriteriju", "query_type": "DELETE_CRITERIA"}
+{"text": "masovno obrisi", "query_type": "DELETE_CRITERIA"}
+{"text": "bulk obrisi", "query_type": "DELETE_CRITERIA"}
+{"text": "masovno azuriraj", "query_type": "BULK_UPDATE"}
+{"text": "azuriraj sve", "query_type": "BULK_UPDATE"}
+{"text": "bulk update", "query_type": "BULK_UPDATE"}
+{"text": "postavi default", "query_type": "DEFAULT_SET"}
+{"text": "zadani dokument", "query_type": "DEFAULT_SET"}
+{"text": "samo ime", "query_type": "PROJECTION"}
+{"text": "vrati samo naziv", "query_type": "PROJECTION"}
+{"text": "select polja", "query_type": "PROJECTION"}
+{"text": "dohvati kompaniju s id", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati vozilo s id", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati osobu s id", "query_type": "SINGLE_ENTITY"}
+{"text": "prikaži kompaniju po id", "query_type": "SINGLE_ENTITY"}
+{"text": "daj mi vozilo id", "query_type": "SINGLE_ENTITY"}
+{"text": "kompanija 123", "query_type": "SINGLE_ENTITY"}
+{"text": "vozilo 456", "query_type": "SINGLE_ENTITY"}
+{"text": "osoba id 789", "query_type": "SINGLE_ENTITY"}
+{"text": "dohvati dokumente kompanije", "query_type": "DOCUMENTS"}
+{"text": "dohvati dokumente vozila", "query_type": "DOCUMENTS"}
+{"text": "dohvati dokumente osobe", "query_type": "DOCUMENTS"}
+{"text": "prikaži dokumente za", "query_type": "DOCUMENTS"}
+{"text": "dokumenti za kompaniju", "query_type": "DOCUMENTS"}
+{"text": "dokumenti vozila", "query_type": "DOCUMENTS"}
+{"text": "prilozi osobe", "query_type": "DOCUMENTS"}
+{"text": "metapodaci korisnika", "query_type": "METADATA"}
+{"text": "metapodaci kompanije", "query_type": "METADATA"}
+{"text": "metapodaci vozila", "query_type": "METADATA"}
+{"text": "struktura kompanije", "query_type": "METADATA"}
+{"text": "shema podataka vozila", "query_type": "METADATA"}
+{"text": "polja tablice osoba", "query_type": "METADATA"}
+{"text": "obriši stare kompanije", "query_type": "DELETE_CRITERIA"}
+{"text": "obriši neaktivna vozila", "query_type": "DELETE_CRITERIA"}
+{"text": "obriši po statusu", "query_type": "DELETE_CRITERIA"}
+{"text": "ažuriraj sve kompanije", "query_type": "BULK_UPDATE"}
+{"text": "ažuriraj sva vozila", "query_type": "BULK_UPDATE"}
+{"text": "promijeni status svim", "query_type": "BULK_UPDATE"}
+{"text": "postavi kao zadano vozilo", "query_type": "DEFAULT_SET"}
+{"text": "postavi zadani dokument", "query_type": "DEFAULT_SET"}
+{"text": "označi kao glavni", "query_type": "DEFAULT_SET"}

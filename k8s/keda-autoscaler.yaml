@@ -126,11 +126,14 @@ spec:
       spec:
         containers:
           - name: burst-worker
-            image: ghcr.io/mobilityone/worker:latest
+            image: ghcr.io/mobilityone/bot:latest  # Same image as main worker
             command: ["python", "worker.py", "--burst-mode"]
+            envFrom:
+              - secretRef:
+                  name: mobility-secrets
+              - configMapRef:
+                  name: mobility-config
             env:
-              - name: REDIS_URL
-                value: "redis://redis-service:6379/0"
               - name: BURST_MODE
                 value: "true"
               - name: MAX_MESSAGES

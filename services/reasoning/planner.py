@@ -14,6 +14,7 @@ from typing import Dict, Any, List, Optional
 from openai import AsyncAzureOpenAI
 
 from config import get_settings
+from services.context import UserContextManager
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -105,23 +106,22 @@ class Planner:
 
     def _summarize_context(self, user_context: Dict[str, Any]) -> str:
         """Summarize user context for planner."""
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
         parts = []
 
-        if user_context.get("person_id"):
-            parts.append(f"person_id: {user_context['person_id']}")
+        if ctx.person_id:
+            parts.append(f"person_id: {ctx.person_id}")
 
-        if user_context.get("display_name"):
-            parts.append(f"ime: {user_context['display_name']}")
+        if ctx.display_name != "Korisnik":  # Only if not default
+            parts.append(f"ime: {ctx.display_name}")
 
-        vehicle = user_context.get("vehicle", {})
-        if vehicle:
-            # Use Swagger field names directly
-            if vehicle.get("Id"):
-                parts.append(f"vehicle_id: {vehicle['Id']}")
-            if vehicle.get("LicencePlate"):
-                parts.append(f"tablica: {vehicle['LicencePlate']}")
-            if vehicle.get("FullVehicleName") or vehicle.get("DisplayName"):
-                parts.append(f"vozilo: {vehicle.get('FullVehicleName') or vehicle.get('DisplayName')}")
+        if ctx.vehicle and ctx.vehicle.is_valid():
+            parts.append(f"vehicle_id: {ctx.vehicle.id}")
+            if ctx.vehicle.plate:
+                parts.append(f"tablica: {ctx.vehicle.plate}")
+            if ctx.vehicle.name:
+                parts.append(f"vozilo: {ctx.vehicle.name}")
 
         if not parts:
             return "Nema dodatnih podataka o korisniku."

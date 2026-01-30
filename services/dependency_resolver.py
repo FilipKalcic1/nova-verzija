@@ -30,6 +30,7 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 
 from services.patterns import PatternRegistry, ValuePattern
+from services.context import UserContextManager
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -380,7 +381,9 @@ class DependencyResolver:
                 provider_params = {'Filter': f"Name(~){user_value}"}
 
         # CRITICAL FIX v12.2: ALWAYS inject PersonId for user-specific data
-        person_id = user_context.get('person_id')
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
+        person_id = ctx.person_id
         if person_id:
             person_param_injected = False
             # Try to inject PersonId as direct parameter using schema-based classification
@@ -663,13 +666,14 @@ class DependencyResolver:
 
         # STRATEGY 1: Possessive - use user's default vehicle
         if reference.is_possessive or reference.reference_type == "possessive":
-            vehicle = user_context.get("vehicle", {})
-            # Use Swagger field names directly
-            vehicle_id = vehicle.get("Id") or vehicle.get("VehicleId")
+            # v22.0: Use UserContextManager for validated vehicle access
+            ctx = UserContextManager(user_context)
+            vehicle = ctx.vehicle
 
-            if vehicle_id:
-                vehicle_name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName") or "Vaše vozilo"
-                plate = vehicle.get("LicencePlate", "")
+            if vehicle and vehicle.id:
+                vehicle_id = vehicle.id
+                vehicle_name = vehicle.name or "Vaše vozilo"
+                plate = vehicle.plate or ""
 
                 logger.info(
                     f"✅ Resolved possessive to user's vehicle: {vehicle_id}"
@@ -759,8 +763,10 @@ class DependencyResolver:
             )
 
         # CRITICAL FIX v12.2: ALWAYS filter by PersonId for user-specific data
+        # v22.0: Use UserContextManager for validated access
         provider_params = {}
-        person_id = user_context.get("person_id")
+        ctx = UserContextManager(user_context)
+        person_id = ctx.person_id
 
         if person_id:
             # Try to inject PersonId using schema-based classification
@@ -908,7 +914,9 @@ class DependencyResolver:
         search_value = reference.value.strip()
 
         # CRITICAL FIX v12.2: Combine name search with PersonId filter
-        person_id = user_context.get("person_id")
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
+        person_id = ctx.person_id
 
         # Start with empty params
         provider_params = {}

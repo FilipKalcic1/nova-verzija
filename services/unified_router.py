@@ -45,6 +45,7 @@ from services.query_router import QueryRouter, RouteResult
 from services.ambiguity_detector import (
     AmbiguityDetector, AmbiguityResult, get_ambiguity_detector
 )
+from services.context import UserContextManager
 
 if TYPE_CHECKING:
     from services.registry import ToolRegistry
@@ -400,13 +401,15 @@ class UnifiedRouter:
     ) -> RouterDecision:
         """Make routing decision using LLM with disambiguation support (v2.0)."""
 
-        # Build context description - use Swagger field names directly
-        vehicle = user_context.get("vehicle", {})
+        # Build context description - use UserContextManager for validated access
+        # v22.0: Use UserContextManager
+        ctx = UserContextManager(user_context)
+        vehicle = ctx.vehicle
         vehicle_info = ""
-        if vehicle.get("Id"):
-            # Use actual Swagger field names: FullVehicleName, LicencePlate
-            name = vehicle.get("FullVehicleName") or vehicle.get("DisplayName", "N/A")
-            plate = vehicle.get("LicencePlate", "N/A")
+        if vehicle and vehicle.id:
+            # Use VehicleContext properties
+            name = vehicle.name or "N/A"
+            plate = vehicle.plate or "N/A"
             vehicle_info = f"Korisnikovo vozilo: {name} ({plate})"
         else:
             vehicle_info = "Korisnik NEMA dodijeljeno vozilo"
@@ -635,15 +638,17 @@ class UnifiedRouter:
             # FORMAT the template with user context
             response_text = qr_result.response_template
             if response_text and user_context:
+                # v22.0: Use UserContextManager for validated access
+                ctx = UserContextManager(user_context)
                 # Direct extraction for context queries (person_id, phone, tenant_id)
                 if 'person_id' in response_text:
-                    val = user_context.get('person_id', 'N/A')
+                    val = ctx.person_id or 'N/A'
                     response_text = f"👤 **Person ID:** {val}"
                 elif 'phone' in response_text:
-                    val = user_context.get('phone', 'N/A')
+                    val = ctx.phone or 'N/A'
                     response_text = f"📱 **Telefon:** {val}"
                 elif 'tenant_id' in response_text:
-                    val = user_context.get('tenant_id', 'N/A')
+                    val = ctx.tenant_id or 'N/A'
                     response_text = f"🏢 **Tenant ID:** {val}"
                 else:
                     # For other templates, use format() with simple context

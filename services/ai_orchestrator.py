@@ -13,6 +13,7 @@ from openai import AsyncAzureOpenAI, RateLimitError, APIStatusError, APITimeoutE
 from config import get_settings
 from services.sanitizer import sanitize
 from services.patterns import PatternRegistry
+from services.context import UserContextManager
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -24,13 +25,15 @@ except ImportError:
 
 
 # Token budgeting constants
-# FIXED: Raised threshold from 0.98 to 0.995 to be more conservative
-# Only use single-tool mode when we're VERY confident (99.5%+)
-SINGLE_TOOL_THRESHOLD = 0.995
-MAX_TOOLS_FOR_LLM = 10
-# FIXED: Always show at least 3 tools to LLM even with high scores
-# This prevents blind spots when embedding scoring is slightly wrong
-MIN_TOOLS_FOR_LLM = 3
+# v16.0: LLM DECISION MODE - Show more tools, let LLM decide
+# REMOVED single-tool mode - LLM is smarter than embeddings
+SINGLE_TOOL_THRESHOLD = 1.1  # > 1.0 = disabled, never use single-tool mode
+# Use config setting for max tools, default to 25 if not set
+from config import get_settings
+_settings = get_settings()
+MAX_TOOLS_FOR_LLM = getattr(_settings, 'MAX_TOOLS_FOR_LLM', 25)
+# Always show at least 5 tools - give LLM real choices
+MIN_TOOLS_FOR_LLM = 5
 MAX_HISTORY_MESSAGES = 20
 MAX_TOKEN_LIMIT = 8000
 
@@ -742,9 +745,11 @@ Vrati SAMO JSON, bez drugog teksta."""
         Returns:
             System prompt
         """
-        name = user_context.get("display_name", "Korisnik")
-        person_id = user_context.get("person_id", "")
-        vehicle = user_context.get("vehicle", {})
+        # v22.0: Use UserContextManager for validated access
+        ctx = UserContextManager(user_context)
+        name = ctx.display_name
+        person_id = ctx.person_id or ""
+        vehicle = ctx.vehicle
         
         today = datetime.now()
         
@@ -759,9 +764,10 @@ Vrati SAMO JSON, bez drugog teksta."""
         - Datum: {today.strftime('%d.%m.%Y')} ({today.strftime('%A')})
         """
 
-        if vehicle and vehicle.get("plate"):
-            prompt += f"""- Vozilo: {vehicle.get('name', 'N/A')} ({vehicle.get('plate', 'N/A')})
-        - Kilometraža: {vehicle.get('mileage', 'N/A')} km
+        # v22.0: VehicleContext has .plate, .name, .mileage properties
+        if vehicle and vehicle.plate:
+            prompt += f"""- Vozilo: {vehicle.name or 'N/A'} ({vehicle.plate or 'N/A'})
+        - Kilometraža: {vehicle.mileage or 'N/A'} km
         """
 
         prompt += """
