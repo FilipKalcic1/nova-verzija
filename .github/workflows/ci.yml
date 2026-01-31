@@ -22,9 +22,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Verify imports
         env:
-          # Required env vars for config.py (test values - not real credentials)
           DATABASE_URL: "postgresql+asyncpg://test:test@localhost/test_db"
           REDIS_URL: "redis://localhost:6379/1"
           MOBILITY_API_URL: "https://test-api.example.com"
@@ -35,7 +34,30 @@ jobs:
           AZURE_OPENAI_ENDPOINT: "https://test.openai.azure.com"
           AZURE_OPENAI_API_KEY: "test-api-key"
           APP_ENV: "testing"
-        run: pytest tests/ -v --tb=short
+        run: |
+          echo "=== Python version ==="
+          python --version
+          echo "=== Verify key imports ==="
+          python -c "from config import get_settings; print('config OK')"
+          python -c "from services.patterns import detect_intent; print('patterns OK')"
+          python -c "import faiss; print('faiss OK:', faiss.__version__)"
+          python -c "import numpy; print('numpy OK:', numpy.__version__)"
+          echo "=== Collect tests ==="
+          pytest --collect-only -q tests/ 2>&1 | tail -5
+
+      - name: Run tests
+        env:
+          DATABASE_URL: "postgresql+asyncpg://test:test@localhost/test_db"
+          REDIS_URL: "redis://localhost:6379/1"
+          MOBILITY_API_URL: "https://test-api.example.com"
+          MOBILITY_AUTH_URL: "https://test-api.example.com/sso/connect/token"
+          MOBILITY_CLIENT_ID: "test_client"
+          MOBILITY_CLIENT_SECRET: "test_secret"
+          MOBILITY_TENANT_ID: "test-tenant-id"
+          AZURE_OPENAI_ENDPOINT: "https://test.openai.azure.com"
+          AZURE_OPENAI_API_KEY: "test-api-key"
+          APP_ENV: "testing"
+        run: pytest tests/ -v --tb=long -x
 
   lint:
     runs-on: ubuntu-latest
