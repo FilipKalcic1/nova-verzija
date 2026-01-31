@@ -57,7 +57,13 @@ jobs:
           AZURE_OPENAI_ENDPOINT: "https://test.openai.azure.com"
           AZURE_OPENAI_API_KEY: "test-api-key"
           APP_ENV: "testing"
-        run: pytest tests/ -v --tb=long -x
+        run: |
+          pytest tests/ -v --tb=long -x 2>&1 | tee test_output.txt || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -80 test_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Fail the step if tests failed
+          grep -q "passed" test_output.txt && ! grep -q "failed\|error" test_output.txt
 
   lint:
     runs-on: ubuntu-latest
