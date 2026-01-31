@@ -96,7 +96,7 @@ class ToolExecutor:
         start_time = time.time()
         operation_id = tool.operation_id
 
-        logger.info(f"🔧 Executing: {operation_id}")
+        logger.info(f"Executing: {operation_id}")
 
         # PHASE 3: Fail-fast if tool not in registry
         if self.registry and not self.registry.get_tool(operation_id):
@@ -115,7 +115,7 @@ class ToolExecutor:
 
             if warnings:
                 for warning in warnings:
-                    logger.warning(f"⚠️ {warning}")
+                    logger.warning(f"{warning}")
 
             # FIX v21.0: Inject PATH parameters from context BEFORE prepare_request
             # PATH params like personIdOrEmail need to be in resolved_params for path substitution
@@ -127,7 +127,7 @@ class ToolExecutor:
                     if param_def.location == "path" and param_def.context_key == "person_id":
                         if param_name not in resolved_params or not resolved_params.get(param_name):
                             resolved_params[param_name] = person_id
-                            logger.info(f"🎯 PATH INJECT: {param_name}={person_id[:8]}... for {operation_id}")
+                            logger.info(f"PATH INJECT: {param_name}={person_id[:8]}... for {operation_id}")
 
             # Prepare request components
             path, query_params, body = self.param_manager.prepare_request(
@@ -463,7 +463,7 @@ class ToolExecutor:
             return url
 
         # Case 4: No swagger_name, no service_url - use path only
-        logger.warning(f"⚠️ No swagger_name or service_url for {tool.operation_id}, using path only")
+        logger.warning(f"No swagger_name or service_url for {tool.operation_id}, using path only")
         return path
 
     def _build_headers(

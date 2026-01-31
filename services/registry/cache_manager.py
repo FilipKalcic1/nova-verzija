@@ -128,7 +128,7 @@ class CacheManager:
                 logger.warning("Cache corrupted: embeddings invalid structure")
                 return False
 
-            logger.info("✅ Cache valid - loading from disk")
+            logger.info("Cache valid - loading from disk")
             return True
 
         except json.JSONDecodeError as e:
@@ -162,7 +162,7 @@ class CacheManager:
                 dep = DependencyGraph(**dep_dict)
                 dependency_graph.append(dep)
 
-            logger.info(f"📦 Loaded {len(tools)} tools from cache")
+            logger.info(f"Loaded {len(tools)} tools from cache")
 
             # Load embeddings
             embeddings_data = await asyncio.to_thread(
@@ -171,7 +171,7 @@ class CacheManager:
             )
             embeddings = embeddings_data.get("embeddings", {})
 
-            logger.info(f"📦 Loaded {len(embeddings)} embeddings from cache")
+            logger.info(f"Loaded {len(embeddings)} embeddings from cache")
 
             return {
                 "tools": tools,
@@ -212,7 +212,7 @@ class CacheManager:
                 MANIFEST_CACHE_FILE,
                 manifest
             )
-            logger.info(f"💾 Saved manifest: {len(swagger_sources)} sources")
+            logger.info(f"Saved manifest: {len(swagger_sources)} sources")
 
             # Save metadata (mode='json' for Enum serialization)
             metadata = {
@@ -232,7 +232,7 @@ class CacheManager:
                 METADATA_CACHE_FILE,
                 metadata
             )
-            logger.info(f"💾 Saved metadata: {len(tools)} tools")
+            logger.info(f"Saved metadata: {len(tools)} tools")
 
             # Save embeddings
             embeddings_data = {
@@ -245,7 +245,7 @@ class CacheManager:
                 EMBEDDINGS_CACHE_FILE,
                 embeddings_data
             )
-            logger.info(f"💾 Saved embeddings: {len(embeddings)} vectors")
+            logger.info(f"Saved embeddings: {len(embeddings)} vectors")
 
             # Verify files were written
             await self._verify_cache_files()
@@ -256,7 +256,7 @@ class CacheManager:
             )
 
         except Exception as e:
-            logger.error(f"❌ Cache save failed: {e}", exc_info=True)
+            logger.error(f"Cache save failed: {e}", exc_info=True)
             raise
 
     async def _verify_cache_files(self) -> None:
@@ -273,7 +273,7 @@ class CacheManager:
             if size == 0:
                 raise RuntimeError(f"Cache {name} is empty: {cache_file}")
 
-            logger.info(f"✅ {name}: {cache_file.name} ({size:,} bytes)")
+            logger.info(f"{name}: {cache_file.name} ({size:,} bytes)")
 
     def _read_json_sync(self, path: Path) -> Dict:
         """Synchronous JSON read."""

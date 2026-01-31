@@ -82,12 +82,13 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  # TODO: Replace with your actual domain before deploying
   tls:
     - hosts:
-        - bot.mobilityone.example.com
+        - bot.mobilityone.example.com  # CHANGE THIS to your real domain
       secretName: mobility-tls
   rules:
-    - host: bot.mobilityone.example.com
+    - host: bot.mobilityone.example.com  # CHANGE THIS to your real domain
       http:
         paths:
           # WhatsApp webhook endpoint

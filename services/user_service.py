@@ -128,7 +128,7 @@ class UserService:
             logger.error(f"ONBOARD FAIL: Gateway is None! Cannot auto-onboard user {phone}")
             return None
         
-        logger.info(f"🔍 AUTO-ONBOARD START for {phone}, gateway={type(self.gateway).__name__}")
+        logger.info(f"AUTO-ONBOARD START for {phone}, gateway={type(self.gateway).__name__}")
 
         try:
             # Generate phone variations to maximize match chance
@@ -203,7 +203,7 @@ class UserService:
                                 )
                                 continue  # Try next variation
 
-                            logger.info(f"✅ Korisnik pronađen i validiran preko polja '{field}': {display_name}")
+                            logger.info(f"Korisnik pronađen i validiran preko polja '{field}': {display_name}")
 
                             # Spremanje u bazu
                             await self._upsert_mapping(phone, person_id, display_name)
@@ -217,7 +217,7 @@ class UserService:
                     f"These are EXTERNAL issues, not bot errors"
                 )
 
-            logger.warning(f"❌ Korisnik nije pronađen na API-ju niti s jednom varijacijom: {variations}")
+            logger.warning(f"Korisnik nije pronađen na API-ju niti s jednom varijacijom: {variations}")
             return None
 
         except Exception as e:
@@ -520,7 +520,7 @@ class UserService:
         Returns:
             (display_name, vehicle_info) tuple or None
         """
-        logger.info(f"🔄 FORCE REFRESH for {phone[-4:]}...")
+        logger.info(f"FORCE REFRESH for {phone[-4:]}...")
         
         # Delete existing mapping to force fresh lookup
         try:
@@ -528,7 +528,7 @@ class UserService:
             stmt = delete(UserMapping).where(UserMapping.phone_number == phone)
             await self.db.execute(stmt)
             await self.db.commit()
-            logger.info(f"🗑️ Deleted old mapping for {phone[-4:]}")
+            logger.info(f"Deleted old mapping for {phone[-4:]}")
         except Exception as e:
             logger.warning(f"Could not delete old mapping: {e}")
             await self.db.rollback()

@@ -85,7 +85,7 @@ class CircuitBreaker:
             if circuit.state == CircuitState.OPEN:
                 if self._should_attempt_reset(circuit):
                     circuit.state = CircuitState.HALF_OPEN
-                    logger.info(f"🔄 Circuit HALF_OPEN: {endpoint_key}")
+                    logger.info(f"Circuit HALF_OPEN: {endpoint_key}")
                 else:
                     raise CircuitOpenError(
                         f"Endpoint {endpoint_key} je onemogućen zbog prethodnih grešaka. "
@@ -115,7 +115,7 @@ class CircuitBreaker:
                 if circuit.success_count >= self.SUCCESS_THRESHOLD_TO_RESET:
                     circuit.state = CircuitState.CLOSED
                     circuit.opened_at = None
-                    logger.info(f"✅ Circuit CLOSED: {endpoint_key}")
+                    logger.info(f"Circuit CLOSED: {endpoint_key}")
 
     async def _record_failure(self, endpoint_key: str) -> None:
         """Record failed call."""
@@ -180,7 +180,7 @@ class CircuitBreaker:
                 circuit.failure_count = 0
                 circuit.success_count = 0
                 circuit.opened_at = None
-                logger.info(f"♻️ Circuit manually reset: {endpoint_key}")
+                logger.info(f"Circuit manually reset: {endpoint_key}")
 
 
 class CircuitOpenError(Exception):

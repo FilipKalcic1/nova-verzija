@@ -324,7 +324,7 @@ class ToolEvaluator:
 
         if positive:
             metrics.positive_feedback += 1
-            logger.debug(f"👍 Positive feedback for {operation_id}")
+            logger.debug(f"Positive feedback for {operation_id}")
         else:
             metrics.negative_feedback += 1
             logger.info(
