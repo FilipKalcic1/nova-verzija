@@ -249,11 +249,11 @@ class ParameterManager:
         injected = {}
 
         # DEBUG v21.1: Log what we're trying to inject
-        logger.info(f"🔍 _inject_context_params for {tool.operation_id}")
-        logger.info(f"🔍 user_context keys: {list(user_context.keys())}")
+        logger.info(f" _inject_context_params for {tool.operation_id}")
+        logger.info(f"user_context keys: {list(user_context.keys())}")
         # v22.0: Use UserContextManager for logging
         ctx = UserContextManager(user_context)
-        logger.info(f"🔍 person_id in context: {ctx.person_id or 'NOT FOUND'}")
+        logger.info(f"person_id in context: {ctx.person_id or 'NOT FOUND'}")
 
         # FIX v13.3: Skip certain params that have incorrect context_key in Swagger metadata
         # VehicleId should come from user context vehicle.id, not person_id
@@ -325,7 +325,7 @@ class ParameterManager:
         nested_obj = get_injectable_context(user_context)
 
         for key, value in nested_obj.items():
-            logger.debug(f"  -> Injected {key}={value} into {param_name}")
+            logger.debug(f"-> Injected {key}={value} into {param_name}")
 
         # Return None if no fields were injected
         return nested_obj if nested_obj else None

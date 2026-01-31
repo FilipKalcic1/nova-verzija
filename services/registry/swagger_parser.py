@@ -177,7 +177,7 @@ class SwaggerParser:
                 except Exception as e:
                     logger.debug(f"Skipped {method} {path}: {e}")
 
-        logger.info(f"✅ {service_name}: {len(tools)} operations")
+        logger.info(f"{service_name}: {len(tools)} operations")
         return tools
 
     def _parse_operation(

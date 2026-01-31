@@ -308,17 +308,17 @@ class SwaggerWatcher:
         # Log summary
         logger.info("=" * 50)
         logger.info("CHANGE SUMMARY:")
-        logger.info(f"  New operations: {len(self.changes['new'])}")
-        logger.info(f"  Modified operations: {len(self.changes['modified'])}")
-        logger.info(f"  Deleted operations: {len(self.changes['deleted'])}")
+        logger.info(f"New operations: {len(self.changes['new'])}")
+        logger.info(f"Modified operations: {len(self.changes['modified'])}")
+        logger.info(f"Deleted operations: {len(self.changes['deleted'])}")
         logger.info("=" * 50)
 
         if self.changes["new"]:
-            logger.info(f"  New: {self.changes['new'][:10]}{'...' if len(self.changes['new']) > 10 else ''}")
+            logger.info(f"New: {self.changes['new'][:10]}{'...' if len(self.changes['new']) > 10 else ''}")
         if self.changes["modified"]:
-            logger.info(f"  Modified: {self.changes['modified'][:10]}{'...' if len(self.changes['modified']) > 10 else ''}")
+            logger.info(f"Modified: {self.changes['modified'][:10]}{'...' if len(self.changes['modified']) > 10 else ''}")
         if self.changes["deleted"]:
-            logger.info(f"  Deleted: {self.changes['deleted'][:10]}{'...' if len(self.changes['deleted']) > 10 else ''}")
+            logger.info(f"Deleted: {self.changes['deleted'][:10]}{'...' if len(self.changes['deleted']) > 10 else ''}")
 
     async def trigger_regeneration(self, delta_only: bool = True) -> bool:
         """

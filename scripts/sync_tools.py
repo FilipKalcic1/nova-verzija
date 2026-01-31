@@ -61,7 +61,7 @@ async def main():
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
-        logger.info(f"✅ Successfully saved tool registry to {output_path}")
+        logger.info(f"Successfully saved tool registry to {output_path}")
     except IOError as e:
         logger.error(f"Failed to write to {output_path}. Error: {e}")
 

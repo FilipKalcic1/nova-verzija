@@ -123,12 +123,12 @@ class SearchEngine:
                 keywords.update(cat_data.get("typical_intents", []))
                 self._category_keywords[cat_name] = {k.lower() for k in keywords}
 
-            logger.info(f"📂 Loaded {len(self._tool_to_category)} tool→category mappings")
+            logger.info(f"Loaded {len(self._tool_to_category)} tool→category mappings")
         else:
             logger.warning("Tool categories not loaded - category boosting disabled")
 
         if self._tool_documentation:
-            logger.info(f"📄 Loaded documentation for {len(self._tool_documentation)} tools")
+            logger.info(f"Loaded documentation for {len(self._tool_documentation)} tools")
 
         logger.debug("SearchEngine initialized (v4.0 - documentation only, no training_queries)")
 
@@ -245,7 +245,7 @@ class SearchEngine:
                 "origin_guide": origin_guide  # NEW: Parameter origin info
             })
 
-        logger.info(f"📦 Returning {len(result)} tools with scores and origin guides")
+        logger.info(f"Returning {len(result)} tools with scores and origin guides")
         return result
 
     async def _get_query_embedding(self, query: str) -> Optional[List[float]]:
@@ -358,7 +358,7 @@ class SearchEngine:
         )
 
         if is_read_intent:
-            logger.info(f"🔍 Detected READ intent in: '{query}'")
+            logger.info(f"Detected READ intent in: '{query}'")
 
         adjusted = []
         for score, op_id in scored:
@@ -469,7 +469,7 @@ class SearchEngine:
             if should_inject:
                 injected.append((injection_score, op_id))
                 injections_count += 1
-                logger.info(f"🎯 WILDCARD INJECT: {op_id} (intent match, no training)")
+                logger.info(f"WILDCARD INJECT: {op_id} (intent match, no training)")
         
         # Re-sort after injection
         injected.sort(key=lambda x: x[0], reverse=True)
@@ -492,7 +492,7 @@ class SearchEngine:
         if not is_user_specific:
             return scored
 
-        logger.info(f"👤 Detected USER-SPECIFIC intent in: '{query}'")
+        logger.info(f"Detected USER-SPECIFIC intent in: '{query}'")
 
         boost_value = 0.15
         penalty_value = 0.10
@@ -564,7 +564,7 @@ class SearchEngine:
             for provider_id in dep_graph.provider_tools[:2]:
                 if provider_id not in result:
                     result.append(provider_id)
-                    logger.debug(f"🔗 Boosted {provider_id} for {tool_id}")
+                    logger.debug(f"Boosted {provider_id} for {tool_id}")
 
         return result
 
@@ -665,7 +665,7 @@ class SearchEngine:
                     break
 
         if matching_categories:
-            logger.info(f"📂 Query matches categories: {matching_categories}")
+            logger.info(f"Query matches categories: {matching_categories}")
 
         config = self.CATEGORY_CONFIG
         category_boost = config["category_boost"]
@@ -805,7 +805,7 @@ class SearchEngine:
                 boost = 0.0
 
             if boost > 0:
-                logger.debug(f"📚 Example query boost +{boost:.2f} for {op_id} (overlap={best_overlap})")
+                logger.debug(f"Example query boost +{boost:.2f} for {op_id} (overlap={best_overlap})")
 
             adjusted.append((score + boost, op_id))
 
@@ -942,7 +942,7 @@ class SearchEngine:
                 if tool.method in ("POST", "PUT", "PATCH", "DELETE"):
                     filtered.add(tool_id)
 
-        logger.info(f"🔍 Method filter ({intent}): {len(tool_ids)} → {len(filtered)} tools")
+        logger.info(f"Method filter ({intent}): {len(tool_ids)} → {len(filtered)} tools")
         return filtered if filtered else tool_ids  # Fallback to all if nothing matches
 
     def filter_by_categories(
@@ -970,7 +970,7 @@ class SearchEngine:
             if tool_category and tool_category in categories:
                 filtered.add(tool_id)
 
-        logger.info(f"📂 Category filter ({categories}): {len(tool_ids)} → {len(filtered)} tools")
+        logger.info(f"Category filter ({categories}): {len(tool_ids)} → {len(filtered)} tools")
         return filtered if filtered else tool_ids  # Fallback to all if nothing matches
 
     async def find_relevant_tools_filtered(
@@ -999,7 +999,7 @@ class SearchEngine:
         """
         # Step 1: Detect intent
         intent = self.detect_intent(query)
-        logger.info(f"🎯 Detected intent: {intent}")
+        logger.info(f"Detected intent: {intent}")
 
         # Step 2: Start with all tools
         search_pool = set(tools.keys())
@@ -1012,13 +1012,13 @@ class SearchEngine:
         # Step 4: Detect categories
         categories = self.detect_categories(query)
         if categories:
-            logger.info(f"📂 Detected categories: {categories}")
+            logger.info(f"Detected categories: {categories}")
 
         # Step 5: Filter by categories (only if we have matches)
         if categories:
             search_pool = self.filter_by_categories(search_pool, categories)
 
-        logger.info(f"🔎 Search space: {original_size} → {len(search_pool)} tools")
+        logger.info(f"Search space: {original_size} → {len(search_pool)} tools")
 
         # Step 6: Run semantic search on filtered set
         query_embedding = await self._get_query_embedding(query)
@@ -1093,6 +1093,6 @@ class SearchEngine:
                 "origin_guide": origin_guide  # NEW: Parameter origin info
             })
 
-        logger.info(f"📦 Returning {len(result)} tools (filtered search with origin guides)")
+        logger.info(f"Returning {len(result)} tools (filtered search with origin guides)")
         return result
 

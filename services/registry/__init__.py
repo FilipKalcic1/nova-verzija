@@ -140,7 +140,7 @@ class ToolRegistry:
 
     async def load_swagger(self, source: str) -> bool:
         """Backward compatible method for single source."""
-        logger.warning("⚠️ load_swagger() is DEPRECATED. Use initialize([sources]).")
+        logger.warning("load_swagger() is DEPRECATED. Use initialize([sources]).")
         return await self.initialize([source])
 
     async def initialize(self, swagger_sources: List[str]) -> bool:
@@ -154,7 +154,7 @@ class ToolRegistry:
                 registry_path = os.path.join(base_path, "config", "processed_tool_registry.json")
 
                 if os.path.exists(registry_path):
-                    logger.info(f"✅ Pre-processed registry found - loading from {registry_path}")
+                    logger.info(f"Pre-processed registry found - loading from {registry_path}")
                     with open(registry_path, 'r', encoding='utf-8') as f:
                         registry_data = json.load(f)
                     
@@ -180,16 +180,16 @@ class ToolRegistry:
                                 for op_id, embedding in cached_embeddings.items():
                                     if op_id in self._store.tools and isinstance(embedding, list):
                                         self._store.add_embedding(op_id, embedding)
-                            logger.info(f"📦 Loaded {len(self._store.embeddings)} embeddings from cache")
+                            logger.info(f"Loaded {len(self._store.embeddings)} embeddings from cache")
                         except Exception as e:
                             logger.warning(f"Failed to load embeddings cache: {e}")
 
                 else:
-                    logger.warning(f"⚠️ Pre-processed registry not found at {registry_path}. Falling back to dynamic loading from Swagger URLs.")
+                    logger.warning(f"Pre-processed registry not found at {registry_path}. Falling back to dynamic loading from Swagger URLs.")
                     
                     # Fallback to old logic
                     if await self._cache.is_cache_valid(swagger_sources):
-                        logger.info("✅ Cache valid - loading from disk")
+                        logger.info("Cache valid - loading from disk")
                         cached_data = await self._cache.load_cache()
 
                         for tool in cached_data["tools"]:
@@ -199,20 +199,20 @@ class ToolRegistry:
                         for op_id, embedding in cached_data["embeddings"].items():
                             self._store.add_embedding(op_id, embedding)
                         
-                        logger.info(f"✅ Loaded {self._store.count()} tools from cache.")
+                        logger.info(f"Loaded {self._store.count()} tools from cache.")
 
                     else:
-                        logger.info("🔄 Cache invalid - fetching Swagger specs...")
+                        logger.info("Cache invalid - fetching Swagger specs...")
                         for source in swagger_sources:
                             tools = await self._parser.parse_spec(source, self._embedding.build_embedding_text)
                             for tool in tools:
                                 self._store.add_tool(tool)
 
                         if self._store.count() == 0:
-                            logger.error("❌ No tools loaded from Swagger sources")
+                            logger.error("No tools loaded from Swagger sources")
                             return False
                         
-                        logger.info(f"📦 Loaded {self._store.count()} tools from Swagger")
+                        logger.info(f"Loaded {self._store.count()} tools from Swagger")
 
                         # Build dependency graph
                         dep_graph = self._embedding.build_dependency_graph(self._store.tools)
@@ -224,16 +224,16 @@ class ToolRegistry:
                 total_tools = self._store.count()
                 
                 if cached_count >= total_tools:
-                    logger.info(f"✅ All embeddings cached ({cached_count}/{total_tools}) - skipping generation")
+                    logger.info(f"All embeddings cached ({cached_count}/{total_tools}) - skipping generation")
                 else:
-                    logger.info(f"🔄 Generating missing embeddings ({cached_count}/{total_tools} cached)...")
+                    logger.info(f"Generating missing embeddings ({cached_count}/{total_tools} cached)...")
                     new_embeddings = await self._embedding.generate_embeddings(
                         self._store.tools,
                         self._store.embeddings
                     )
                     for op_id, embedding in new_embeddings.items():
                         self._store.add_embedding(op_id, embedding)
-                    logger.info(f"✅ Generated {len(new_embeddings)} new embeddings")
+                    logger.info(f"Generated {len(new_embeddings)} new embeddings")
 
                 # Save cache if we didn't load from pre-processed file
                 if not os.path.exists(registry_path):
@@ -257,7 +257,7 @@ class ToolRegistry:
                 return True
 
             except Exception as e:
-                logger.error(f"❌ Initialization failed: {e}", exc_info=True)
+                logger.error(f"Initialization failed: {e}", exc_info=True)
                 return False
 
     async def _initialize_faiss(self) -> None:
@@ -288,7 +288,7 @@ class ToolRegistry:
                 tool_registry_tools=self._store.tools
             )
 
-            logger.info(f"✅ FAISS initialized: {faiss_store.get_stats()['total_tools']} tools indexed")
+            logger.info(f"FAISS initialized: {faiss_store.get_stats()['total_tools']} tools indexed")
 
         except ImportError as e:
             logger.warning(f"FAISS not available: {e}. Using legacy search.")

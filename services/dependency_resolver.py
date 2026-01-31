@@ -250,7 +250,7 @@ class DependencyResolver:
         if hasattr(self.registry, 'dependency_graph'):
             for tool_id, dep_graph in self.registry.dependency_graph.items():
                 if missing_param in dep_graph.provider_tools:
-                    logger.info(f"📦 Found provider via DependencyGraph: {tool_id}")
+                    logger.info(f"Found provider via DependencyGraph: {tool_id}")
                     return tool_id
 
         # Strategy 2: Search tools by output_keys
@@ -282,7 +282,7 @@ class DependencyResolver:
                             )
                             return tool_id
 
-        logger.warning(f"❌ No provider found for: {missing_param}")
+        logger.warning(f"No provider found for: {missing_param}")
         return None
 
     def build_filter_query(
@@ -337,13 +337,13 @@ class DependencyResolver:
         Returns:
             ResolutionResult with resolved value or error
         """
-        logger.info(f"🔗 Resolving dependency: {missing_param}")
+        logger.info(f"Resolving dependency: {missing_param}")
 
         # Check cache first
         cache_key = f"{missing_param}:{user_value}"
         if cache_key in self._resolution_cache:
             cached = self._resolution_cache[cache_key]
-            logger.info(f"✅ Cache hit for {cache_key}")
+            logger.info(f"Cache hit for {cache_key}")
             return ResolutionResult(
                 success=True,
                 resolved_value=cached['value'],
@@ -391,7 +391,7 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"🎯 Dependency resolution: filtering by {param_name}={person_id}")
+                    logger.info(f"Dependency resolution: filtering by {param_name}={person_id}")
                     break
 
             # If no direct param match but Filter exists, add to Filter
@@ -402,9 +402,9 @@ class DependencyResolver:
                     provider_params['Filter'] = f"{existing_filter};PersonId(=){person_id}"
                 else:
                     provider_params['Filter'] = f"PersonId(=){person_id}"
-                logger.info(f"🎯 Added PersonId filter to dependency resolution")
+                logger.info(f"Added PersonId filter to dependency resolution")
         else:
-            logger.warning("⚠️ No person_id in user_context for dependency resolution")
+            logger.warning("No person_id in user_context for dependency resolution")
 
         # Execute provider tool
         try:
@@ -662,7 +662,7 @@ class DependencyResolver:
         Returns:
             ResolutionResult with UUID or error
         """
-        logger.info(f"🔍 Resolving entity: {reference}")
+        logger.info(f"Resolving entity: {reference}")
 
         # STRATEGY 1: Possessive - use user's default vehicle
         if reference.is_possessive or reference.reference_type == "possessive":
@@ -775,15 +775,15 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"🎯 Filtering by {param_name}={person_id} for user-specific data")
+                    logger.info(f"Filtering by {param_name}={person_id} for user-specific data")
                     break
 
             # If no direct param match, try using Filter parameter
             if not person_param_injected and "Filter" in provider_tool.parameters:
                 provider_params["Filter"] = f"PersonId(=){person_id}"
-                logger.info(f"🎯 Using Filter=PersonId(=){person_id} for user-specific data")
+                logger.info(f"Using Filter=PersonId(=){person_id} for user-specific data")
         else:
-            logger.warning("⚠️ No person_id in user_context - may return tenant-wide data!")
+            logger.warning("No person_id in user_context - may return tenant-wide data!")
 
         try:
             from services.tool_contracts import ToolExecutionContext
@@ -928,21 +928,21 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"🎯 Name search: filtering by {param_name}={person_id}")
+                    logger.info(f"Name search: filtering by {param_name}={person_id}")
                     break
 
             # If no direct param, combine with Filter
             if not person_param_injected and "Filter" in provider_tool.parameters:
                 # Combine PersonId and Name filter
                 provider_params["Filter"] = f"PersonId(=){person_id};Name(~){search_value}"
-                logger.info(f"🎯 Combined filter: PersonId + Name search")
+                logger.info(f"Combined filter: PersonId + Name search")
             else:
                 # Add name filter separately
                 provider_params["Filter"] = f"Name(~){search_value}"
         else:
             # No person_id - just search by name (may return tenant-wide results)
             provider_params["Filter"] = f"Name(~){search_value}"
-            logger.warning("⚠️ No person_id - name search may return other users' data")
+            logger.warning("No person_id - name search may return other users' data")
 
         try:
             from services.tool_contracts import ToolExecutionContext

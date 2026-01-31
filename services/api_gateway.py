@@ -163,11 +163,11 @@ class APIGateway:
                     request_headers.update(headers)
                 
                 # DETAILED LOGGING for debugging
-                logger.info(f"🔍 API Request: {method.value} {url}")
+                logger.info(f"API Request: {method.value} {url}")
                 if params:
-                    logger.info(f"🔍 Query params: {params}")
+                    logger.info(f"Query params: {params}")
                 if body:
-                    logger.info(f"🔍 Body: {json.dumps(body)[:500]}")
+                    logger.info(f"Body: {json.dumps(body)[:500]}")
                 
                 # Execute
                 response = await self._do_request(method, url, request_headers, body)

@@ -122,10 +122,10 @@ class DocumentationGenerator:
             # Only categorize changed tools, merge with existing
             new_categories = await self._categorize_tools(tools_to_process)
             categories = self._merge_categories(existing_categories, new_categories)
-            logger.info(f"✅ Merged categories (updated {len(tools_to_process)} tools)")
+            logger.info(f"Merged categories (updated {len(tools_to_process)} tools)")
         else:
             categories = await self._categorize_tools(tools)
-            logger.info(f"✅ Created {len(categories.get('categories', {}))} categories")
+            logger.info(f"Created {len(categories.get('categories', {}))} categories")
         self._save_json(CONFIG_DIR / "tool_categories.json", categories)
 
         # Step 2: Generate documentation for each tool
@@ -135,10 +135,10 @@ class DocumentationGenerator:
             # Only document changed tools, merge with existing
             new_documentation = await self._generate_documentation(tools_to_process, categories)
             documentation = self._merge_documentation(existing_documentation, new_documentation, tools)
-            logger.info(f"✅ Merged documentation (updated {len(new_documentation)} tools)")
+            logger.info(f"Merged documentation (updated {len(new_documentation)} tools)")
         else:
             documentation = await self._generate_documentation(tools, categories)
-            logger.info(f"✅ Documented {len(documentation)} tools")
+            logger.info(f"Documented {len(documentation)} tools")
         self._save_json(CONFIG_DIR / "tool_documentation.json", documentation)
 
         # Step 3: DEPRECATED - training_queries.json no longer used (v4.0)
@@ -151,7 +151,7 @@ class DocumentationGenerator:
         logger.info("STEP 4: Building knowledge graph...")
         knowledge_graph = await self._build_knowledge_graph(tools, categories)
         self._save_json(CONFIG_DIR / "knowledge_graph.json", knowledge_graph)
-        logger.info("✅ Knowledge graph created")
+        logger.info("Knowledge graph created")
 
         self.stats["end_time"] = datetime.now()
         duration = (self.stats["end_time"] - self.stats["start_time"]).total_seconds()
@@ -489,10 +489,10 @@ Vrati JSON array svih endpointa. Samo JSON."""
                     doc = await self._document_single_tool(op_id, tool, category)
                     if doc:
                         documentation[op_id] = doc
-                        logger.info(f"  ✓ Documented {op_id} via fallback")
+                        logger.info(f"Documented {op_id} via fallback")
                     else:
                         failed_tools.append(op_id)
-                        logger.warning(f"  ✗ Failed to document {op_id}")
+                        logger.warning(f"Failed to document {op_id}")
 
         # Final validation
         all_tool_ids = set(tools.keys())
@@ -503,7 +503,7 @@ Vrati JSON array svih endpointa. Samo JSON."""
             logger.warning(f"COMPLETENESS CHECK: {len(still_missing)} tools still missing after all retries")
             self.stats["missing_tools"] = list(still_missing)
         else:
-            logger.info(f"✅ COMPLETENESS CHECK: All {len(tools)} tools documented!")
+            logger.info(f"COMPLETENESS CHECK: All {len(tools)} tools documented!")
 
         return documentation
 

@@ -222,7 +222,7 @@ class EmbeddingEngine:
 
             await asyncio.sleep(0.05)  # Rate limiting
 
-        logger.info(f"✅ Generated {len(missing)} embeddings")
+        logger.info(f"Generated {len(missing)} embeddings")
         return embeddings
 
     async def _get_embedding(self, text: str) -> Optional[List[float]]:
