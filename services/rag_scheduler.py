@@ -79,7 +79,6 @@ class RAGScheduler:
     3. Tool documentation cache
     """
 
-    # FIX v11.1: Use centralized config instead of os.getenv()
     REDIS_KEY_METRICS = "rag:scheduler:metrics"
     REDIS_KEY_LOCK = "rag:scheduler:lock"
     REDIS_CHANNEL_REFRESH = "rag:refresh:trigger"

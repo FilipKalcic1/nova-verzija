@@ -18,7 +18,7 @@ Primjer:
 import logging
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field, asdict
@@ -41,7 +41,7 @@ class ErrorPattern:
     context: Dict[str, Any]
     correction: Optional[str] = None  # What fixed it
     occurrence_count: int = 1
-    last_seen: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    last_seen: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     resolved: bool = False
 
 
@@ -247,7 +247,7 @@ class ErrorLearningService:
             # Update existing pattern
             pattern = self._error_patterns[pattern_key]
             pattern.occurrence_count += 1
-            pattern.last_seen = datetime.utcnow().isoformat()
+            pattern.last_seen = datetime.now(timezone.utc).isoformat()
             if correction:
                 pattern.correction = correction
                 pattern.resolved = True
@@ -602,7 +602,7 @@ class ErrorLearningService:
 
         # 2. Also keep in memory cache (masked)
         report = HallucinationReport(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             user_query=masked_query,
             bot_response=masked_response,
             user_feedback=masked_feedback,
@@ -702,7 +702,7 @@ class ErrorLearningService:
 
             data = {
                 "version": "2.0",
-                "saved_at": datetime.utcnow().isoformat(),
+                "saved_at": datetime.now(timezone.utc).isoformat(),
                 "patterns": [asdict(p) for p in self._error_patterns.values()],
                 "hallucinations": [asdict(h) for h in self._hallucination_reports],
                 "learned_rules": [

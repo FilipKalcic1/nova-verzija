@@ -144,7 +144,6 @@ class HallucinationHandler:
             )
 
             # Save state (run in thread to avoid blocking the event loop)
-            # FIX v11.1: Was blocking file I/O in async handler
             await asyncio.to_thread(self.error_learning.save_to_file)
 
             # Return the follow-up question

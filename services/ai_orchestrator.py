@@ -28,7 +28,6 @@ except ImportError:
 # v16.0: LLM DECISION MODE - Show more tools, let LLM decide
 # REMOVED single-tool mode - LLM is smarter than embeddings
 SINGLE_TOOL_THRESHOLD = 1.1  # > 1.0 = disabled, never use single-tool mode
-# FIX v11.1: Removed duplicate import of get_settings (already imported at line 13)
 MAX_TOOLS_FOR_LLM = getattr(settings, 'MAX_TOOLS_FOR_LLM', 25)
 # Always show at least 5 tools - give LLM real choices
 MIN_TOOLS_FOR_LLM = 5
@@ -36,7 +35,6 @@ MAX_HISTORY_MESSAGES = 20
 MAX_TOKEN_LIMIT = 8000
 
 # Token counting overhead constants
-# FIX v11.1: Croatian avg word ~6 chars, ~1.3 tokens/word → chars / 4.6
 CROATIAN_CHARS_PER_TOKEN = 4.6
 MESSAGE_TOKEN_OVERHEAD = 3  # Tokens added per message (OpenAI format overhead)
 FINAL_TOKEN_OVERHEAD = 3    # Final overhead added to total count
@@ -132,7 +130,6 @@ class AIOrchestrator:
         # Build final message list with system prompt first
         final_messages = []
 
-        # CRITICAL FIX v12.2: Prevent duplicate system prompts
         # _apply_smart_history may already include a system message
         has_system_in_filtered = (
             filtered_conversation and
@@ -146,7 +143,6 @@ class AIOrchestrator:
         final_messages.extend(filtered_conversation)
 
         # NEW v12.0: Apply Token Budgeting (trim tools if top match is excellent)
-        # CRITICAL FIX v15.1: Pass forced_tool to prevent mismatch
         trimmed_tools = self._apply_token_budgeting(tools, tool_scores, forced_tool)
 
         call_args = {
@@ -160,7 +156,6 @@ class AIOrchestrator:
             call_args["tools"] = trimmed_tools
 
             # ACTION-FIRST PROTOCOL: Force specific tool if similarity >= ACTION_THRESHOLD
-            # CRITICAL FIX v15.1: Validate forced_tool is actually in trimmed_tools
             if forced_tool:
                 # Check if forced_tool exists in trimmed_tools
                 tool_names_in_list = [t.get("function", {}).get("name") for t in trimmed_tools]
@@ -335,7 +330,6 @@ class AIOrchestrator:
         NEW v12.0: If best tool score >= SINGLE_TOOL_THRESHOLD (0.98),
         send only that tool to LLM. This saves ~80% of token cost for tool descriptions.
 
-        CRITICAL FIX v15.1: If forced_tool is specified and differs from best_match,
         don't apply SINGLE TOOL MODE to ensure forced_tool is in the list.
 
         CRITICAL REQUIREMENTS:
@@ -364,7 +358,6 @@ class AIOrchestrator:
             return tools
 
         # VALIDATION: Ensure tools and tool_scores are aligned
-        # MEDIUM FIX v12.2: Return early to prevent misaligned tool selection
         if len(tools) != len(tool_scores):
             logger.error(
                 f"Token budgeting: tools count ({len(tools)}) != "
@@ -379,7 +372,6 @@ class AIOrchestrator:
         if best and best.get("score", 0) >= SINGLE_TOOL_THRESHOLD:
             best_name = best.get("name")
 
-            # CRITICAL FIX v15.1: Check if forced_tool conflicts with best match
             if forced_tool and forced_tool != best_name:
                 logger.info(
                     f" Token budget: Skipping HIGH CONFIDENCE MODE - forced_tool '{forced_tool}' "
@@ -416,7 +408,6 @@ class AIOrchestrator:
                     )
 
         # Apply limit (tools already sorted by score DESC)
-        # CRITICAL FIX v15.1: Ensure forced_tool is included if specified
         if forced_tool:
             # Check if forced_tool is in the list
             tool_names = [t.get("function", {}).get("name") for t in tools]
@@ -502,7 +493,6 @@ class AIOrchestrator:
             final_messages.append(context_message)
             final_messages.extend(recent_history)
 
-            # CRITICAL FIX v12.2: Re-check token count after summarization
             # Summary might still push us over the limit
             final_tokens = self._count_tokens(final_messages)
             if final_tokens > MAX_TOKEN_LIMIT:
@@ -526,7 +516,6 @@ class AIOrchestrator:
         """
         Extract entity references from messages.
 
-        CRITICAL FIX v12.2: Changed to store lists of entities instead of single values.
         Prevents data loss when multiple UUIDs/plates are mentioned.
 
         Returns:
@@ -570,7 +559,6 @@ class AIOrchestrator:
         """
         Format extracted entities as context string.
 
-        CRITICAL FIX v12.2: Updated to handle lists of entities.
 
         Args:
             entities: Dict mapping entity types to lists of values
@@ -593,7 +581,6 @@ class AIOrchestrator:
             summary_parts.append(f"Ranije entiteti: {self._format_entity_context(entities)}")
 
         role_counts = Counter(m.get("role") for m in messages)
-        # CRITICAL FIX v12.2: Use .get() to prevent KeyError if role is missing
         summary_parts.append(
             f"Prethodnih {len(messages)} poruka "
             f"({role_counts.get('user', 0)} user, {role_counts.get('assistant', 0)} assistant, {role_counts.get('tool', 0)} tool calls)"

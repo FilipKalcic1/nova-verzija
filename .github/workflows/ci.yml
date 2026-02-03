@@ -7,7 +7,6 @@ on:
     branches: [main]
 
 env:
-  # Shared test env vars (not real credentials)
   DATABASE_URL: "postgresql+asyncpg://test:test@localhost/test_db"
   REDIS_URL: "redis://localhost:6379/1"
   MOBILITY_API_URL: "https://test-api.example.com"
@@ -34,8 +33,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest tests/ -v --tb=short
+      - name: Run tests with coverage
+        run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=40
 
   lint:
     runs-on: ubuntu-latest
@@ -60,3 +59,27 @@ jobs:
 
       - name: Compile entry points
         run: python -m py_compile config.py && python -m py_compile main.py && python -m py_compile worker.py && python -m py_compile admin_api.py
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt bandit pip-audit
+
+      - name: Bandit security scan
+        run: bandit -r services/ config.py main.py worker.py admin_api.py database.py -f json -o bandit-report.json --severity-level medium || true
+
+      - name: Bandit summary
+        if: always()
+        run: bandit -r services/ config.py main.py worker.py admin_api.py database.py --severity-level high
+
+      - name: Dependency audit
+        run: pip-audit --strict --desc on 2>&1 | head -50 || true

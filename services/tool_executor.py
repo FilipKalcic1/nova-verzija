@@ -117,7 +117,6 @@ class ToolExecutor:
                 for warning in warnings:
                     logger.warning(f"{warning}")
 
-            # FIX v21.0: Inject PATH parameters from context BEFORE prepare_request
             # PATH params like personIdOrEmail need to be in resolved_params for path substitution
             # v22.0: Use UserContextManager for validated access
             ctx_manager = UserContextManager(execution_context.user_context)
@@ -145,7 +144,6 @@ class ToolExecutor:
                     query_params["Filter"] = filter_string
                     logger.info(f"Built filter string: {filter_string}")
 
-            # FIX v13.2: INJECT PERSON_ID DIRECTLY INTO QUERY PARAMS
             # This bypasses parameter_manager validation which was filtering out
             # personId because it's not in Swagger definition for most GET tools.
             # The injection happens HERE, not in message_engine, so it goes
@@ -208,7 +206,6 @@ class ToolExecutor:
                     query_params = self.registry.get_merged_params(operation_id, query_params)
 
             # Build full URL using STRICT Master Prompt v3.1 formula
-            # FIX v21.4: Pass resolved path (with PATH params substituted) to _build_url
             full_url = self._build_url(tool, resolved_path=path)
 
             # VALIDATE: HTTP Method and URL construction
@@ -251,7 +248,6 @@ class ToolExecutor:
                     operation_id=operation_id
                 )
 
-                # FIX v13.2: Learn from "Unknown filter field" errors
                 # This teaches the system to stop injecting personId for tools that don't support it
                 error_msg = response.error_message or ""
                 if "unknown filter field" in error_msg.lower():
@@ -428,7 +424,6 @@ class ToolExecutor:
         # Formula: base_url + "/" + swagger_name + "/" + path.lstrip('/')
 
         swagger_name = tool.swagger_name
-        # FIX v21.4: Use resolved_path if provided (PATH params already substituted)
         path = resolved_path if resolved_path else tool.path
         service_url = tool.service_url
 

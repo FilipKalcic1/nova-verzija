@@ -18,7 +18,6 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# FIX v11.1: Use centralized config instead of os.getenv()
 BASELINE_DAYS = settings.DRIFT_BASELINE_DAYS
 ANALYSIS_HOURS = settings.DRIFT_ANALYSIS_HOURS
 MIN_SAMPLES = settings.DRIFT_MIN_SAMPLES

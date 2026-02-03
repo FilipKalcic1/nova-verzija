@@ -235,6 +235,32 @@ async def health_check():
     return checks
 
 
+@app.get("/ready")
+async def readiness_check():
+    """Readiness probe - returns 200 only when all dependencies are available."""
+    from database import engine
+    from fastapi.responses import JSONResponse
+
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(status_code=503, content={"ready": False, "reason": "database unavailable"})
+
+    try:
+        if hasattr(app.state, 'redis') and app.state.redis:
+            await app.state.redis.ping()
+        else:
+            return JSONResponse(status_code=503, content={"ready": False, "reason": "redis not initialized"})
+    except Exception:
+        return JSONResponse(status_code=503, content={"ready": False, "reason": "redis unavailable"})
+
+    if not hasattr(app.state, 'registry') or not app.state.registry or len(app.state.registry.tools) == 0:
+        return JSONResponse(status_code=503, content={"ready": False, "reason": "tool registry empty"})
+
+    return {"ready": True}
+
+
 @app.get("/")
 async def root():
     """Root endpoint."""

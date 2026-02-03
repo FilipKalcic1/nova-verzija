@@ -13,7 +13,7 @@
 # =============================================================================
 # STAGE 1: BUILDER - Compile dependencies
 # =============================================================================
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 # Build environment
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -41,7 +41,7 @@ RUN pip install --upgrade pip && \
 # =============================================================================
 # STAGE 2: RUNTIME - Minimal production image
 # =============================================================================
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 # Runtime environment
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -27,7 +27,7 @@ import os
 import time
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -160,7 +160,6 @@ app.add_middleware(
 admin_api_key = APIKeyHeader(name="X-Admin-Token", auto_error=True)
 
 # Valid admin tokens - MUST be set via environment variables
-# FIX v11.1: Removed hardcoded dev tokens - admin API won't work without real tokens
 VALID_ADMIN_TOKENS = {}
 for i in range(1, 5):  # Support up to 4 admin tokens
     token = os.environ.get(f"ADMIN_TOKEN_{i}")
@@ -401,8 +400,23 @@ async def health_check(request: Request):
         "database": db_status,
         "redis": redis_status,
         "drift_detector": drift_status,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+
+@app.get("/ready")
+async def readiness_check(request: Request):
+    """Readiness probe - returns 200 only when database is available."""
+    from fastapi.responses import JSONResponse
+
+    try:
+        async with AsyncSessionLocal() as session:
+            from sqlalchemy import text
+            await session.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(status_code=503, content={"ready": False, "reason": "database unavailable"})
+
+    return {"ready": True}
 
 
 @app.get("/metrics")
@@ -682,7 +696,7 @@ async def export_training_data(
             "count": len(data),
             "format": format,
             "data": data,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "exported_by": admin_id
         }
     except HTTPException:
@@ -720,7 +734,7 @@ async def download_training_data_jsonl(
         )
 
         # Return as downloadable file
-        filename = f"training_data_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.jsonl"
+        filename = f"training_data_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.jsonl"
         return Response(
             content=jsonl_content,
             media_type="application/x-ndjson",

@@ -130,7 +130,6 @@ class APIGateway:
             params = {}
 
         # For GET requests, set a sensible default Rows limit if not specified
-        # FIX v11.1: Was Rows=1 which silently truncated ALL list responses!
         if method == HttpMethod.GET:
             # Case-insensitive check for 'Rows'
             if not any(k.lower() == 'rows' for k in params):

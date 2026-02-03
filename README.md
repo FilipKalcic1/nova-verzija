@@ -2,6 +2,11 @@
 
 AI-powered fleet management chatbot that connects WhatsApp users to the MobilityOne API platform via Azure OpenAI.
 
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![Tests](https://img.shields.io/badge/tests-265%20passing-brightgreen)
+![Linting](https://img.shields.io/badge/linting-ruff-orange)
+![License](https://img.shields.io/badge/license-Proprietary-red)
+
 ## Architecture
 
 ```
@@ -31,6 +36,7 @@ Admin API (8080) --> PostgreSQL (audit_logs, hallucination_reports)
 - **950+ tools from Swagger**: Tools are auto-parsed from OpenAPI specs, indexed with FAISS for semantic search, and selected by the AI orchestrator.
 - **Redis Streams**: Async message processing with consumer groups, automatic reconnection, and backpressure handling.
 - **Pydantic Settings**: All configuration centralized in `config.py` with fail-fast validation. No hardcoded secrets.
+- **Circuit Breaker**: Per-endpoint circuit breaker prevents cascading failures (CLOSED -> OPEN -> HALF_OPEN -> CLOSED).
 
 ## Project Structure
 
@@ -58,17 +64,13 @@ Admin API (8080) --> PostgreSQL (audit_logs, hallucination_reports)
 │   ├── context/             # User context management
 │   └── reasoning/           # Query planning
 │
-├── tests/                   # pytest test suite (194 tests)
+├── tests/                   # pytest test suite (265 tests)
 ├── scripts/                 # Utility scripts
 │   ├── benchmarks/          # Manual integration/accuracy benchmarks
 │   ├── sync_tools.py        # Swagger tool synchronization
 │   └── swagger_watcher.py   # Watch for Swagger spec changes
 │
 ├── config/                  # JSON configuration files
-│   ├── context_param_schemas.json
-│   ├── tool_categories.json
-│   └── tool_documentation.json
-│
 ├── models/                  # ML models (intent classifier, query type)
 ├── data/training/           # Training data for ML models
 ├── alembic/                 # Database migrations
@@ -76,10 +78,10 @@ Admin API (8080) --> PostgreSQL (audit_logs, hallucination_reports)
 ├── docker/                  # Docker support (Grafana, Prometheus)
 ├── docker-compose.yml       # Local development stack
 ├── Dockerfile               # Production container image
-└── .github/workflows/       # CI pipeline (test + lint)
+└── .github/workflows/       # CI pipeline (test + lint + security)
 ```
 
-## Setup
+## Quick Start
 
 ```bash
 # 1. Copy and fill environment variables
@@ -87,22 +89,32 @@ cp .env.example .env
 
 # 2. Install dependencies
 pip install -r requirements.txt
+pip install -r requirements-dev.txt  # testing + linting tools
 
 # 3. Run database migrations
 alembic upgrade head
 
 # 4. Start services
-uvicorn main:app --port 8000          # Webhook API
-python worker.py                       # Message processor
-uvicorn admin_api:app --port 8080      # Admin API
+make run          # Webhook API (port 8000)
+make run-worker   # Message processor
+make run-admin    # Admin API (port 8080)
 ```
 
-## Testing
+Or with Docker:
 
 ```bash
-pytest                    # Run all 194 tests
-pytest tests/ -v          # Verbose output
-pytest tests/ -x          # Stop on first failure
+make docker-up    # Start full stack (PostgreSQL, Redis, API, Worker, Admin)
+```
+
+## Development
+
+```bash
+make test         # Run all 265 tests
+make coverage     # Run tests with coverage report
+make lint         # Run ruff linter
+make format       # Auto-format code
+make check        # Run lint + tests
+make help         # Show all available commands
 ```
 
 ## Environment Variables
@@ -124,5 +136,15 @@ See [.env.example](.env.example) for the full list. Required variables:
 ## CI/CD
 
 GitHub Actions runs on every push to `main`:
-- **test**: Runs the full pytest suite
-- **lint**: Ruff linting + entry point compilation
+- **test**: Runs the full pytest suite with coverage reporting
+- **lint**: Ruff linting + ruff format check + entry point compilation
+- **security**: Bandit static analysis + pip-audit dependency check
+
+## Health Endpoints
+
+| Endpoint | Service | Auth | Purpose |
+|----------|---------|------|---------|
+| `GET /health` | Webhook API | None | Liveness probe (DB + Redis + tools) |
+| `GET /ready` | Webhook API | None | Readiness probe (all dependencies up) |
+| `GET /health` | Admin API | None | Liveness probe (DB + Redis + drift) |
+| `GET /ready` | Admin API | None | Readiness probe (all dependencies up) |

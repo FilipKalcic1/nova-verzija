@@ -17,7 +17,6 @@ CONNECTION POOLING (CRITICAL for production):
 - pool_pre_ping: Verify connection is alive before use
 """
 
-import os
 import logging
 from typing import AsyncGenerator
 
@@ -45,7 +44,7 @@ BOT_DATABASE_URL = settings.BOT_DATABASE_URL or settings.DATABASE_URL
 ADMIN_DATABASE_URL = settings.ADMIN_DATABASE_URL or settings.DATABASE_URL
 
 # Detect which service we are (set in docker-compose environment)
-SERVICE_TYPE = os.getenv("SERVICE_TYPE", "api")  # api, worker, admin
+SERVICE_TYPE = settings.SERVICE_ROLE  # "bot" or "admin" (from config.py)
 
 
 def get_database_url() -> str:

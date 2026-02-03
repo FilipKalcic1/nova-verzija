@@ -20,7 +20,7 @@ import json
 from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +291,7 @@ class ErrorTranslator:
             if pattern.matches(error, tool_name):
                 # Update stats
                 pattern.occurrence_count += 1
-                pattern.last_seen = datetime.utcnow().isoformat()
+                pattern.last_seen = datetime.now(timezone.utc).isoformat()
 
                 if for_user:
                     return pattern.format_user_message(error, tool_name)
@@ -349,7 +349,7 @@ class ErrorTranslator:
 
             data = {
                 "version": "1.0",
-                "saved_at": datetime.utcnow().isoformat(),
+                "saved_at": datetime.now(timezone.utc).isoformat(),
                 "learned_patterns": [
                     {
                         "pattern": p.pattern,

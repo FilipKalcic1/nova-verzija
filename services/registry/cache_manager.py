@@ -8,7 +8,7 @@ Single responsibility: Load and save tool data to .cache/ directory.
 import asyncio
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -203,7 +203,7 @@ class CacheManager:
             # Save manifest
             manifest = {
                 "version": "2.0",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "cache_version": CACHE_VERSION,
                 "swagger_sources": swagger_sources
             }
@@ -217,7 +217,7 @@ class CacheManager:
             # Save metadata (mode='json' for Enum serialization)
             metadata = {
                 "version": "2.0",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "tools": [
                     tool.model_dump(mode='json')
                     for tool in tools
@@ -237,7 +237,7 @@ class CacheManager:
             # Save embeddings
             embeddings_data = {
                 "version": "2.0",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "embeddings": embeddings
             }
             await asyncio.to_thread(
