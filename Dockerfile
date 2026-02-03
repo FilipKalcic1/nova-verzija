@@ -77,9 +77,9 @@ RUN chmod +x /app/docker/init-db.sh 2>/dev/null || true
 # Switch to non-root user
 USER appuser
 
-# Healthcheck
+# Healthcheck (uses /ready for full dependency check)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/ready || exit 1
 
 # Entrypoint with tini for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--"]

@@ -82,6 +82,13 @@ dist/
 .cache/
 *.cache
 
+# Dev dependencies
+requirements-dev.txt
+pyproject.toml
+.editorconfig
+.pre-commit-config.yaml
+.ruff_cache
+
 # CI/CD
 .github
 .gitlab-ci.yml
