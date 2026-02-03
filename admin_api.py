@@ -144,6 +144,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Security headers
+from services.security_headers import SecurityHeadersMiddleware
+app.add_middleware(SecurityHeadersMiddleware)
+
 # CORS - Restrict to internal domains only
 app.add_middleware(
     CORSMiddleware,

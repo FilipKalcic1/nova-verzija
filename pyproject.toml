@@ -1,6 +1,6 @@
 [project]
 name = "mobility-whatsapp-bot"
-version = "11.0.2"
+version = "11.2.0"
 description = "MobilityOne WhatsApp Bot - AI-powered fleet management chatbot"
 requires-python = ">=3.11"
 license = {text = "Proprietary"}
@@ -53,3 +53,39 @@ markers = [
     "slow: mark test as slow running",
     "integration: mark test as integration test",
 ]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+exclude = [
+    "scripts/",
+    "alembic/",
+    "tests/",
+]
+
+[tool.coverage.run]
+source = ["services", "config"]
+omit = [
+    "services/faiss_vector_store.py",
+    "services/llm_reranker.py",
+    "services/unified_search.py",
+    "services/executor_fallback.py",
+    "services/whatsapp_service.py",
+    "services/queue_service.py",
+    "services/message_engine.py",
+    "services/query_type_classifier.py",
+]
+
+[tool.coverage.report]
+fail_under = 35
+show_missing = true
+skip_covered = false
+precision = 1

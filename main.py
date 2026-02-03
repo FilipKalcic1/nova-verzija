@@ -178,6 +178,10 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None
 )
 
+# Security headers
+from services.security_headers import SecurityHeadersMiddleware
+app.add_middleware(SecurityHeadersMiddleware)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
