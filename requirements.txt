@@ -8,7 +8,6 @@ redis==5.0.1
 fastapi-limiter==0.1.6
 httpx==0.26.0
 python-dotenv==1.0.1
-structlog==24.1.0
 async-lru==2.0.4
 numpy==1.26.4
 tiktoken==0.6.0
@@ -25,6 +24,8 @@ faiss-cpu==1.8.0
 psutil==5.9.8
 packaging==24.0
 
-# Testing
+
+# Testing (base - see requirements-dev.txt for full dev deps)
 pytest==9.0.1
 pytest-asyncio==1.3.0
+pytest-cov==6.0.0

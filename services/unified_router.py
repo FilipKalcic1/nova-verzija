@@ -368,7 +368,6 @@ class UnifiedRouter:
                     )
 
             # Numeric selection in SELECTING state
-            # FIX v11.1: Removed len<=3 check - it matched Croatian words like "da", "ne", "ok"
             if state == "selecting":
                 if query.strip().isdigit():
                     logger.info(f"UNIFIED ROUTER: Numeric selection detected, returning continue_flow")

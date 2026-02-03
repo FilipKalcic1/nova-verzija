@@ -34,7 +34,7 @@ import json
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ class ToolMetrics:
         if self.last_error_time:
             try:
                 last_error = datetime.fromisoformat(self.last_error_time)
-                hours_since_error = (datetime.utcnow() - last_error).total_seconds() / 3600
+                hours_since_error = (datetime.now(timezone.utc) - last_error).total_seconds() / 3600
 
                 if hours_since_error < 1:
                     # Recent error - penalty
@@ -205,7 +205,7 @@ class ToolEvaluator:
 
             data = {
                 "version": "1.0",
-                "saved_at": datetime.utcnow().isoformat(),
+                "saved_at": datetime.now(timezone.utc).isoformat(),
                 "metrics": [m.to_dict() for m in self.metrics.values()]
             }
 
@@ -237,7 +237,7 @@ class ToolEvaluator:
         """
         metrics = self._get_or_create_metrics(operation_id)
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         metrics.total_calls += 1
         metrics.successful_calls += 1
@@ -280,7 +280,7 @@ class ToolEvaluator:
         """
         metrics = self._get_or_create_metrics(operation_id)
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         metrics.total_calls += 1
         metrics.failed_calls += 1

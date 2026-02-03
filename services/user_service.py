@@ -9,7 +9,7 @@ v11.0: Uses SchemaExtractor for schema-driven field access
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple, Dict, Any
 
 from sqlalchemy import select, or_
@@ -381,7 +381,7 @@ class UserService:
                 display_name=name,
                 tenant_id=tenant_id,  # Dynamic tenant!
                 is_active=True,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(timezone.utc)
             ).on_conflict_do_update(
                 index_elements=['phone_number'],
                 set_={
@@ -389,7 +389,7 @@ class UserService:
                     'display_name': name,
                     # NOTE: Don't overwrite tenant_id on conflict - admin may have changed it
                     'is_active': True,
-                    'updated_at': datetime.utcnow()
+                    'updated_at': datetime.now(timezone.utc)
                 }
             )
             await self.db.execute(stmt)

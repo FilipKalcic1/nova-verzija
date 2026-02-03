@@ -40,5 +40,16 @@ known-first-party = ["config", "database", "models", "services"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
 asyncio_mode = "auto"
 addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning:asyncio",
+]
+markers = [
+    "asyncio: mark test as async",
+    "slow: mark test as slow running",
+    "integration: mark test as integration test",
+]

@@ -26,7 +26,6 @@ from services.context import UserContextManager
 
 logger = logging.getLogger(__name__)
 
-# FIX v11.1: Centralized tool-specific parameter overrides.
 # These tools have Swagger metadata that incorrectly maps context_key for certain params.
 # Instead of hardcoding tool IDs throughout the code, define overrides here.
 TOOL_SKIP_CONTEXT_INJECTION: Dict[str, set] = {
@@ -248,14 +247,12 @@ class ParameterManager:
         """
         injected = {}
 
-        # DEBUG v21.1: Log what we're trying to inject
         logger.info(f" _inject_context_params for {tool.operation_id}")
         logger.info(f"user_context keys: {list(user_context.keys())}")
         # v22.0: Use UserContextManager for logging
         ctx = UserContextManager(user_context)
         logger.info(f"person_id in context: {ctx.person_id or 'NOT FOUND'}")
 
-        # FIX v13.3: Skip certain params that have incorrect context_key in Swagger metadata
         # VehicleId should come from user context vehicle.id, not person_id
         skip_injection = TOOL_SKIP_CONTEXT_INJECTION.get(tool.operation_id, set())
 
@@ -414,7 +411,6 @@ class ParameterManager:
                         break
 
                 if not matched:
-                    # FIX v11.1: Use centralized TOOL_FLOW_PARAMS instead of hardcoded checks
                     # These params come from flow_handler, not LLM, so pass them through
                     flow_params = TOOL_FLOW_PARAMS.get(tool.operation_id, set())
                     if param_name in flow_params:
@@ -422,7 +418,6 @@ class ParameterManager:
                         logger.debug(f"Passed through flow param: {param_name} for {tool.operation_id}")
                         continue
 
-                    # FIX v13.2: Log at debug level, not warning, because
                     # some params like personId are intentionally added by
                     # tool_executor AFTER this processing step
                     logger.debug(
@@ -590,7 +585,6 @@ class ParameterManager:
         """
         Parse datetime to ISO 8601 format WITH TIMEZONE.
 
-        TIMEZONE FIX v2.1:
         - Handles Croatian natural language dates (sutra, danas, prekosutra)
         - Adds timezone offset to prevent UTC/CET confusion
         - Default timezone is CET (+01:00) for Croatian users
@@ -706,8 +700,6 @@ class ParameterManager:
         """Check for missing required parameters."""
         missing = []
 
-        # FIX v13.3: Skip params with incorrect context_key/dependency_source
-        # FIX v11.1: Use centralized TOOL_SKIP_CONTEXT_INJECTION instead of hardcoded checks
         skip_params = TOOL_SKIP_CONTEXT_INJECTION.get(tool.operation_id, set())
 
         for param_name in tool.required_params:

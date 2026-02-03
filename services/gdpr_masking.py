@@ -186,7 +186,6 @@ class GDPRMaskingService:
         self.use_hashing = use_hashing
 
         # CRITICAL: Load salt from config, never hardcode!
-        # FIX v11.1: Use centralized config instead of os.getenv()
         if hash_salt:
             self.hash_salt = hash_salt
         else:

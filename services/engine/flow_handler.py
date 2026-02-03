@@ -132,12 +132,10 @@ class FlowHandler:
         plate = first_vehicle.get("LicencePlate", "N/A")
         vehicle_id = first_vehicle.get("Id")
 
-        # CRITICAL FIX v15.1: Store ALL items for later display
         await conv_manager.set_displayed_items(items)
         await conv_manager.add_parameters(parameters)
         await conv_manager.select_item(first_vehicle)
 
-        # RACE CONDITION FIX v2.1: Batch all tool_outputs updates into single dict
         # to prevent partial state being saved if interrupted between updates
         if hasattr(conv_manager.context, 'tool_outputs'):
             # Build minimal vehicle data first (no async operations here)
@@ -164,7 +162,6 @@ class FlowHandler:
         from_time = parameters.get("from") or parameters.get("FromTime")
         to_time = parameters.get("to") or parameters.get("ToTime")
 
-        # CRITICAL FIX v15.1: Don't show dates if not provided by user
         message = f"**Pronasao sam slobodno vozilo:**\n\n**{vehicle_name}** ({plate})\n\n"
 
         if from_time and to_time:
@@ -173,7 +170,6 @@ class FlowHandler:
         if len(items) > 1:
             message += f"_(Ima jos {len(items) - 1} slobodnih vozila. Recite 'pokaži ostala' za listu)_\n\n"
 
-        # CRITICAL FIX v15.1: Only ask for confirmation if we have time params
         if from_time and to_time:
             message += "**Zelite li potvrditi rezervaciju?** (Da/Ne)"
         else:
@@ -310,7 +306,6 @@ class FlowHandler:
                 await conv_manager.save()
                 return message
 
-        # CRITICAL FIX v15.1: Check if user wants to see other vehicles
         if any(keyword in text_lower for keyword in ["pokaz", "ostala", "druga", "jos vozila", "vise", "sva"]):
             # User wants to see all available vehicles
             if hasattr(conv_manager.context, 'tool_outputs'):

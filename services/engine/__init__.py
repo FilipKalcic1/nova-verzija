@@ -439,7 +439,6 @@ class MessageEngine:
                 if isinstance(result, dict) and result.get("mid_flow_question"):
                     question = result.get("question", text)
                     logger.info(f"P1: Handling mid-flow question: '{question[:50]}'")
-                    # FIX v11.1: Guard against infinite recursion - only handle
                     # mid-flow question if we're not already handling one
                     if not getattr(self, '_handling_mid_flow', False):
                         self._handling_mid_flow = True

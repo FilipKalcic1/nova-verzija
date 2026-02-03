@@ -139,7 +139,6 @@ class ConflictResolver:
     4. Merge suggestions - help resolve conflicts automatically where possible
     """
 
-    # FIX v11.1: Use centralized config instead of os.getenv()
     REDIS_LOCK_PREFIX = "edit_lock:"
     REDIS_VERSION_PREFIX = "record_version:"
     REDIS_HISTORY_PREFIX = "change_history:"

@@ -18,7 +18,7 @@ import sys
 import hashlib
 import traceback
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Set, Dict
 from contextlib import suppress
 
@@ -62,7 +62,7 @@ def get_memory_usage_mb() -> float:
 def log(level: str, event: str, data: dict = None):
     """JSON structured logging for container orchestrators."""
     log_entry = {
-        "ts": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
         "level": level,
         "event": event,
         "worker": "worker",
@@ -134,7 +134,7 @@ class Worker:
     def __init__(self):
         self.redis: Optional[aioredis.Redis] = None
         self.shutdown = GracefulShutdown()
-        self.consumer_name = f"worker_{int(datetime.utcnow().timestamp())}"
+        self.consumer_name = f"worker_{int(datetime.now(timezone.utc).timestamp())}"
         self.group_name = "workers"
 
         # Rate limiting
@@ -168,7 +168,7 @@ class Worker:
         self._processing_locks: Dict[str, asyncio.Lock] = {}
 
     async def start(self):
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(timezone.utc)
         log("info", "worker_starting", {
             "consumer": self.consumer_name,
             "max_concurrent": MAX_CONCURRENT
@@ -218,7 +218,7 @@ class Worker:
     async def _cleanup(self):
         log("info", "cleanup_started")
 
-        uptime = (datetime.utcnow() - self._start_time).total_seconds() if self._start_time else 0
+        uptime = (datetime.now(timezone.utc) - self._start_time).total_seconds() if self._start_time else 0
         log("info", "final_stats", {
             "processed": self._messages_processed,
             "failed": self._messages_failed,
@@ -596,7 +596,7 @@ class Worker:
                 # Calculate uptime
                 uptime_sec = 0
                 if self._start_time:
-                    uptime_sec = int((datetime.utcnow() - self._start_time).total_seconds())
+                    uptime_sec = int((datetime.now(timezone.utc) - self._start_time).total_seconds())
 
                 health_data = {
                     "processed": self._messages_processed,
@@ -675,7 +675,7 @@ class Worker:
         entry = {
             "original": data,
             "error": error,
-            "time": datetime.utcnow().isoformat(),
+            "time": datetime.now(timezone.utc).isoformat(),
             "worker": self.consumer_name
         }
         await self.redis.rpush("dlq:inbound", json.dumps(entry))

@@ -16,7 +16,6 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# FIX v11.1: Use centralized config instead of os.getenv()
 INPUT_PRICE = settings.LLM_INPUT_PRICE_PER_1K
 OUTPUT_PRICE = settings.LLM_OUTPUT_PRICE_PER_1K
 DAILY_BUDGET = settings.DAILY_COST_BUDGET_USD

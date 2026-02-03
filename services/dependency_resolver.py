@@ -380,7 +380,6 @@ class DependencyResolver:
                 # Try as generic search/name filter
                 provider_params = {'Filter': f"Name(~){user_value}"}
 
-        # CRITICAL FIX v12.2: ALWAYS inject PersonId for user-specific data
         # v22.0: Use UserContextManager for validated access
         ctx = UserContextManager(user_context)
         person_id = ctx.person_id
@@ -691,7 +690,6 @@ class DependencyResolver:
                     }
                 )
             else:
-                # CRITICAL FIX v2.1: No default vehicle - DO NOT silently pick first!
                 # Instead, return a "needs_selection" result to ask the user
                 logger.warning(
                     f"⚠️ User said '{reference.value}' but has NO default vehicle! "
@@ -740,7 +738,6 @@ class DependencyResolver:
 
         Uses get_MasterData ili get_Vehicles s PersonId filterom.
 
-        CRITICAL FIX v12.2: ALWAYS filter by PersonId to get user-specific data,
         not first result from tenant!
         """
         # Find provider tool for listing vehicles
@@ -762,7 +759,6 @@ class DependencyResolver:
                 error_message=f"Alat {provider_tool_id} nije dostupan"
             )
 
-        # CRITICAL FIX v12.2: ALWAYS filter by PersonId for user-specific data
         # v22.0: Use UserContextManager for validated access
         provider_params = {}
         ctx = UserContextManager(user_context)
@@ -913,7 +909,6 @@ class DependencyResolver:
         # Build filter for name search
         search_value = reference.value.strip()
 
-        # CRITICAL FIX v12.2: Combine name search with PersonId filter
         # v22.0: Use UserContextManager for validated access
         ctx = UserContextManager(user_context)
         person_id = ctx.person_id
