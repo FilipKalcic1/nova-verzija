@@ -34,7 +34,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests with coverage
-        run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=35
+        run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=90
 
   lint:
     runs-on: ubuntu-latest
@@ -86,4 +86,5 @@ jobs:
         run: bandit -r services/ config.py main.py worker.py admin_api.py database.py --severity-level high
 
       - name: Dependency audit
+        if: always()
         run: pip-audit --strict --desc on 2>&1 | head -50 || true

@@ -47,6 +47,8 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning:asyncio",
+    "ignore::DeprecationWarning:pydantic",
+    "ignore::UserWarning:tests.test_ghost_variables",
 ]
 markers = [
     "asyncio: mark test as async",

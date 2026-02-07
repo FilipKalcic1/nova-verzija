@@ -196,3 +196,156 @@ class TestPhonePrefixRules:
     def test_rules_map_to_valid_tenant_ids(self):
         for pattern, tenant_id in PHONE_PREFIX_RULES.items():
             assert tenant_id.startswith("tenant-"), f"Tenant ID {tenant_id} doesn't follow naming convention"
+
+
+class TestUpdateUserTenant:
+    """Test update_user_tenant method - lines 182-207."""
+
+    @pytest.fixture
+    def service_with_db(self):
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+            db = AsyncMock()
+            redis = AsyncMock()
+            svc = TenantService(db_session=db, redis_client=redis)
+            return svc, db, redis
+
+    @pytest.mark.asyncio
+    async def test_no_db_returns_false(self):
+        """Test returns False when no database session (line 182-184)."""
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+            service = TenantService(db_session=None)
+
+            result = await service.update_user_tenant("+385991234567", "tenant-new", "admin")
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_successful_update(self, service_with_db):
+        """Test successful tenant update (lines 186-202)."""
+        service, db, redis = service_with_db
+
+        # Mock execute result
+        mock_result = MagicMock()
+        mock_result.rowcount = 1
+        db.execute = AsyncMock(return_value=mock_result)
+        db.commit = AsyncMock()
+
+        result = await service.update_user_tenant("+385991234567", "tenant-new", "admin-123")
+
+        assert result is True
+        db.execute.assert_called_once()
+        db.commit.assert_called_once()
+        redis.delete.assert_called_once_with("tenant:+385991234567")
+
+    @pytest.mark.asyncio
+    async def test_update_no_rows_affected(self, service_with_db):
+        """Test update when no rows affected returns False."""
+        service, db, redis = service_with_db
+
+        mock_result = MagicMock()
+        mock_result.rowcount = 0
+        db.execute = AsyncMock(return_value=mock_result)
+        db.commit = AsyncMock()
+
+        result = await service.update_user_tenant("+385999999999", "tenant-new", "admin")
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_update_exception_rollback(self, service_with_db):
+        """Test exception during update triggers rollback (lines 204-207)."""
+        service, db, redis = service_with_db
+
+        db.execute = AsyncMock(side_effect=Exception("DB error"))
+        db.rollback = AsyncMock()
+
+        result = await service.update_user_tenant("+385991234567", "tenant-new", "admin")
+
+        assert result is False
+        db.rollback.assert_called_once()
+
+
+class TestGetTenantStats:
+    """Test get_tenant_stats method - line 235."""
+
+    @pytest.fixture
+    def service(self):
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+            return TenantService()
+
+    def test_returns_stats_dict(self, service):
+        """Test returns stats dictionary (lines 235-239)."""
+        stats = service.get_tenant_stats()
+
+        assert "default_tenant" in stats
+        assert "prefix_rules_count" in stats
+        assert "rules" in stats
+        assert isinstance(stats["rules"], list)
+        assert stats["default_tenant"] == "tenant-default"
+
+
+class TestGetTenantServiceSingleton:
+    """Test get_tenant_service factory function - lines 259-266."""
+
+    def test_creates_singleton(self):
+        """Test creates singleton instance (lines 259-260)."""
+        import services.tenant_service as ts_module
+
+        # Reset singleton
+        ts_module._tenant_service = None
+
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+
+            from services.tenant_service import get_tenant_service
+
+            svc1 = get_tenant_service()
+            svc2 = get_tenant_service()
+
+            assert svc1 is svc2
+
+    def test_updates_db_session_if_missing(self):
+        """Test updates db_session if service exists but db is None (lines 261-262)."""
+        import services.tenant_service as ts_module
+
+        ts_module._tenant_service = None
+
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+
+            from services.tenant_service import get_tenant_service
+
+            # First call without db
+            svc1 = get_tenant_service()
+            assert svc1.db is None
+
+            # Second call with db
+            mock_db = MagicMock()
+            svc2 = get_tenant_service(db_session=mock_db)
+
+            assert svc1 is svc2
+            assert svc2.db is mock_db
+
+    def test_updates_redis_if_missing(self):
+        """Test updates redis if service exists but redis is None (lines 263-264)."""
+        import services.tenant_service as ts_module
+
+        ts_module._tenant_service = None
+
+        with patch("services.tenant_service.settings") as mock_settings:
+            mock_settings.MOBILITY_TENANT_ID = "tenant-default"
+
+            from services.tenant_service import get_tenant_service
+
+            # First call without redis
+            svc1 = get_tenant_service()
+            assert svc1.redis is None
+
+            # Second call with redis
+            mock_redis = MagicMock()
+            svc2 = get_tenant_service(redis_client=mock_redis)
+
+            assert svc1 is svc2
+            assert svc2.redis is mock_redis

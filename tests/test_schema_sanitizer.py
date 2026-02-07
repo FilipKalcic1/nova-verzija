@@ -207,3 +207,189 @@ class TestValidateOpenAISchema:
         }
         with pytest.raises(ValueError):
             sanitizer.validate_openai_schema(schema)
+
+    def test_missing_function_key_raises(self, sanitizer):
+        """Test missing 'function' key raises error (line 233)."""
+        schema = {"type": "function"}
+        with pytest.raises(ValueError, match="must have 'function' key"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_missing_description_raises(self, sanitizer):
+        """Test missing description raises error (line 242)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        }
+        with pytest.raises(ValueError, match="must have 'description'"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_params_wrong_type_raises(self, sanitizer):
+        """Test parameters with wrong type raises error (line 251)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "description": "test",
+                "parameters": {
+                    "type": "string",  # Wrong type
+                    "properties": {}
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="type: 'object'"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_params_missing_properties_raises(self, sanitizer):
+        """Test parameters missing properties raises error (line 254)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "description": "test",
+                "parameters": {
+                    "type": "object"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="must have 'properties'"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_required_not_array_raises(self, sanitizer):
+        """Test required not array raises error (line 262)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "description": "test",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": "not_an_array"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="must be array"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_property_missing_type_raises(self, sanitizer):
+        """Test property missing type raises error (line 279)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "description": "test",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "bad": {"description": "missing type"}
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="missing 'type'"):
+            sanitizer.validate_openai_schema(schema)
+
+    def test_array_items_missing_type_raises(self, sanitizer):
+        """Test array items missing type raises error (lines 297-299)."""
+        schema = {
+            "type": "function",
+            "function": {
+                "name": "test",
+                "description": "test",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "tags": {
+                            "type": "array",
+                            "description": "tags",
+                            "items": {}  # Missing type in items
+                        }
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="items missing 'type'"):
+            sanitizer.validate_openai_schema(schema)
+
+
+class TestBuildParamSchemaExtended:
+    """Extended tests for _build_param_schema method."""
+
+    @pytest.fixture
+    def sanitizer(self):
+        return SchemaSanitizer()
+
+    def test_array_without_items_type_defaults_to_object(self, sanitizer):
+        """Test array without items_type defaults to object (lines 186-187)."""
+        param = ParameterDefinition(
+            name="Items", param_type="array", required=False,
+            description="Item list", items_type=None
+        )
+        result = sanitizer._build_param_schema(param, "Items")
+        assert result["type"] == "array"
+        assert result["items"]["type"] == "object"
+
+    def test_format_datetime_hint(self, sanitizer):
+        """Test datetime format hint added (lines 198-199)."""
+        param = ParameterDefinition(
+            name="StartTime", param_type="string", required=False,
+            description="Start time", format="date-time"
+        )
+        result = sanitizer._build_param_schema(param, "StartTime")
+        assert "ISO 8601" in result["description"]
+
+    def test_format_date_hint(self, sanitizer):
+        """Test date format hint added (lines 200-201)."""
+        param = ParameterDefinition(
+            name="Birthday", param_type="string", required=False,
+            description="Birthday", format="date"
+        )
+        result = sanitizer._build_param_schema(param, "Birthday")
+        assert "YYYY-MM-DD" in result["description"]
+
+    def test_format_uuid_hint(self, sanitizer):
+        """Test uuid format hint added (lines 202-203)."""
+        param = ParameterDefinition(
+            name="Id", param_type="string", required=False,
+            description="ID", format="uuid"
+        )
+        result = sanitizer._build_param_schema(param, "Id")
+        assert "UUID" in result["description"]
+
+    def test_format_email_hint(self, sanitizer):
+        """Test email format hint added (lines 204-205)."""
+        param = ParameterDefinition(
+            name="Email", param_type="string", required=False,
+            description="Email", format="email"
+        )
+        result = sanitizer._build_param_schema(param, "Email")
+        assert "email@example.com" in result["description"]
+
+    def test_default_value_in_description(self, sanitizer):
+        """Test default value added to description (line 210)."""
+        param = ParameterDefinition(
+            name="Status", param_type="string", required=False,
+            description="Status", default_value="active"
+        )
+        result = sanitizer._build_param_schema(param, "Status")
+        assert "Default: active" in result["description"]
+
+
+class TestGetToolDocumentation:
+    """Test get_tool_documentation function."""
+
+    def test_returns_dict(self):
+        """Test returns a dict (may be empty if file not found)."""
+        from services.schema_sanitizer import get_tool_documentation
+        result = get_tool_documentation()
+        assert isinstance(result, dict)
+
+    def test_cache_works(self):
+        """Test caching returns same object."""
+        from services.schema_sanitizer import get_tool_documentation
+        result1 = get_tool_documentation()
+        result2 = get_tool_documentation()
+        assert result1 is result2

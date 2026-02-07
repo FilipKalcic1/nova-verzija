@@ -162,3 +162,97 @@ class TestBookingContracts:
         """Mapped values should be PascalCase (API format)."""
         for key, value in BOOKING_FIELD_MAPPING.items():
             assert value[0].isupper(), f"API field {value} should be PascalCase"
+
+
+class TestErrorTranslatorAdvanced:
+    """Advanced tests for ErrorTranslator - covers lines 252-270, 309, 313, 317, 333-343, 347-370, 380-382."""
+
+    @pytest.fixture
+    def translator(self):
+        return ErrorTranslator()
+
+    def test_get_ai_feedback(self, translator):
+        """Test get_ai_feedback method (line 313)."""
+        result = translator.get_ai_feedback("HTTP 404 Not Found", "get_Vehicles")
+        assert isinstance(result, str)
+        # AI feedback in English
+        assert len(result) > 0
+
+    def test_get_user_message(self, translator):
+        """Test get_user_message method (line 317)."""
+        result = translator.get_user_message("HTTP 404 Not Found", "get_Vehicles")
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_translate_for_ai_returns_english(self, translator):
+        """Test translate with for_user=False (line 309)."""
+        result = translator.translate("Unknown error XYZ", "get_Test", for_user=False)
+        assert "Error in get_Test" in result
+
+    def test_record_resolution_adds_hint(self, translator):
+        """Test record_resolution adds new hint (lines 333-338)."""
+        # First make the pattern match something
+        error = "HTTP 404 Not Found"
+        tool = "get_Vehicles"
+
+        # Find matching pattern and check initial hints
+        for p in translator.patterns:
+            if p.matches(error, tool):
+                initial_hints = len(p.resolution_hints)
+                break
+        else:
+            initial_hints = 0
+
+        # Record a resolution
+        translator.record_resolution(error, tool, "Try using a different vehicle ID")
+
+        # Check hint was added
+        for p in translator.patterns:
+            if p.matches(error, tool):
+                assert len(p.resolution_hints) >= initial_hints + 1
+                break
+
+    def test_record_resolution_no_duplicate_hints(self, translator):
+        """Test record_resolution doesn't add duplicate hints (line 335)."""
+        error = "HTTP 404 Not Found"
+        tool = "get_Vehicles"
+        hint = "Unique hint for testing"
+
+        # Add hint twice
+        translator.record_resolution(error, tool, hint)
+        translator.record_resolution(error, tool, hint)
+
+        # Should only appear once
+        for p in translator.patterns:
+            if p.matches(error, tool):
+                count = p.resolution_hints.count(hint)
+                assert count == 1
+                break
+
+
+class TestGetErrorTranslatorSingleton:
+    """Test get_error_translator factory function - lines 380-382."""
+
+    def test_returns_singleton(self):
+        """Test returns same instance on multiple calls."""
+        import services.error_translator as et_module
+        et_module._error_translator = None  # Reset
+
+        from services.error_translator import get_error_translator
+
+        t1 = get_error_translator()
+        t2 = get_error_translator()
+
+        assert t1 is t2
+
+    def test_creates_instance_if_none(self):
+        """Test creates new instance if none exists."""
+        import services.error_translator as et_module
+        et_module._error_translator = None  # Reset
+
+        from services.error_translator import get_error_translator
+
+        result = get_error_translator()
+
+        assert result is not None
+        assert isinstance(result, ErrorTranslator)
