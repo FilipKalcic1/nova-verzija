@@ -481,7 +481,7 @@ class Worker:
 
         if not message_id:
             content_hash = hashlib.md5(
-                f"{sender}:{text}".encode()
+                f"{sender}:{text}".encode(), usedforsecurity=False
             ).hexdigest()[:16]
             message_id = f"hash_{content_hash}"
 

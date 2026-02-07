@@ -217,8 +217,8 @@ class GDPRMaskingService:
         )
 
         logger.info(
-            "GDPRMaskingService initialized (salt from config: %s)",
-            "yes" if get_settings().GDPR_HASH_SALT else "no"
+            "GDPRMaskingService initialized (salt provided: %s)",
+            "yes" if hash_salt else "from config"
         )
 
     def _compile_patterns(self) -> None:

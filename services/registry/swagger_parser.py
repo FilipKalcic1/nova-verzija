@@ -121,7 +121,7 @@ class SwaggerParser:
     async def fetch_spec(self, url: str) -> Optional[Dict]:
         """Fetch Swagger spec from URL."""
         try:
-            async with httpx.AsyncClient(verify=False, timeout=30) as client:
+            async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.get(url)
                 if response.status_code == 200:
                     return response.json()

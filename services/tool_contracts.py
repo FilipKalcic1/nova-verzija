@@ -118,7 +118,7 @@ class UnifiedToolDefinition(BaseModel):
     def _compute_hash(self) -> str:
         """Compute hash of tool definition for cache invalidation."""
         signature = f"{self.operation_id}:{self.method}:{self.path}:{len(self.parameters)}"
-        return hashlib.md5(signature.encode()).hexdigest()[:16]
+        return hashlib.md5(signature.encode(), usedforsecurity=False).hexdigest()[:16]
 
     def get_context_params(self) -> Dict[str, ParameterDefinition]:
         """Get parameters that should be injected from context."""
