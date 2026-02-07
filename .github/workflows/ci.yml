@@ -33,37 +33,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Debug environment
-        run: |
-          python --version
-          pip list | grep -E "pytest|coverage"
-          ls -la tests/*.py | head -20
-          echo "Test file count: $(ls tests/*.py | wc -l)"
-
-      - name: Verify imports work
-        run: |
-          python -c "from config import get_settings; print('Config OK')"
-          python -c "from services.cost_tracker import get_cost_tracker; print('CostTracker OK')"
-          python -c "from services.registry import ToolRegistry; print('Registry OK')"
-
-      - name: Run pytest collection check
-        run: pytest tests/ --collect-only 2>&1 | tail -50
-
-      - name: Run quick smoke test
-        run: pytest tests/test_admin_review.py -v --tb=short 2>&1 | tail -50 || echo "Smoke test failed"
-
       - name: Run tests with coverage
-        run: |
-          pytest tests/ -v --tb=long --cov=services --cov=config --cov-report=term-missing --cov-fail-under=90 2>&1 | tee pytest_output.txt
-          EXIT_CODE=$?
-          echo "=== PYTEST EXIT CODE: $EXIT_CODE ==="
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== FAILURES ==="
-            grep -A 20 "FAILED\|ERROR" pytest_output.txt | head -100 || true
-            echo "=== LAST 100 LINES ==="
-            tail -100 pytest_output.txt
-            exit $EXIT_CODE
-          fi
+        run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=90
 
   lint:
     runs-on: ubuntu-latest
