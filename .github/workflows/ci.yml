@@ -17,6 +17,8 @@ env:
   AZURE_OPENAI_ENDPOINT: "https://test.openai.azure.com"
   AZURE_OPENAI_API_KEY: "test-api-key"
   APP_ENV: "testing"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
 
 jobs:
   test:
@@ -32,6 +34,11 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Verify imports
+        run: |
+          python -c "from config import get_settings; print('Config OK')"
+          python -c "from services.cost_tracker import get_cost_tracker; print('CostTracker OK')"
 
       - name: Run tests with coverage
         run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=90
