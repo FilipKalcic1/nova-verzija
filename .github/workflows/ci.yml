@@ -40,6 +40,15 @@ jobs:
           ls -la tests/*.py | head -20
           echo "Test file count: $(ls tests/*.py | wc -l)"
 
+      - name: Verify imports work
+        run: |
+          python -c "from config import get_settings; print('Config OK')"
+          python -c "from services.cost_tracker import get_cost_tracker; print('CostTracker OK')"
+          python -c "from services.registry import ToolRegistry; print('Registry OK')"
+
+      - name: Run pytest collection check
+        run: pytest tests/ --collect-only 2>&1 | tail -50
+
       - name: Run tests with coverage
         run: pytest tests/ -v --tb=long --cov=services --cov=config --cov-report=term-missing --cov-fail-under=90 2>&1 || (echo "=== Test output above ===" && exit 1)
 
