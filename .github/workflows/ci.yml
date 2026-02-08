@@ -46,11 +46,12 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=long --cov=services --cov=config --cov-report=term-missing 2>&1 | tee test_output.txt
+          pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=80 2>&1 | tee test_output.txt
           RESULT=$?
-          echo "=== PYTEST EXIT CODE: $RESULT ==="
-          echo "=== LAST 100 LINES ==="
-          tail -100 test_output.txt
+          if [ $RESULT -ne 0 ]; then
+            echo "=== LAST 50 LINES ==="
+            tail -50 test_output.txt
+          fi
           exit $RESULT
 
   lint:
