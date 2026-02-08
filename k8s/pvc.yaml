@@ -1,0 +1,79 @@
+# =============================================================================
+# PERSISTENT VOLUME CLAIM - Cache for ML embeddings and models
+# =============================================================================
+#
+# PURPOSE:
+# - Stores pre-computed Azure OpenAI embeddings (~40MB)
+# - Stores trained ML models (intent classifier, etc.)
+# - Without this, each pod startup takes 60-120 seconds generating embeddings
+# - With this, pod startup takes <5 seconds
+#
+# IMPORTANT:
+# - Use ReadWriteMany (RWX) access mode so all pods can share the cache
+# - Requires a storage class that supports RWX (e.g., Azure Files, NFS, EFS)
+# - For Azure: Use azurefile storage class
+# - For AWS: Use EFS CSI driver
+# - For GCP: Use Filestore CSI driver
+# =============================================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mobility-cache-pvc
+  namespace: mobility
+  labels:
+    app: mobility-bot
+    component: cache
+spec:
+  accessModes:
+    - ReadWriteMany  # All pods can read/write (required for shared cache)
+  resources:
+    requests:
+      storage: 500Mi  # 500MB should be enough for embeddings + models
+  # Use appropriate storage class for your cluster:
+  # - Azure AKS: azurefile, azurefile-premium
+  # - AWS EKS: efs-sc (requires EFS CSI driver)
+  # - GCP GKE: standard-rwx (requires Filestore CSI driver)
+  # - On-prem: nfs-client
+  # Uncomment and modify as needed:
+  # storageClassName: azurefile
+
+---
+# =============================================================================
+# OPTIONAL: PVC for Redis data (if running Redis in-cluster)
+# =============================================================================
+# Only needed if you deploy Redis as StatefulSet instead of managed service
+# For production, use managed Redis (Azure Cache, ElastiCache, etc.)
+#
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mobility-redis-pvc
+#   namespace: mobility
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+#   storageClassName: standard
+
+---
+# =============================================================================
+# OPTIONAL: PVC for PostgreSQL data (if running PostgreSQL in-cluster)
+# =============================================================================
+# Only needed if you deploy PostgreSQL as StatefulSet instead of managed service
+# For production, use managed PostgreSQL (Azure Database, RDS, Cloud SQL, etc.)
+#
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mobility-postgres-pvc
+#   namespace: mobility
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 10Gi
+#   storageClassName: standard

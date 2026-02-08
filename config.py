@@ -58,8 +58,15 @@ class Settings(BaseSettings):
     # =========================================================================
     INFOBIP_API_KEY: Optional[str] = Field(default=None)
     INFOBIP_BASE_URL: str = Field(default="api.infobip.com")
-    INFOBIP_SECRET_KEY: Optional[str] = Field(default=None)
+    INFOBIP_SECRET_KEY: Optional[str] = Field(
+        default=None,
+        description="Secret key for webhook HMAC-SHA256 signature validation"
+    )
     INFOBIP_SENDER_NUMBER: Optional[str] = Field(default=None)
+    WHATSAPP_VERIFY_TOKEN: Optional[str] = Field(
+        default=None,
+        description="Token for WhatsApp webhook verification (hub.verify_token)"
+    )
     
     # =========================================================================
     # MOBILITYONE API - REQUIRED (NEMA DEFAULT VRIJEDNOSTI!)
@@ -158,6 +165,10 @@ class Settings(BaseSettings):
         description="Comma-separated CORS origins for admin API"
     )
     ADMIN_RATE_LIMIT_PER_MINUTE: int = Field(default=30, description="Admin API rate limit per minute per user")
+    ADMIN_ALLOWED_IPS: Optional[str] = Field(
+        default=None,
+        description="Comma-separated IP whitelist for admin API (e.g., '10.0.0.0/8,192.168.0.0/16'). If None, all IPs allowed."
+    )
 
     # =========================================================================
     # DATABASE ROLES (dual-user security)
