@@ -161,6 +161,8 @@ app.add_middleware(
 # SECURITY
 # =============================================================================
 
+import ipaddress
+
 admin_api_key = APIKeyHeader(name="X-Admin-Token", auto_error=True)
 
 # Valid admin tokens - MUST be set via environment variables
@@ -173,6 +175,37 @@ for i in range(1, 5):  # Support up to 4 admin tokens
 
 if not VALID_ADMIN_TOKENS:
     logger.warning("ADMIN API: No admin tokens configured! Set ADMIN_TOKEN_1 + ADMIN_TOKEN_1_USER env vars.")
+
+# IP whitelist for admin API
+ADMIN_ALLOWED_IPS = None
+if settings.ADMIN_ALLOWED_IPS:
+    ADMIN_ALLOWED_IPS = []
+    for ip_str in settings.ADMIN_ALLOWED_IPS.split(","):
+        ip_str = ip_str.strip()
+        if ip_str:
+            try:
+                # Support both individual IPs and CIDR ranges
+                ADMIN_ALLOWED_IPS.append(ipaddress.ip_network(ip_str, strict=False))
+            except ValueError as e:
+                logger.error(f"Invalid IP in ADMIN_ALLOWED_IPS: {ip_str} - {e}")
+    if ADMIN_ALLOWED_IPS:
+        logger.info(f"Admin IP whitelist enabled: {len(ADMIN_ALLOWED_IPS)} entries")
+
+
+def is_ip_allowed(client_ip: str) -> bool:
+    """Check if client IP is in the whitelist."""
+    if ADMIN_ALLOWED_IPS is None:
+        return True  # No whitelist = all IPs allowed
+
+    try:
+        ip = ipaddress.ip_address(client_ip)
+        for network in ADMIN_ALLOWED_IPS:
+            if ip in network:
+                return True
+        return False
+    except ValueError:
+        logger.warning(f"Invalid client IP format: {client_ip}")
+        return False
 
 
 async def verify_admin_token(token: str = Security(admin_api_key)) -> str:
@@ -267,10 +300,19 @@ async def check_rate_limit(
     request: Request,
     admin_id: str = Depends(verify_admin_token)
 ) -> str:
-    """Rate limit middleware."""
+    """Rate limit and IP whitelist middleware."""
     client_ip = request.client.host if request.client else "unknown"
-    rate_key = f"{admin_id}:{client_ip}"
 
+    # Check IP whitelist FIRST (before rate limiting)
+    if not is_ip_allowed(client_ip):
+        logger.warning(f"Admin access denied for {admin_id} from non-whitelisted IP: {client_ip}")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied. Your IP is not in the allowed list."
+        )
+
+    # Then check rate limit
+    rate_key = f"{admin_id}:{client_ip}"
     if not await rate_limiter.is_allowed(rate_key):
         remaining = await rate_limiter.get_remaining(rate_key)
         logger.warning(f"Rate limit exceeded for {admin_id} from {client_ip}")

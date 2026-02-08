@@ -79,6 +79,13 @@ spec:
               cpu: "1000m"     # Max 1 CPU
               memory: "1Gi"    # Max 1GB (OOM kill if exceeded)
 
+          # Volume mounts for shared cache
+          volumeMounts:
+            - name: cache-volume
+              mountPath: /app/.cache
+            - name: models-volume
+              mountPath: /app/models
+
           # Health checks
           livenessProbe:
             httpGet:
@@ -91,7 +98,7 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready  # Use /ready for stricter check (requires all dependencies)
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 5
@@ -115,6 +122,15 @@ spec:
                     app: mobility-bot
                     component: api
                 topologyKey: kubernetes.io/hostname
+
+      # Volumes for shared cache (speeds up pod startup from 120s to <5s)
+      volumes:
+        - name: cache-volume
+          persistentVolumeClaim:
+            claimName: mobility-cache-pvc
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: mobility-cache-pvc  # Same PVC, different mount path
 
       terminationGracePeriodSeconds: 30
 
@@ -163,6 +179,13 @@ spec:
               cpu: "2000m"     # AI processing can be CPU-intensive
               memory: "2Gi"    # FAISS embeddings + LLM context
 
+          # Volume mounts for shared cache
+          volumeMounts:
+            - name: cache-volume
+              mountPath: /app/.cache
+            - name: models-volume
+              mountPath: /app/models
+
           # Workers don't have HTTP endpoint - use shell to read env var
           livenessProbe:
             exec:
@@ -173,6 +196,15 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 10
+
+      # Volumes for shared cache
+      volumes:
+        - name: cache-volume
+          persistentVolumeClaim:
+            claimName: mobility-cache-pvc
+        - name: models-volume
+          persistentVolumeClaim:
+            claimName: mobility-cache-pvc
 
       terminationGracePeriodSeconds: 60  # Allow time for message completion
 
@@ -232,7 +264,7 @@ spec:
 
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready  # Use /ready for stricter check
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
