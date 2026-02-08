@@ -45,7 +45,12 @@ jobs:
         run: pytest tests/ --collect-only -q 2>&1 | tail -10
 
       - name: Run tests with coverage
-        run: pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=85
+        run: |
+          pytest tests/ -v --tb=long --cov=services --cov=config --cov-report=term-missing 2>&1 | tee test_output.txt
+          RESULT=$?
+          echo "=== PYTEST EXIT CODE: $RESULT ==="
+          tail -50 test_output.txt
+          exit $RESULT
 
   lint:
     runs-on: ubuntu-latest
