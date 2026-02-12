@@ -42,7 +42,7 @@ FALLBACK MECHANISM (v3.2):
     to embedding quality, not just mapped ones.
 
 EVALUATION (embedding_evaluator.py):
-    - Evaluation dataset: 140 queries across 10 categories
+    - Evaluation dataset: 200 queries across 14 categories
     - Industry-standard metrics: MRR, NDCG@5, NDCG@10, Hit@K
     - Coverage tracking via embedding_coverage.py
 
