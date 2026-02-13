@@ -46,7 +46,15 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=short --cov=services --cov=config --cov-report=term-missing --cov-fail-under=80 2>&1 | tee test_output.txt
+          # Skip integration tests that require real external services
+          pytest tests/ -v --tb=short \
+            --ignore=tests/test_booking_flow.py \
+            --ignore=tests/test_case_flow.py \
+            --ignore=tests/test_mileage_flow.py \
+            -m "not integration" \
+            --cov=services --cov=config \
+            --cov-report=term-missing \
+            --cov-fail-under=80 2>&1 | tee test_output.txt
           RESULT=$?
           if [ $RESULT -ne 0 ]; then
             echo "=== LAST 50 LINES ==="
