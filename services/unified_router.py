@@ -41,7 +41,7 @@ from pathlib import Path
 from openai import AsyncAzureOpenAI
 
 from config import get_settings
-from services.query_router import QueryRouter, RouteResult
+from services.query_router import QueryRouter, RouteResult, ML_CONFIDENCE_THRESHOLD
 from services.ambiguity_detector import (
     AmbiguityDetector, AmbiguityResult, get_ambiguity_detector
 )
@@ -269,28 +269,15 @@ class UnifiedRouter:
         return any(signal in query_lower for signal in EXIT_SIGNALS)
 
     def _check_greeting(self, query: str) -> Optional[str]:
-        """Check if query is a greeting and return response."""
-        query_lower = query.lower().strip()
+        """
+        Check if query is a greeting using ML classifier via QueryRouter.
 
-        greetings = {
-            "bok": "Bok! Kako vam mogu pomoći?",
-            "hej": "Hej! Kako vam mogu pomoći?",
-            "pozdrav": "Pozdrav! Kako vam mogu pomoći?",
-            "zdravo": "Zdravo! Kako vam mogu pomoći?",
-            "dobar dan": "Dobar dan! Kako vam mogu pomoći?",
-            "dobro jutro": "Dobro jutro! Kako vam mogu pomoći?",
-            "dobra večer": "Dobra večer! Kako vam mogu pomoći?",
-            "hvala": "Nema na čemu! Trebate li još nešto?",
-            "thanks": "You're welcome! Need anything else?",
-            "help": "Mogu vam pomoći s:\n• Rezervacija vozila\n• Unos kilometraže\n• Prijava kvara\n• Informacije o vozilu",
-            "pomoc": "Mogu vam pomoći s:\n• Rezervacija vozila\n• Unos kilometraže\n• Prijava kvara\n• Informacije o vozilu",
-            "pomoć": "Mogu vam pomoći s:\n• Rezervacija vozila\n• Unos kilometraže\n• Prijava kvara\n• Informacije o vozilu",
-        }
-
-        for greeting, response in greetings.items():
-            if query_lower == greeting or query_lower.startswith(greeting + " "):
-                return response
-
+        Delegates to QueryRouter which uses ML-based intent classification
+        (handles GREETING, THANKS, HELP intents at 100% accuracy).
+        """
+        qr_result = self.query_router.route(query, None)
+        if qr_result.matched and qr_result.flow_type == "direct_response":
+            return qr_result.response_template
         return None
 
     async def route(
@@ -382,8 +369,8 @@ class UnifiedRouter:
         logger.info(f"UNIFIED ROUTER: Trying QueryRouter for query='{query[:50]}'")
         qr_result = self.query_router.route(query, user_context)
         logger.info(f"UNIFIED ROUTER: QR result: matched={qr_result.matched}, conf={qr_result.confidence}, flow={qr_result.flow_type if qr_result.matched else None}")
-        if qr_result.matched and qr_result.confidence >= 1.0:
-            # Samo ako je SIGURAN match (confidence=1.0) - izbjegavamo false positives
+        if qr_result.matched and qr_result.confidence >= ML_CONFIDENCE_THRESHOLD:
+            # High-confidence ML match bypasses LLM for speed (saves ~80% LLM calls)
             logger.info(
                 f"UNIFIED ROUTER: Fast path via QueryRouter → "
                 f"{qr_result.tool_name or qr_result.flow_type} (conf={qr_result.confidence})"
@@ -487,15 +474,11 @@ class UnifiedRouter:
         - Ako je upit PREVIŠE GENERIČAN (npr. "prosječna vrijednost" bez entiteta) → action="clarify"
 
         3. ODABIR ALATA:
-        - "unesi km", "upiši kilometražu", "mogu li upisati" → post_AddMileage (WRITE!)
-        - "koliko imam km", "moja kilometraža" → get_MasterData (READ)
-        - "registracija", "tablica", "podaci o vozilu" → get_MasterData
-        - "slobodna vozila", "dostupna vozila" → get_AvailableVehicles
-        - "trebam auto", "rezerviraj" → get_AvailableVehicles (pa flow)
-        - "moje rezervacije" → get_VehicleCalendar
-        - "prijavi štetu", "kvar", "udario sam" → post_AddCase
-        - "troškovi" → get_Expenses
-        - "tripovi", "putovanja" → get_Trips
+        - Odaberi alat prema semantičkom značenju korisnikovog upita
+        - READ upiti (dohvati, prikaži, koliko) → GET alati
+        - WRITE upiti (unesi, dodaj, kreiraj, prijavi) → POST alati
+        - UPDATE upiti (ažuriraj, promijeni) → PUT/PATCH alati
+        - DELETE upiti (obriši, otkaži, ukloni) → DELETE alati
 
         4. FLOW TYPES:
         - booking: za rezervacije

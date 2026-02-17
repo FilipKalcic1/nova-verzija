@@ -12,7 +12,9 @@ Uses trained ML model for intent classification.
 
 import json
 import logging
-import pickle
+import os
+import joblib
+import threading
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple, Set
@@ -22,6 +24,21 @@ import unicodedata
 import re
 
 logger = logging.getLogger(__name__)
+
+
+def _load_intent_synonyms() -> Dict[str, str]:
+    """Load intent synonyms from config/croatian_mappings.json."""
+    base_path = os.path.dirname(os.path.dirname(__file__))
+    config_path = os.path.join(base_path, "config", "croatian_mappings.json")
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        raw = data.get("intent_synonyms", {})
+        return {k: v for k, v in raw.items() if k != "_comments"}
+    except Exception as e:
+        logger.warning(f"Could not load intent_synonyms from config: {e}")
+        return {}
 
 
 # ============================================================
@@ -34,32 +51,8 @@ DIACRITIC_MAP = {
     'Č': 'C', 'Ć': 'C', 'Đ': 'D', 'Š': 'S', 'Ž': 'Z',
 }
 
-# Common Croatian synonyms (normalize to canonical form)
-SYNONYM_MAP = {
-    # Vehicle synonyms → vozilo
-    'auto': 'vozilo',
-    'auta': 'vozila',
-    'automobil': 'vozilo',
-    'automobili': 'vozila',
-    'automobila': 'vozila',
-    'kola': 'vozilo',
-    'kolima': 'vozilima',
-    # Phone synonyms
-    'mobitel': 'telefon',
-    'mobitela': 'telefona',
-    'gsm': 'telefon',
-    'tel': 'telefon',
-    # Mileage synonyms
-    'kilometraza': 'kilometara',
-    'km': 'kilometara',
-    # Common typos
-    'telfon': 'telefon',
-    'telef': 'telefon',
-    'rezevacija': 'rezervacija',
-    'rezevirati': 'rezervirati',
-    'osteio': 'ostetio',
-    'ostetiti': 'ostetio',
-}
+# Load Croatian synonyms from config/croatian_mappings.json
+SYNONYM_MAP = _load_intent_synonyms()
 
 
 def normalize_diacritics(text: str) -> str:
@@ -189,6 +182,7 @@ class IntentClassifier:
         self.label_encoder = None
         self.intent_to_metadata = {}  # Maps intent -> (action, tool)
         self._loaded = False
+        self._azure_client = None  # Cached Azure OpenAI client
 
     def load(self) -> bool:
         """Load trained model from disk."""
@@ -200,11 +194,10 @@ class IntentClassifier:
                 logger.warning(f"Model file not found: {model_file}")
                 return False
 
-            with open(model_file, "rb") as f:
-                saved = pickle.load(f)
-                self.model = saved["model"]
-                self.vectorizer = saved.get("vectorizer")
-                self.label_encoder = saved["label_encoder"]
+            saved = joblib.load(model_file)
+            self.model = saved["model"]
+            self.vectorizer = saved.get("vectorizer")
+            self.label_encoder = saved["label_encoder"]
 
             if meta_file.exists():
                 with open(meta_file, "r", encoding="utf-8") as f:
@@ -324,7 +317,7 @@ class IntentClassifier:
         self.vectorizer = TfidfVectorizer(
             ngram_range=(1, 3),
             max_features=5000,
-            min_df=2
+            min_df=1
         )
         X = self.vectorizer.fit_transform(texts)
 
@@ -332,15 +325,16 @@ class IntentClassifier:
         self.label_encoder = LabelEncoder()
         y = self.label_encoder.fit_transform(labels)
 
-        # Train
+        # Train with balanced class weights to handle imbalanced intents
         self.model = LogisticRegression(
             max_iter=1000,
             solver="lbfgs",
-            C=10.0
+            C=10.0,
+            class_weight="balanced"
         )
         self.model.fit(X, y)
 
-        # Evaluate
+        # Evaluate with stratified CV to preserve class distribution
         cv_scores = cross_val_score(self.model, X, y, cv=5, scoring="accuracy")
 
         # Save
@@ -587,7 +581,8 @@ class IntentClassifier:
         self.model = LogisticRegression(
             max_iter=1000,
             solver="lbfgs",
-            C=10.0
+            C=10.0,
+            class_weight="balanced"
         )
         self.model.fit(X, y)
 
@@ -610,19 +605,25 @@ class IntentClassifier:
             "embedding_dim": X.shape[1]
         }
 
+    def _get_azure_client(self):
+        """Get or create cached Azure OpenAI client."""
+        if self._azure_client is None:
+            from openai import AzureOpenAI
+            from config import get_settings
+            settings = get_settings()
+            self._azure_client = AzureOpenAI(
+                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                api_key=settings.AZURE_OPENAI_API_KEY,
+                api_version="2024-02-15-preview"
+            )
+        return self._azure_client
+
     def _predict_azure_embedding(self, text: str) -> IntentPrediction:
         """Predict using Azure OpenAI embeddings - SEMANTIC matching."""
-        import asyncio
-        from openai import AzureOpenAI  # Use sync client for prediction
         from config import get_settings
 
         settings = get_settings()
-        # Use SYNC client for prediction to avoid async issues
-        client = AzureOpenAI(
-            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-            api_key=settings.AZURE_OPENAI_API_KEY,
-            api_version="2024-02-15-preview"
-        )
+        client = self._get_azure_client()
 
         # Get query embedding (sync)
         response = client.embeddings.create(
@@ -667,8 +668,7 @@ class IntentClassifier:
         if include_vectorizer and self.vectorizer is not None:
             save_data["vectorizer"] = self.vectorizer
 
-        with open(model_file, "wb") as f:
-            pickle.dump(save_data, f)
+        joblib.dump(save_data, model_file)
 
         logger.info(f"Saved model to {model_file}")
 
@@ -681,16 +681,21 @@ class IntentClassifier:
             json.dump(self.intent_to_metadata, f, indent=2, ensure_ascii=False)
 
 
-# Singleton instance
+# Singleton instance with thread-safe access
 _classifier: Optional[IntentClassifier] = None
+_classifier_lock = threading.Lock()
 
 
 def get_intent_classifier(algorithm: str = "tfidf_lr") -> IntentClassifier:
-    """Get or create singleton classifier instance."""
+    """Get or create singleton classifier instance (thread-safe)."""
     global _classifier
-    if _classifier is None or _classifier.algorithm != algorithm:
-        _classifier = IntentClassifier(algorithm=algorithm)
-        _classifier.load()
+    if _classifier is not None and _classifier.algorithm == algorithm:
+        return _classifier
+    with _classifier_lock:
+        # Double-check after acquiring lock
+        if _classifier is None or _classifier.algorithm != algorithm:
+            _classifier = IntentClassifier(algorithm=algorithm)
+            _classifier.load()
     return _classifier
 
 
@@ -701,19 +706,27 @@ def get_intent_classifier(algorithm: str = "tfidf_lr") -> IntentClassifier:
 # Cache for semantic classifier (only load when needed)
 _semantic_classifier: Optional[IntentClassifier] = None
 _semantic_model_unavailable: bool = False  # Prevents repeated warnings
+_semantic_lock = threading.Lock()
 
 ENSEMBLE_FALLBACK_THRESHOLD = 0.75  # Use semantic if TF-IDF < 75%
 
 
 def _get_semantic_classifier() -> IntentClassifier:
-    """Get semantic classifier (lazy loaded)."""
+    """Get semantic classifier (lazy loaded, thread-safe)."""
     global _semantic_classifier, _semantic_model_unavailable
 
     # Skip if we already know the model is unavailable
     if _semantic_model_unavailable:
         raise FileNotFoundError("Azure embedding model not available (cached)")
 
-    if _semantic_classifier is None:
+    if _semantic_classifier is not None:
+        return _semantic_classifier
+
+    with _semantic_lock:
+        # Double-check after acquiring lock
+        if _semantic_classifier is not None:
+            return _semantic_classifier
+
         # Check if model file exists BEFORE creating classifier
         model_file = MODEL_DIR / "azure_embedding_model.pkl"
         if not model_file.exists():
@@ -934,10 +947,9 @@ class QueryTypeClassifierML:
                 logger.warning("QueryType model not found, training...")
                 return self.train()
 
-            with open(model_file, 'rb') as f:
-                data = pickle.load(f)
-                self.vectorizer = data['vectorizer']
-                self.model = data['model']
+            data = joblib.load(model_file)
+            self.vectorizer = data['vectorizer']
+            self.model = data['model']
             self._loaded = True
             return True
         except Exception as e:
@@ -986,8 +998,7 @@ class QueryTypeClassifierML:
 
             # Save model
             QUERY_TYPE_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-            with open(QUERY_TYPE_MODEL_DIR / "tfidf_model.pkl", 'wb') as f:
-                pickle.dump({'vectorizer': self.vectorizer, 'model': self.model}, f)
+            joblib.dump({'vectorizer': self.vectorizer, 'model': self.model}, QUERY_TYPE_MODEL_DIR / "tfidf_model.pkl")
 
             self._loaded = True
             return True
@@ -1038,16 +1049,20 @@ class QueryTypeClassifierML:
             )
 
 
-# Singleton for QueryType classifier
+# Singleton for QueryType classifier (thread-safe)
 _query_type_classifier: Optional[QueryTypeClassifierML] = None
+_query_type_lock = threading.Lock()
 
 
 def get_query_type_classifier_ml() -> QueryTypeClassifierML:
-    """Get singleton QueryType classifier."""
+    """Get singleton QueryType classifier (thread-safe)."""
     global _query_type_classifier
-    if _query_type_classifier is None:
-        _query_type_classifier = QueryTypeClassifierML()
-        _query_type_classifier.load()
+    if _query_type_classifier is not None:
+        return _query_type_classifier
+    with _query_type_lock:
+        if _query_type_classifier is None:
+            _query_type_classifier = QueryTypeClassifierML()
+            _query_type_classifier.load()
     return _query_type_classifier
 
 
