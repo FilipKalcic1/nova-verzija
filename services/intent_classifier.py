@@ -314,18 +314,34 @@ class IntentClassifier:
         return texts, labels, metadata
 
     def _train_tfidf_lr(self, texts: List[str], labels: List[str]) -> Dict[str, float]:
-        """Train TF-IDF + Logistic Regression model."""
+        """Train TF-IDF + Logistic Regression model.
+
+        Uses FeatureUnion of word n-grams + char_wb n-grams:
+        - Word n-grams: exact word matching for standard queries
+        - Char_wb n-grams: character-level matching for typo resilience
+          e.g. "priajvi" and "prijavi" share 80% of char 3-grams
+        """
         from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.pipeline import FeatureUnion
         from sklearn.linear_model import LogisticRegression
         from sklearn.preprocessing import LabelEncoder
         from sklearn.model_selection import cross_val_score
 
-        # Vectorize
-        self.vectorizer = TfidfVectorizer(
-            ngram_range=(1, 3),
-            max_features=5000,
-            min_df=2
-        )
+        # FeatureUnion: word n-grams + char_wb n-grams
+        self.vectorizer = FeatureUnion([
+            ("word", TfidfVectorizer(
+                analyzer="word",
+                ngram_range=(1, 3),
+                max_features=5000,
+                min_df=2,
+            )),
+            ("char", TfidfVectorizer(
+                analyzer="char_wb",
+                ngram_range=(3, 5),
+                max_features=10000,
+                min_df=2,
+            )),
+        ])
         X = self.vectorizer.fit_transform(texts)
 
         # Encode labels
