@@ -447,6 +447,60 @@ class Worker:
         # Clean up stale pending messages from previous worker runs
         await self._cleanup_stale_pending()
 
+        # Clean up zombie consumers from previous worker restarts
+        await self._cleanup_stale_consumers()
+
+    async def _cleanup_stale_consumers(self):
+        """
+        Remove zombie consumers from previous worker restarts.
+
+        Each restart creates a new consumer (worker_{timestamp}) but never
+        removes the old one. This leads to consumer count growing indefinitely.
+        Keep only the current consumer and remove all others.
+        """
+        try:
+            consumers = await self.redis.xinfo_consumers(
+                "whatsapp_stream_inbound",
+                self.group_name
+            )
+
+            if not consumers or len(consumers) <= 1:
+                log("info", "no_stale_consumers")
+                return
+
+            removed = 0
+            for consumer in consumers:
+                name = consumer.get("name", "")
+                pending = consumer.get("pending", 0)
+                idle = consumer.get("idle", 0)
+
+                # Skip current consumer
+                if name == self.consumer_name:
+                    continue
+
+                # Remove consumers with 0 pending messages (safe to remove)
+                # or idle for more than 5 minutes (300000ms)
+                if pending == 0 or idle > 300000:
+                    try:
+                        await self.redis.xgroup_delconsumer(
+                            "whatsapp_stream_inbound",
+                            self.group_name,
+                            name
+                        )
+                        removed += 1
+                    except Exception:
+                        pass
+
+            if removed:
+                log("info", "stale_consumers_removed", {
+                    "removed": removed,
+                    "total_before": len(consumers),
+                    "remaining": len(consumers) - removed
+                })
+
+        except Exception as e:
+            log("warn", "consumer_cleanup_failed", {"error": str(e)})
+
     async def _cleanup_stale_pending(self):
         """
         Clean up stale pending messages from previous worker runs.

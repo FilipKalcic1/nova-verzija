@@ -49,6 +49,12 @@ from services.context import (
     MissingContextError,
     VehicleSelectionRequired,
 )
+from services.flow_phrases import (
+    matches_show_more,
+    matches_confirm_yes,
+    matches_confirm_no,
+    matches_item_selection,
+)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -238,7 +244,8 @@ class MessageEngine:
         self,
         sender: str,
         text: str,
-        message_id: Optional[str] = None
+        message_id: Optional[str] = None,
+        db_session=None
     ) -> str:
         """
         Process incoming message.
@@ -247,21 +254,21 @@ class MessageEngine:
             sender: User phone number
             text: Message text
             message_id: Optional message ID
+            db_session: Database session for this request (concurrency-safe)
 
         Returns:
             Response text
         """
+        import time as _time
+        _t0 = _time.perf_counter()
         logger.info(f"Processing: {sender[-4:]} - {text[:50]}")
 
         try:
             # 1. Identify user (delegated to UserHandler)
-            user_context = await self._user_handler.identify_user(sender)
-
-            if not user_context:
-                return (
-                    "Vas broj nije pronaden u sustavu MobilityOne.\n"
-                    "Molimo kontaktirajte administratora."
-                )
+            # Always returns a context (guest context if not in MobilityOne)
+            user_context = await self._user_handler.identify_user(sender, db_session=db_session)
+            _t1 = _time.perf_counter()
+            logger.info(f"TIMING identify_user: {int((_t1-_t0)*1000)}ms")
 
             # 2. Load conversation state
             conv_manager = await ConversationManager.load_for_user(sender, self.redis)
@@ -283,6 +290,9 @@ class MessageEngine:
             if hallucination_result:
                 return hallucination_result
 
+            _t2 = _time.perf_counter()
+            logger.info(f"TIMING pre-processing: {int((_t2-_t0)*1000)}ms")
+
             # 5. Handle new user greeting (delegated to UserHandler)
             if UserContextManager(user_context).is_new:
                 greeting = self._user_handler.build_greeting(user_context)
@@ -292,6 +302,9 @@ class MessageEngine:
                     sender, text, user_context, conv_manager
                 )
 
+                _t3 = _time.perf_counter()
+                logger.info(f"TIMING total (new user): {int((_t3-_t0)*1000)}ms")
+
                 full_response = f"{greeting}\n\n---\n\n{response}"
                 await self.context.add_message(sender, "assistant", response)
                 return full_response
@@ -300,6 +313,10 @@ class MessageEngine:
             response = await self._process_with_state(
                 sender, text, user_context, conv_manager
             )
+
+            _t3 = _time.perf_counter()
+            logger.info(f"TIMING _process_with_state: {int((_t3-_t2)*1000)}ms")
+            logger.info(f"TIMING total: {int((_t3-_t0)*1000)}ms")
 
             # 7. Save response to history
             await self.context.add_message(sender, "assistant", response)
@@ -333,6 +350,9 @@ class MessageEngine:
         conv_manager: ConversationManager
     ) -> str:
         """Process message based on conversation state using Unified Router."""
+        import time as _time
+        _pws_start = _time.perf_counter()
+
         state = conv_manager.get_state()
         is_in_flow = conv_manager.is_in_flow()
 
@@ -346,22 +366,20 @@ class MessageEngine:
 
         # Direct state-based handling for in-flow messages
         if is_in_flow:
-            text_lower = text.lower()
-
             if state == ConversationState.CONFIRMING:
-                if any(s in text_lower for s in ["pokaz", "ostala", "druga", "vise", "sva vozila", "lista", "popis"]):
+                if matches_show_more(text):
                     logger.info("DIRECT HANDLER: 'show more' in CONFIRMING state")
                     return await self._flow_handler.handle_confirmation(
                         sender, text, user_context, conv_manager
                     )
-                if any(w in text_lower for w in ["da", "potvrdi", "ok", "yes", "moze", "ne", "odustani", "cancel", "no"]):
+                if matches_confirm_yes(text) or matches_confirm_no(text):
                     logger.info("DIRECT HANDLER: confirmation response in CONFIRMING state")
                     return await self._flow_handler.handle_confirmation(
                         sender, text, user_context, conv_manager
                     )
 
             if state == ConversationState.SELECTING_ITEM:
-                if text.strip().isdigit() or any(s in text_lower for s in ["prvi", "drugi", "treci"]):
+                if matches_item_selection(text):
                     logger.info("DIRECT HANDLER: item selection in SELECTING state")
                     return await self._flow_handler.handle_selection(
                         sender, text, user_context, conv_manager, self._handle_new_request
@@ -385,12 +403,15 @@ class MessageEngine:
             }
 
         # Get unified routing decision
+        _rt0 = _time.perf_counter()
         decision = await self.unified_router.route(text, user_context, conv_state)
+        _rt1 = _time.perf_counter()
 
         logger.info(
             f"UNIFIED ROUTER: action={decision.action}, tool={decision.tool}, "
             f"flow={decision.flow_type}, conf={decision.confidence:.2f}"
         )
+        logger.info(f"TIMING router: {int((_rt1-_rt0)*1000)}ms (since pws_start: {int((_rt1-_pws_start)*1000)}ms)")
 
         # Handle routing decisions
         if decision.action == "direct_response":
@@ -656,14 +677,24 @@ class MessageEngine:
                 method = tool.method if tool else "GET"
 
                 # Special handling for availability/calendar
-                if "available" in tool_name.lower() or "calendar" in tool_name.lower():
-                    if method == "GET" and "vehicle" in tool_name.lower():
-                        return await self._flow_executors.handle_availability_flow(
-                            result, user_context, conv_manager
-                        )
+                # Config-driven: check tool tags/method instead of name substrings
+                tool_tags = getattr(tool, 'tags', []) or []
+                is_availability_tool = (
+                    method == "GET" and
+                    any(tag in (t.lower() for t in tool_tags) for tag in ["availability", "calendar"]) or
+                    (method == "GET" and tool_name in self._get_availability_tools())
+                )
+                if is_availability_tool:
+                    return await self._flow_executors.handle_availability_flow(
+                        result, user_context, conv_manager
+                    )
 
-                # Block direct POST VehicleCalendar
-                if tool_name == "post_VehicleCalendar" and method == "POST":
+                # Block direct booking creation without validation
+                is_booking_create = (
+                    method == "POST" and
+                    tool_name in self._get_booking_tools()
+                )
+                if is_booking_create:
                     params = result.get("parameters", {})
                     vehicle_id = params.get("VehicleId") or params.get("vehicleId")
 
@@ -706,23 +737,26 @@ class MessageEngine:
 
                 # Use LLM extraction for successful responses
                 if tool_response.get("success") and tool_response.get("data"):
-                    try:
-                        extracted_response = await self.response_extractor.extract(
-                            user_query=text,
-                            api_response=tool_response["data"],
-                            tool_name=tool_name,
-                            extraction_hint=extraction_hint
-                        )
-                        if extracted_response:
-                            return extracted_response
-                    except Exception as e:
-                        logger.warning(f"LLM extraction failed: {e}")
+                    # If there are NO additional calls, try to return extracted response directly
+                    if not result.get("additional_calls"):
+                        try:
+                            extracted_response = await self.response_extractor.extract(
+                                user_query=text,
+                                api_response=tool_response["data"],
+                                tool_name=tool_name,
+                                extraction_hint=extraction_hint
+                            )
+                            if extracted_response:
+                                return extracted_response
+                        except Exception as e:
+                            logger.warning(f"LLM extraction failed: {e}")
 
-                if tool_response.get("final_response"):
-                    return tool_response["final_response"]
+                if not result.get("additional_calls"):
+                    if tool_response.get("final_response"):
+                        return tool_response["final_response"]
 
-                if tool_response.get("needs_input"):
-                    return tool_response.get("prompt", "")
+                    if tool_response.get("needs_input"):
+                        return tool_response.get("prompt", "")
 
                 # Try fallback tools on failure
                 if not tool_response.get("success", True) and fallback_tools:
@@ -763,7 +797,17 @@ class MessageEngine:
                                 return fb_response["final_response"]
                             break
 
-                # Add to conversation for next iteration
+                # Build tool_calls list for conversation (include all calls from LLM)
+                all_assistant_tool_calls = [{
+                    "id": result["tool_call_id"],
+                    "type": "function",
+                    "function": {
+                        "name": result["tool"],
+                        "arguments": json.dumps(result["parameters"])
+                    }
+                }]
+
+                # First tool result
                 tool_result_content = tool_response.get("data", {})
                 if not tool_response.get("success", True):
                     tool_result_content = {
@@ -772,23 +816,92 @@ class MessageEngine:
                         "ai_feedback": tool_response.get("ai_feedback", "")
                     }
 
-                current_messages.append({
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [{
-                        "id": result["tool_call_id"],
-                        "type": "function",
-                        "function": {
-                            "name": result["tool"],
-                            "arguments": json.dumps(result["parameters"])
-                        }
-                    }]
-                })
-
-                current_messages.append({
+                all_tool_results = [{
                     "role": "tool",
                     "tool_call_id": result["tool_call_id"],
                     "content": json.dumps(tool_result_content)
+                }]
+
+                # Process additional parallel tool calls from LLM
+                additional_calls = result.get("additional_calls", [])
+                if additional_calls:
+                    logger.info(f"Processing {len(additional_calls)} additional parallel tool calls")
+
+                for extra_call in additional_calls:
+                    extra_tool_name = extra_call["tool"]
+                    logger.info(f"Executing additional tool call: {extra_tool_name}")
+
+                    all_assistant_tool_calls.append({
+                        "id": extra_call["tool_call_id"],
+                        "type": "function",
+                        "function": {
+                            "name": extra_call["tool"],
+                            "arguments": json.dumps(extra_call["parameters"])
+                        }
+                    })
+
+                    extra_response = await self._tool_handler.execute_tool_call(
+                        extra_call, user_context, conv_manager, sender, user_query=text
+                    )
+
+                    extra_content = extra_response.get("data", {})
+                    if not extra_response.get("success", True):
+                        extra_content = {
+                            "error": True,
+                            "message": extra_response.get("error", "Unknown error")
+                        }
+
+                    all_tool_results.append({
+                        "role": "tool",
+                        "tool_call_id": extra_call["tool_call_id"],
+                        "content": json.dumps(extra_content)
+                    })
+
+                # Add assistant message with ALL tool calls
+                current_messages.append({
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": all_assistant_tool_calls
                 })
 
+                # Add ALL tool results
+                current_messages.extend(all_tool_results)
+
         return "Nisam uspio obraditi zahtjev. Pokusajte drugacije formulirati."
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # CONFIG-DRIVEN TOOL IDENTIFICATION (replaces hardcoded tool name checks)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def _get_availability_tools(self) -> set:
+        """Get tool names that handle vehicle availability (config-driven)."""
+        if not self.registry:
+            return set()
+        # Dynamically discover from registry instead of hardcoding names
+        tools = set()
+        for tool_name in self.registry.tools:
+            tool = self.registry.get_tool(tool_name)
+            if not tool or tool.method != "GET":
+                continue
+            name_lower = tool_name.lower()
+            desc_lower = (getattr(tool, 'description', '') or '').lower()
+            if ('available' in name_lower and 'vehicle' in name_lower) or \
+               ('slobodn' in desc_lower and 'vozil' in desc_lower):
+                tools.add(tool_name)
+        return tools
+
+    def _get_booking_tools(self) -> set:
+        """Get tool names that create bookings (config-driven)."""
+        if not self.registry:
+            return set()
+        tools = set()
+        for tool_name in self.registry.tools:
+            tool = self.registry.get_tool(tool_name)
+            if not tool or tool.method != "POST":
+                continue
+            name_lower = tool_name.lower()
+            desc_lower = (getattr(tool, 'description', '') or '').lower()
+            if ('calendar' in name_lower and 'vehicle' in name_lower) or \
+               ('rezervacij' in desc_lower and 'kreir' in desc_lower):
+                tools.add(tool_name)
+        return tools
