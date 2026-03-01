@@ -93,7 +93,7 @@ class APIGateway:
         
         self.client = httpx.AsyncClient(
             timeout=httpx.Timeout(self.DEFAULT_TIMEOUT, connect=10.0),
-            limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
+            limits=httpx.Limits(max_keepalive_connections=40, max_connections=100),
             follow_redirects=True
         )
         

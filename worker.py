@@ -38,7 +38,7 @@ from services.rag_scheduler import RAGScheduler, get_rag_scheduler
 
 settings = get_settings()
 
-MAX_CONCURRENT = 5              # Constrained by Azure TPM limit
+MAX_CONCURRENT = 10             # Azure gpt-4o-mini supports higher concurrency
 MESSAGE_LOCK_TTL = 300          # 5 min - enough for longest LLM calls
 REDIS_MAX_RETRIES = 30          # 30 x 2s = 60s max wait for Redis
 REDIS_RETRY_DELAY = 2
@@ -260,7 +260,7 @@ class Worker:
                 settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
-                max_connections=20,
+                max_connections=50,
                 socket_keepalive=True,
                 health_check_interval=30
             )

@@ -33,8 +33,8 @@ class Settings(BaseSettings):
         ...,  # REQUIRED - must be set via environment variable
         description="PostgreSQL connection string (e.g., postgresql+asyncpg://user:pass@host:5432/db)"
     )
-    DB_POOL_SIZE: int = Field(default=10)
-    DB_MAX_OVERFLOW: int = Field(default=20)
+    DB_POOL_SIZE: int = Field(default=20)
+    DB_MAX_OVERFLOW: int = Field(default=30)
     DB_POOL_RECYCLE: int = Field(default=3600)
     
     # ---
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         ...,  # REQUIRED - must be set via environment variable
         description="Redis connection string (e.g., redis://host:6379/0)"
     )
-    REDIS_MAX_CONNECTIONS: int = Field(default=50)
+    REDIS_MAX_CONNECTIONS: int = Field(default=100)
     REDIS_STATS_KEY_TOOLS: str = Field(default="stats:tools_loaded")
     
     # ---
