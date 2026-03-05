@@ -189,7 +189,7 @@ class AIOrchestrator:
                         try:
                             arguments = json.loads(tc.function.arguments)
                         except json.JSONDecodeError:
-                            logger.warning(f"Invalid tool arguments: {tc.function.arguments[:100]}")
+                            logger.warning(f"Invalid tool arguments for {tc.function.name}: [args_len={len(tc.function.arguments)}]")
                             arguments = {}
                         all_calls.append({
                             "tool": tc.function.name,

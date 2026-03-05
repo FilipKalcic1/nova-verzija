@@ -130,6 +130,9 @@ class MessageEngine:
         self.unified_router = None
         self._unified_router_initialized = False
 
+        # Per-sender mid-flow question tracking (prevents race conditions)
+        self._mid_flow_senders: set = set()
+
         # Refactored handlers
         self._tool_handler = ToolHandler(
             registry=registry,
@@ -258,7 +261,7 @@ class MessageEngine:
         """
         import time as _time
         _t0 = _time.perf_counter()
-        logger.info(f"Processing: {sender[-4:]} - {text[:50]}")
+        logger.info(f"Processing: {sender[-4:]} - [text_len={len(text)}]")
 
         try:
             # 1. Identify user (delegated to UserHandler)
@@ -456,14 +459,14 @@ class MessageEngine:
                 )
                 if isinstance(result, dict) and result.get("mid_flow_question"):
                     question = result.get("question", text)
-                    logger.info(f"P1: Handling mid-flow question: '{question[:50]}'")
-                    # mid-flow question if we're not already handling one
-                    if not getattr(self, '_handling_mid_flow', False):
-                        self._handling_mid_flow = True
+                    logger.info(f"P1: Handling mid-flow question: [len={len(question)}]")
+                    # Per-sender mid-flow tracking (safe for concurrent users)
+                    if sender not in self._mid_flow_senders:
+                        self._mid_flow_senders.add(sender)
                         try:
                             answer = await self._handle_new_request(sender, question, user_context, conv_manager)
                         finally:
-                            self._handling_mid_flow = False
+                            self._mid_flow_senders.discard(sender)
                         return f"{answer}\n\n---\n_Ceka se potvrda prethodne operacije. Potvrdite s **Da** ili **Ne**._"
                     else:
                         logger.warning("P1: Skipping nested mid-flow question to prevent recursion")

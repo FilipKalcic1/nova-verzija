@@ -103,7 +103,7 @@ class HallucinationHandler:
         if len(text) > 100:
             return None
 
-        logger.info(f"Hallucination feedback detected: '{text}'")
+        logger.info(f"Hallucination feedback detected: [text_len={len(text)}]")
 
         try:
             # Get last bot response from history

@@ -242,6 +242,7 @@ class ConversationManager:
                     "current_flow": self.context.current_flow,
                     "current_tool": self.context.current_tool,
                     "missing_params": self.context.missing_params,
+                    "parameters": self.context.parameters,
                     "last_updated": datetime.now(timezone.utc).isoformat()
                 }
                 await self.redis.setex(

@@ -200,6 +200,7 @@ class Worker:
             await asyncio.gather(
                 self._process_inbound_loop(),
                 self._process_outbound_loop(),
+                self._process_delayed_outbound_loop(),
                 self._health_reporter(),
                 self._shutdown_watcher()
             )
@@ -668,7 +669,7 @@ class Worker:
 
         log("info", "processing", {
             "sender": sender[-4:] if sender else "",
-            "text_preview": text[:30] if text else ""
+            "text_len": len(text) if text else 0
         })
 
         # Handle non-text messages (images, locations, voice, etc.)
@@ -700,6 +701,10 @@ class Worker:
 
         if not self._check_rate_limit(sender):
             log("warn", "rate_limited", {"sender": sender[-4:]})
+            await self._enqueue_outbound(
+                sender,
+                "Primate previše poruka u kratkom vremenu. Molimo pričekajte minutu pa pokušajte ponovno."
+            )
             await self._release_message_lock(sender, message_id)
             await self._ack_message(msg_id)
             return
@@ -709,19 +714,33 @@ class Worker:
         try:
             response = await self._process_message(sender, text, message_id)
 
-            if response:
+            if response is not None:
                 await self._enqueue_outbound(sender, response)
+            else:
+                log("warn", "null_response", {"sender": sender[-4:]})
+                await self._enqueue_outbound(
+                    sender,
+                    "Doslo je do greske pri obradi poruke. Molimo pokusajte ponovno."
+                )
 
             self._messages_processed += 1
 
         except Exception as e:
             log_exception("processing_error", e, {
                 "sender": sender[-4:] if sender else "",
-                "text_preview": text[:50] if text else "",
+                "text_len": len(text) if text else 0,
                 "message_id": message_id[:20] if message_id else ""
             })
             self._messages_failed += 1
             await self._store_dlq(data, str(e))
+            # Always respond to user even on error
+            try:
+                await self._enqueue_outbound(
+                    sender,
+                    "Doslo je do greske pri obradi poruke. Molimo pokusajte ponovno."
+                )
+            except Exception:
+                pass
 
         finally:
             await self._release_message_lock(sender, message_id)
@@ -738,8 +757,7 @@ class Worker:
                 response = await self._message_engine.process(sender, text, message_id, db_session=db)
 
                 log("debug", "response_generated", {
-                    "length": len(response) if response else 0,
-                    "preview": response[:100] if response else "NONE"
+                    "length": len(response) if response else 0
                 })
 
                 return response
@@ -747,7 +765,7 @@ class Worker:
                 await db.rollback()
                 log_exception("engine_error_rollback", e, {
                     "sender": sender[-4:] if sender else "",
-                    "text_preview": text[:50] if text else ""
+                    "text_len": len(text) if text else 0
                 })
                 raise
 
@@ -866,7 +884,7 @@ class Worker:
             except asyncio.CancelledError:
                 break
 
-    async def _send_whatsapp(self, to: str, text: str):
+    async def _send_whatsapp(self, to: str, text: str, retry_count: int = 0):
         """Send WhatsApp message via WhatsAppService."""
         if not self._whatsapp_service:
             log("warn", "whatsapp_not_initialized")
@@ -882,7 +900,8 @@ class Worker:
         else:
             log("error", "send_failed", {
                 "error_code": result.error_code,
-                "error": result.error_message
+                "error": result.error_message,
+                "retry_count": retry_count
             })
 
             if result.error_code == "RATE_LIMIT":
@@ -890,6 +909,9 @@ class Worker:
                     to, text,
                     delay=result.retry_after or 30
                 )
+            elif retry_count < 2 and result.error_code not in ("INVALID_PHONE", "CONFIG_ERROR"):
+                # Re-enqueue with delay for transient failures (max 2 retries)
+                await self._enqueue_outbound_delayed(to, text, delay=10 * (retry_count + 1))
 
     async def _enqueue_outbound_delayed(self, to: str, text: str, delay: int = 30):
         """Enqueue outbound message with delay for rate limiting."""
@@ -908,6 +930,54 @@ class Worker:
             log("info", "queued_delayed", {"to": to[-4:], "delay": delay})
         except Exception as e:
             log("error", "queue_delayed_failed", {"error": str(e)})
+
+    async def _process_delayed_outbound_loop(self):
+        """Process delayed outbound messages (rate-limit retries)."""
+        log("info", "delayed_outbound_processor_started")
+
+        while not self.shutdown.is_shutting_down():
+            try:
+                now = time.time()
+                # Get messages whose scheduled time has passed
+                ready = await self.redis.zrangebyscore(
+                    "whatsapp_outbound_delayed",
+                    min=0,
+                    max=now,
+                    start=0,
+                    num=10
+                )
+
+                if not ready:
+                    await asyncio.sleep(5)
+                    continue
+
+                for item in ready:
+                    try:
+                        payload = json.loads(item)
+                        to = payload.get("to", "")
+                        text = payload.get("text", "")
+
+                        if to and text:
+                            await self._enqueue_outbound(to, text)
+                            log("info", "delayed_message_requeued", {"to": to[-4:]})
+
+                        # Remove from delayed set
+                        await self.redis.zrem("whatsapp_outbound_delayed", item)
+                    except Exception as e:
+                        log("error", "delayed_item_error", {"error": str(e)})
+                        # Remove broken item to prevent infinite loop
+                        await self.redis.zrem("whatsapp_outbound_delayed", item)
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                err_str = str(e).lower()
+                if "closed" in err_str or "connection" in err_str:
+                    log("warn", "redis_connection_lost_delayed")
+                    await self._reconnect_redis()
+                else:
+                    log("error", "delayed_loop_error", {"error": str(e)})
+                await asyncio.sleep(5)
 
     async def _enqueue_outbound(self, to: str, text: str):
         # Split long messages to respect WhatsApp's 4096 char limit
@@ -974,13 +1044,19 @@ class Worker:
             await self.redis.xdel("whatsapp_stream_inbound", msg_id)
 
     async def _store_dlq(self, data: dict, error: str):
-        entry = {
-            "original": data,
-            "error": error,
-            "time": datetime.now(timezone.utc).isoformat(),
-            "worker": self.consumer_name
-        }
-        await self.redis.rpush("dlq:inbound", json.dumps(entry))
+        try:
+            entry = {
+                "original": data,
+                "error": error,
+                "time": datetime.now(timezone.utc).isoformat(),
+                "worker": self.consumer_name
+            }
+            await self.redis.rpush("dlq:inbound", json.dumps(entry))
+        except Exception as e:
+            # DLQ write failed - log to stderr as last resort
+            log("error", "dlq_write_failed", {"error": str(e)})
+            sys.stderr.write(f"DLQ_WRITE_FAILED: {json.dumps({'data': data, 'error': error})}\n")
+            sys.stderr.flush()
 
     def _check_rate_limit(self, identifier: str) -> bool:
         """Check rate limit with periodic cleanup."""

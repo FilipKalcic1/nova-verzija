@@ -376,7 +376,7 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"Dependency resolution: filtering by {param_name}={person_id}")
+                    logger.info(f"Dependency resolution: filtering by {param_name}={person_id[:8]}...")
                     break
 
             # If no direct param match but Filter exists, add to Filter
@@ -757,13 +757,13 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"Filtering by {param_name}={person_id} for user-specific data")
+                    logger.info(f"Filtering by {param_name}={person_id[:8]}... for user-specific data")
                     break
 
             # If no direct param match, try using Filter parameter
             if not person_param_injected and "Filter" in provider_tool.parameters:
                 provider_params["Filter"] = f"PersonId(=){person_id}"
-                logger.info(f"Using Filter=PersonId(=){person_id} for user-specific data")
+                logger.info(f"Using Filter=PersonId(=){person_id[:8]}... for user-specific data")
         else:
             logger.warning("No person_id in user_context - may return tenant-wide data!")
 
@@ -909,7 +909,7 @@ class DependencyResolver:
                 if param_def.context_key == "person_id":
                     provider_params[param_name] = person_id
                     person_param_injected = True
-                    logger.info(f"Name search: filtering by {param_name}={person_id}")
+                    logger.info(f"Name search: filtering by {param_name}={person_id[:8]}...")
                     break
 
             # If no direct param, combine with Filter

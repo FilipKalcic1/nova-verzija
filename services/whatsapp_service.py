@@ -106,6 +106,12 @@ class WhatsAppService:
         # Validate configuration
         self._validate_config()
 
+        # Persistent HTTP client with connection pooling
+        self._client = httpx.AsyncClient(
+            timeout=30.0,
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10)
+        )
+
         # Stats
         self._messages_sent = 0
         self._messages_failed = 0
@@ -470,12 +476,11 @@ class WhatsAppService:
 
         for attempt in range(self.MAX_RETRIES):
             try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    response = await client.post(
-                        url,
-                        json=payload,
-                        headers=headers
-                    )
+                response = await self._client.post(
+                    url,
+                    json=payload,
+                    headers=headers
+                )
 
                 # Success
                 if response.status_code in (200, 201):
@@ -637,6 +642,11 @@ class WhatsAppService:
     # ---
     # STATS & HEALTH
     # ---
+
+    async def close(self):
+        """Close the HTTP client (call on shutdown)."""
+        if self._client:
+            await self._client.aclose()
 
     def get_stats(self) -> Dict[str, Any]:
         """Get service statistics."""

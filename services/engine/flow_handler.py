@@ -350,7 +350,7 @@ class FlowHandler:
             # P1 FIX: Detect if user is asking a question mid-flow
             # Allow them to get information without losing confirmation state
             if self._is_question(text):
-                logger.info(f"Mid-flow question detected: '{text[:50]}'")
+                logger.info(f"Mid-flow question detected: [text_len={len(text)}]")
                 # Return special marker to let message_engine handle the question
                 # The flow state is preserved so user can still confirm after
                 return {"mid_flow_question": True, "question": text}
@@ -529,7 +529,7 @@ class FlowHandler:
         """Handle parameter gathering with smart extraction."""
         missing = conv_manager.get_missing_params()
 
-        logger.info(f"GATHERING: missing={missing}, user_input='{text[:50]}'")
+        logger.info(f"GATHERING: missing={missing}, input_len={len(text)}")
 
         # Build context for better extraction
         context = None
@@ -544,7 +544,7 @@ class FlowHandler:
             context=context
         )
 
-        logger.info(f"GATHERING: extracted={extracted}")
+        logger.info(f"GATHERING: extracted_keys={list(extracted.keys()) if isinstance(extracted, dict) else type(extracted).__name__}")
 
         # FALLBACK: If extraction failed and we need only one parameter,
         # use entire text as value (smart assumption)
@@ -555,7 +555,7 @@ class FlowHandler:
                 # User likely provided a time/date value
                 if text.strip() and len(text.strip()) < 50:
                     extracted[param] = text.strip()
-                    logger.info(f"GATHERING FALLBACK: Using raw text '{text.strip()}' as {param}")
+                    logger.info(f"GATHERING FALLBACK: Using raw text [{len(text)} chars] as {param}")
             # For Value (mileage), try to parse the number
             elif param.lower() in ['value', 'mileage']:
                 import re

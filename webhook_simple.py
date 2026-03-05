@@ -247,10 +247,10 @@ async def whatsapp_webhook(request: Request):
         except (json.JSONDecodeError, ValueError) as e:
             _stats["total_parse_errors"] += 1
             logger.error(f"Invalid JSON in webhook body: {e}")
-            _diag_log("json_parse_error", {"error": str(e), "body_preview": raw_body[:200].decode(errors='replace')})
+            _diag_log("json_parse_error", {"error": str(e), "body_len": len(raw_body)})
             return {"status": "ok", "error": "invalid_json"}
 
-        logger.info(f"Received WhatsApp webhook: {json.dumps(body, ensure_ascii=False)[:500]}")
+        logger.info(f"Received WhatsApp webhook: results={len(body.get('results', []))}, keys={list(body.keys())}")
         _diag_log("received", {"keys": list(body.keys()), "result_count": len(body.get("results", []))})
 
         # Extract message details from Infobip format
@@ -320,8 +320,8 @@ async def whatsapp_webhook(request: Request):
                 pushed += 1
                 _stats["total_pushed"] += 1
                 _stats["last_success_at"] = datetime.now(timezone.utc).isoformat()
-                logger.info(f"Message pushed to stream: {sender[-4:]}... - {text[:50]}")
-                _diag_log("pushed", {"sender": sender[-4:], "text_preview": text[:30]})
+                logger.info(f"Message pushed to stream: {sender[-4:]}... [text_len={len(text)}]")
+                _diag_log("pushed", {"sender": sender[-4:], "text_len": len(text)})
 
             except Exception as redis_err:
                 # WEBHOOK-LEVEL DLQ: Redis failed, log full payload for recovery
@@ -331,7 +331,7 @@ async def whatsapp_webhook(request: Request):
 
                 logger.error(
                     f"REDIS PUSH FAILED - MESSAGE WILL BE LOST! "
-                    f"sender={sender}, text={text[:100]}, message_id={message_id}, "
+                    f"sender=...{sender[-4:]}, text_len={len(text)}, message_id={message_id}, "
                     f"error={redis_err}",
                     exc_info=True
                 )
@@ -345,8 +345,8 @@ async def whatsapp_webhook(request: Request):
                 dlq_entry = json.dumps({
                     "dlq": "webhook",
                     "ts": datetime.now(timezone.utc).isoformat(),
-                    "sender": sender,
-                    "text": text,
+                    "sender": sender[-4:],
+                    "text_length": len(text),
                     "message_id": message_id,
                     "error": str(redis_err)
                 })

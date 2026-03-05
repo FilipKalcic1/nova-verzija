@@ -151,7 +151,7 @@ class DeterministicExecutor:
         if result.data:
             # Log first 500 chars of data for debugging
             data_preview = str(result.data)[:500]
-            logger.info(f"DETERMINISTIC: Data preview: {data_preview}")
+            logger.info(f"DETERMINISTIC: Data received [len={len(str(result.data))}]")
 
         if not result.success:
             logger.warning(f"DETERMINISTIC: {route.tool_name} failed: {result.error_message}")

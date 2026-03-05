@@ -355,7 +355,7 @@ class SearchEngine:
         )
 
         if is_read_intent:
-            logger.info(f"Detected READ intent in: '{query}'")
+            logger.info(f"Detected READ intent [query_len={len(query)}]")
 
         adjusted = []
         for score, op_id in scored:
@@ -489,7 +489,7 @@ class SearchEngine:
         if not is_user_specific:
             return scored
 
-        logger.info(f"Detected USER-SPECIFIC intent in: '{query}'")
+        logger.info(f"Detected USER-SPECIFIC intent [query_len={len(query)}]")
 
         boost_value = 0.15
         penalty_value = 0.10
