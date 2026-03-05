@@ -100,7 +100,7 @@ class ChainPlanner:
         Returns:
             ExecutionPlan with primary path and fallbacks
         """
-        logger.info(f"Planning chain for: {query[:50]}...")
+        logger.info(f"Planning chain for query [len={len(query)}]")
 
         # Check for simple cases first
         simple_plan = self._check_simple_cases(query, user_context, tool_scores)

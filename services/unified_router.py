@@ -254,7 +254,7 @@ class UnifiedRouter:
         """
         await self.initialize()
 
-        logger.info(f"UNIFIED ROUTER START: query='{query[:50]}', has_user_context={user_context is not None}, in_flow={conversation_state is not None}")
+        logger.info(f"UNIFIED ROUTER START: query_len={len(query)}, has_user_context={user_context is not None}, in_flow={conversation_state is not None}")
 
         # Quick checks before LLM
 
@@ -320,7 +320,7 @@ class UnifiedRouter:
 
         # 4. QUERY ROUTER - fast path for known patterns (0 tokens, <1ms)
         # Saves ~80% of LLM calls for simple queries
-        logger.info(f"UNIFIED ROUTER: Trying QueryRouter for query='{query[:50]}'")
+        logger.info(f"UNIFIED ROUTER: Trying QueryRouter [query_len={len(query)}]")
         qr_result = self.query_router.route(query, user_context)
         logger.info(f"UNIFIED ROUTER: QR result: matched={qr_result.matched}, conf={qr_result.confidence}, flow={qr_result.flow_type if qr_result.matched else None}")
         if qr_result.matched and qr_result.confidence >= 1.0:
@@ -539,7 +539,7 @@ class UnifiedRouter:
         user_context: Dict[str, Any]
     ) -> RouterDecision:
         """Fallback routing when LLM fails - uses QueryRouter's regex rules."""
-        logger.warning(f"LLM routing failed, using QueryRouter fallback for: '{query[:50]}...'")
+        logger.warning(f"LLM routing failed, using QueryRouter fallback [query_len={len(query)}]")
 
         # Use Query Router
         qr_result = self.query_router.route(query, user_context)

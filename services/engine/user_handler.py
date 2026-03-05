@@ -53,7 +53,12 @@ class UserHandler:
         db = db_session or self.db
         user_service = UserService(db, self.gateway, self.cache)
 
-        user = await user_service.get_active_identity(phone)
+        try:
+            user = await user_service.get_active_identity(phone)
+        except Exception as e:
+            # DB error - don't fall through to auto-onboard (would spam API)
+            logger.error(f"DB lookup failed for {phone[-4:]}..., skipping auto-onboard: {e}")
+            raise
 
         if user:
             # Pass user_mapping for dynamic tenant resolution

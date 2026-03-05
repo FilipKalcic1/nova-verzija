@@ -55,7 +55,7 @@ class LLMResponseExtractor:
         Returns:
             Formatted response string with only relevant data
         """
-        logger.info(f"Extracting from response for query: {user_query[:50]}...")
+        logger.info(f"Extracting from response for query [len={len(user_query)}]")
 
         # Handle empty or error responses
         if not api_response:
@@ -233,7 +233,7 @@ Izvuci SAMO ono što korisnik traži. Budi koncizan."""
                 if claimed_count != actual_count:
                     logger.warning(
                         f"POTENTIAL HALLUCINATION: LLM claimed {claimed_count} vehicles, "
-                        f"but API returned {actual_count}. Query: '{query[:50]}'"
+                        f"but API returned {actual_count}. Query [len={len(query)}]"
                     )
 
         # 2. Check for registration plates not in original data
@@ -246,7 +246,7 @@ Izvuci SAMO ono što korisnik traži. Budi koncizan."""
                 if normalized not in data_str.replace("-", "").replace(" ", ""):
                     logger.warning(
                         f"POTENTIAL HALLUCINATION: Plate '{plate}' not found in API data. "
-                        f"Query: '{query[:50]}'"
+                        f"Query [len={len(query)}]"
                     )
 
     def _format_fallback(self, data: Dict[str, Any], query: str) -> str:

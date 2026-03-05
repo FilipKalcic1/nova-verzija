@@ -250,7 +250,7 @@ class ParameterManager:
         logger.info(f"user_context keys: {list(user_context.keys())}")
         # Use UserContextManager for logging
         ctx = UserContextManager(user_context)
-        logger.info(f"person_id in context: {ctx.person_id or 'NOT FOUND'}")
+        logger.info(f"person_id in context: {'present' if ctx.person_id else 'NOT FOUND'}")
 
         # VehicleId should come from user context vehicle.id, not person_id
         skip_injection = TOOL_SKIP_CONTEXT_INJECTION.get(tool.operation_id, set())

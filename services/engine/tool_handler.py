@@ -199,7 +199,7 @@ class ToolHandler:
         # DEBUG: Log raw API response for debugging data extraction issues
         try:
             raw_json = json.dumps(exec_result.data, default=str, ensure_ascii=False)
-            logger.info(f"RAW API RESPONSE [{tool_name}]: {raw_json[:1500]}")
+            logger.info(f"RAW API RESPONSE [{tool_name}]: [response_len={len(raw_json)}]")
         except Exception as e:
             logger.warning(f"Could not serialize API response: {e}")
 
@@ -335,7 +335,7 @@ class ToolHandler:
 
                 if method == "native":
                     modified_params[param_name] = person_id
-                    logger.info(f"INJECT: {param_name}={person_id}")
+                    logger.info(f"INJECT: {param_name}={person_id[:8]}...")
                 elif method == "filter":
                     existing_filter = modified_params.get("Filter", "")
                     if existing_filter:
@@ -344,7 +344,7 @@ class ToolHandler:
                         )
                     else:
                         modified_params["Filter"] = f"PersonId(=){person_id}"
-                    logger.info(f"FILTER: PersonId={person_id}")
+                    logger.info(f"FILTER: PersonId={person_id[:8]}...")
 
                 return modified_params
 
@@ -353,7 +353,7 @@ class ToolHandler:
             if param_def.context_key == "person_id":
                 modified_params = parameters.copy()
                 modified_params[param_name] = person_id
-                logger.info(f"SCHEMA INJECT: {param_name}={person_id}")
+                logger.info(f"SCHEMA INJECT: {param_name}={person_id[:8]}...")
                 return modified_params
 
         return parameters

@@ -92,7 +92,7 @@ class UserService:
             if digits_only.startswith("0") and len(digits_only) > 1:
                 variations.add("385" + digits_only[1:])
 
-            logger.debug(f"Attempting user lookup with phone variations: {variations}")
+            logger.debug(f"Attempting user lookup with {len(variations)} phone variations")
 
             stmt = select(UserMapping).where(
                 UserMapping.phone_number.in_(list(variations)),
@@ -103,14 +103,14 @@ class UserService:
             user = result.scalars().first()
             
             if user:
-                logger.info(f"Found active user '{user.display_name}' for phone '{phone}' using variation '{user.phone_number}'")
+                logger.info(f"Found active user for phone {phone[-4:]}...")
             else:
-                logger.warning(f"No active user found for phone '{phone}' with variations {variations}")
+                logger.warning(f"No active user found for phone {phone[-4:]}...")
                 
             return user
         except Exception as e:
-            logger.error(f"DB lookup failed for phone '{phone}': {e}")
-            return None
+            logger.error(f"DB lookup failed for phone {phone[-4:]}...: {e}")
+            raise
     
     # ... (rest of class)
         
@@ -147,7 +147,7 @@ class UserService:
             from services.api_gateway import HttpMethod
 
             for phone_var in variations:
-                logger.info(f"Lookup: Phone(=){phone_var}")
+                logger.info(f"Lookup: Phone(=)...{phone_var[-4:]}")
 
                 response = await self.gateway.execute(
                     method=HttpMethod.GET,
@@ -159,7 +159,7 @@ class UserService:
                 if not response.success:
                     if response.status_code in (0, 500):
                         # 0 = network/auth error, 500 = server error - no point retrying other variations
-                        logger.warning(f"API error {response.status_code} for Phone={phone_var} - stopping lookup")
+                        logger.warning(f"API error {response.status_code} for Phone=...{phone_var[-4:]} - stopping lookup")
                         break
                     continue
 
@@ -179,7 +179,7 @@ class UserService:
                         )
                         continue
 
-                    logger.info(f"User found: {display_name}")
+                    logger.info(f"User found for {phone[-4:]}...")
                     await self._upsert_mapping(phone, person_id, display_name)
                     vehicle_info = await self._get_vehicle_info(person_id)
                     return (display_name, vehicle_info)
@@ -408,7 +408,7 @@ class UserService:
         # DYNAMIC TENANT RESOLUTION
         tenant_id = await self._tenant_service.get_tenant_for_user(phone, user_mapping)
 
-        logger.info(f"BUILD_CONTEXT: person_id={person_id}, phone={phone}, tenant_id={tenant_id} (dynamic)")
+        logger.info(f"BUILD_CONTEXT: person_id={person_id[:8]}..., phone=...{phone[-4:]}, tenant_id={tenant_id} (dynamic)")
         context = {
             "person_id": person_id,
             "phone": phone,

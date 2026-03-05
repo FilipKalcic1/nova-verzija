@@ -87,7 +87,7 @@ class Planner:
         Returns:
             ExecutionPlan with steps to execute
         """
-        logger.info(f"Planning for: {query[:50]}...")
+        logger.info(f"Planning for query [len={len(query)}]")
 
         # Build context for planner
         context_summary = self._summarize_context(user_context)
